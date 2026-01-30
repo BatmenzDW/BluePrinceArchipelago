@@ -9,7 +9,7 @@ using UnityEngine;
 namespace BluePrinceArchipelago.ModRooms
 {
     public class ModRoomManager {
-        private List<ModRoom> rooms = new List<ModRoom>();
+        private List<ModRoom> rooms = [];
         public List<ModRoom> Rooms { 
             get { return rooms; }
             set { rooms = value; }
@@ -26,17 +26,15 @@ namespace BluePrinceArchipelago.ModRooms
         public void Intialize() {
             Plugin.BepinLogger.LogMessage("Attempting to modify room pools");
             foreach (ModRoom room in rooms) {
-                Plugin.BepinLogger.LogMessage($"\t{room.Name}");
                 if (room.IsUnlocked && room.IsRandomizable)
                 {
-                    Plugin.BepinLogger.LogMessage($"\t{room.Name}");
-                    ArchipelagoConsole.LogMessage($"\t{room.Name}");
                     foreach (string arrayName in room.PickerArrays)
                     {
                         PlayMakerArrayListProxy array = ModInstance.PickerDict[arrayName];
                         if (!array.arrayList.Contains(room.GameObj))
                         {
                             array.Add(room.GameObj, "GameObject");
+                            ModInstance.PlanPicker.GetComponent<PlayMakerFSM>().Fsm.Variables.GetFsmBool("POOL REMOVAL").value = false;
                             Plugin.BepinLogger.LogMessage($"Added {room.Name} to {arrayName}");
                         }
                     }
@@ -49,6 +47,7 @@ namespace BluePrinceArchipelago.ModRooms
                         if (array.arrayList.Contains(room.GameObj))
                         {
                             array.Remove(room.GameObj, "GameObject");
+                            ModInstance.PlanPicker.GetComponent<PlayMakerFSM>().Fsm.Variables.GetFsmBool("POOL REMOVAL").value = false;
                             Plugin.BepinLogger.LogMessage($"Removed {room.Name} from {arrayName}");
                         }
                     }
@@ -56,23 +55,13 @@ namespace BluePrinceArchipelago.ModRooms
             }
         }
     }
-    public class ModRoom
+    public class ModRoom(String name, GameObject gameObject, List<string> pickerArrays, bool isUnlocked, bool isRandomizable = true)
     {
-        public string Name { get; set; }
-        public GameObject GameObj { get; set; }
-        public List<string> PickerArrays { get; set; }
-        public bool IsUnlocked { get; set; }
-        public bool HasBeenDrafted { get; set; }
-        public bool IsRandomizable { get; set; }
-        
-
-        public ModRoom(String name, GameObject gameObject, List<string> pickerArrays, bool isUnlocked, bool isRandomizable = true) { 
-            Name = name;
-            GameObj = gameObject;
-            PickerArrays = pickerArrays;
-            IsUnlocked = isUnlocked;
-            HasBeenDrafted = false;
-            IsRandomizable = isRandomizable;
-        }
+        public string Name { get; set; } = name;
+        public GameObject GameObj { get; set; } = gameObject;
+        public List<string> PickerArrays { get; set; } = pickerArrays;
+        public bool IsUnlocked { get; set; } = isUnlocked;
+        public bool HasBeenDrafted { get; set; } = false;
+        public bool IsRandomizable { get; set; } = isRandomizable;
     }
 }
