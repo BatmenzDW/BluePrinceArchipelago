@@ -3,6 +3,7 @@ using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.ModRooms;
 using BluePrinceArchipelago.Utils;
 using HarmonyLib;
+using HutongGames.PlayMaker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -37,7 +38,7 @@ namespace BluePrinceArchipelago
         {
             SceneManager.sceneLoaded += (Action<Scene, LoadSceneMode>)OnSceneLoaded;
         }
-
+        // Called whenver a scene is loaded (triggered by the scene manager).
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             Plugin.BepinLogger.LogMessage($"Scene: {scene.name} loaded in {mode}");
@@ -47,25 +48,60 @@ namespace BluePrinceArchipelago
                 _Inventory = GameObject.Find("Inventory").gameObject;
                 LoadArrays();
                 InitializeRooms();
+                HasInitializedRooms = true;
                 Harmony.CreateAndPatchAll(typeof(ItemPatches), "ItemPatches"); //Specify type of patches so they can be applied and removed as required.
+                Harmony.CreateAndPatchAll(typeof(EventPatches), "EventPatches");
             }
         }
-
+        // Handles the mod object being destroyed somehow.
         private void OnDestroy()
         {
             SceneManager.sceneLoaded -= (Action<Scene, LoadSceneMode>)OnSceneLoaded;
             Harmony.UnpatchID("ItemPatches");
+            Harmony.UnpatchID("EventPatches");
+        }
+        // Fires off when an event is sent from an FSM to an FSM or GameObject. Currently just for testing. It is pretty buggy.
+        public static void OnEventSend(FsmEventTarget target, FsmEvent sendEvent, FsmFloat delay, DelayedEvent delayedEvent, GameObject owner, bool isDelayed) {
+            string eventName = sendEvent.name;
+            string targetType = target.target.ToString();
+            string targetName = target.gameObject.gameObject.name;
+            if (targetName.Trim() == "")
+            {
+                GameObject targetObj = target.gameObject.gameObject.value;
+                if (targetObj != null && ! isDelayed)
+                {
+                    targetName = targetObj.name;
+                }
+            }
+            Plugin.BepinLogger.LogMessage($"Sending {sendEvent.name} to {targetType}: {targetName}");
+        }
+        //Called by the item patch whenever an item is spawned.
+        public static void OnItemSpawn(GameObject obj, string poolName, GameObject transformObj, FsmGameObject spawnedObj) {
+            if (obj != null)
+            {
+                Plugin.BepinLogger.LogMessage($"Item: {obj.name}");
+            }
+            if (transformObj != null)
+            {
+                Plugin.BepinLogger.LogMessage($"Transform: {transformObj.name} - {transformObj.transform.position.ToString()}");
+            }
+            if (spawnedObj != null) {
+                if (spawnedObj.value != null) {
+                    Plugin.BepinLogger.LogMessage($"SpawnedObj: {spawnedObj.value.name} - {transformObj.transform.position.ToString()}");
+                }
+            }
         }
 
-        public static void OnItemSpawn(GameObject obj, string poolName, GameObject transformObj) {
-            Plugin.BepinLogger.LogMessage($"Item: {obj.name}");
-            Plugin.BepinLogger.LogMessage($"Transform: {transformObj.name} - {transformObj.transform.position.ToString()}");
-        }
-
+        // Handles initializing rooms.
         public static void OnDraftInitialize(RoomDraftHelper helper) 
         {
-            if (! HasInitializedRooms) {
-                Plugin.ModRoomManager.Intialize();
+            if (HasInitializedRooms)
+            {
+
+                Plugin.ModRoomManager.UpdateRoomPools();
+            }
+            else {
+                Plugin.BepinLogger.LogMessage("Unable to update Room Pool because Rooms have not been initialized.");
             }
         }
 
@@ -118,6 +154,7 @@ namespace BluePrinceArchipelago
             }
             // this is a good place to create and add a bunch of debug buttons
         }
+        // loads the list of picker arrays the rooms can be added to. May rewrite to use names instead of the id of the child for better forward compatibility.
         private static void LoadArrays() {
             List<int> childIDs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 55, 56, 58, 59, 60, 61];
 
@@ -127,6 +164,7 @@ namespace BluePrinceArchipelago
             }
             
         }
+        //TODO add Archipelago seed logic to this function. Also should be used to handle recconnects.
         private static void InitializeRooms()
         {
             Plugin.BepinLogger.LogMessage("Initializing Rooms");
@@ -222,7 +260,7 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.AddRoom("TERRACE", ["EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("THE ARMORY", ["CENTER - Tier 1 G", "CORNER - Tier 1 G", "EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G", "NORTH PIERCE G"], false, false);
                 Plugin.ModRoomManager.AddRoom("THE FOUNDATION", ["CENTER - Tier 1", "CENTER - Tier 2", "CENTER - Tier 3"], true);
-                Plugin.ModRoomManager.AddRoom("THE KENNEL", ["FRONT - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "CENTER - Tier 1"], true);
+                Plugin.ModRoomManager.AddRoom("THE KENNEL", ["FRONT - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "CENTER - Tier 1"], false);
                 Plugin.ModRoomManager.AddRoom("THE POOL", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CENTER - Tier 2 G", "EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G", "Center Rare G"], true);
                 Plugin.ModRoomManager.AddRoom("THRONE ROOM", ["EDGEPIERCE - RARE G", "CENTER - Tier 2 G"], false);
                 Plugin.ModRoomManager.AddRoom("TOMB", ["STANDALONE ARRAY", "STANDALONE ARRAY FULL"], true);
@@ -240,6 +278,9 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.AddRoom("WEST WING HALL", ["EDGECREEP WEST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("WINE CELLAR", ["FRONTBACK - RARE", "NORTH PIERCE", "CORNER - RARE", "CENTER - Tier 1", "EDGECREEP - RARE", "EDGEPIERCE - RARE"], true);
                 Plugin.ModRoomManager.AddRoom("WORKSHOP", ["FRONTBACK - RARE", "CENTER - Tier 2", "EDGECREEP - RARE", "Center Rare"], true);
+                Plugin.ModRoomManager.AddRoom("ANTECHAMPER", [], true, false);
+                Plugin.ModRoomManager.AddRoom("ROOM 46", [], true, false);
+                Plugin.ModRoomManager.AddRoom("ENTRANCE HALL", [], true, false);
             }
         }
     }
