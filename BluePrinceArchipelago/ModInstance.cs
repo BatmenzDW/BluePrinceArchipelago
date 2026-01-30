@@ -18,6 +18,18 @@ namespace BluePrinceArchipelago
             get { return _PlanPicker; }
             set { _PlanPicker = value; }
         }
+        private static GameObject _Inventory = new();
+        public static GameObject Inventory {
+            get { return _Inventory; }
+            set { _Inventory = value;  }
+        }
+
+        private static bool _HasInitializedRooms = false;
+        public static bool HasInitializedRooms
+        {
+            get { return _HasInitializedRooms; }
+            set { _HasInitializedRooms = value; }
+        }
         public ModInstance(IntPtr ptr) : base(ptr)
         {
         }
@@ -32,15 +44,17 @@ namespace BluePrinceArchipelago
             if (scene.name.Equals("Mount Holly Estate"))
             {
                 _PlanPicker = GameObject.Find("PLAN PICKER").gameObject;
+                _Inventory = GameObject.Find("Inventory").gameObject;
                 LoadArrays();
                 InitializeRooms();
-                Harmony.CreateAndPatchAll(typeof(ItemPatches));
+                Harmony.CreateAndPatchAll(typeof(ItemPatches), "ItemPatches"); //Specify type of patches so they can be applied and removed as required.
             }
         }
 
         private void OnDestroy()
         {
             SceneManager.sceneLoaded -= (Action<Scene, LoadSceneMode>)OnSceneLoaded;
+            Harmony.UnpatchID("ItemPatches");
         }
 
         public static void OnItemSpawn(GameObject obj, string poolName, GameObject transformObj) {
@@ -48,8 +62,11 @@ namespace BluePrinceArchipelago
             Plugin.BepinLogger.LogMessage($"Transform: {transformObj.name} - {transformObj.transform.position.ToString()}");
         }
 
-        public static void OnDraftInitialize(RoomDraftHelper helper) {
-            Plugin.ModRoomManager.Intialize();
+        public static void OnDraftInitialize(RoomDraftHelper helper) 
+        {
+            if (! HasInitializedRooms) {
+                Plugin.ModRoomManager.Intialize();
+            }
         }
 
         private void OnGUI()

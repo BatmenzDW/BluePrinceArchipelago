@@ -33,7 +33,7 @@ namespace BluePrinceArchipelago
         }
     }
     public class RoomPatches {
-        [HarmonyPatch(typeof(RoomDraftHelper), nameof(RoomDraftHelper.InitializeDraft))]
+        [HarmonyPatch(typeof(RoomDraftHelper), nameof(RoomDraftHelper.StartDraft))]
         [HarmonyPostfix]
         static void PostFix(RoomDraftHelper __instance)
         {
