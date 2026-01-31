@@ -43,11 +43,32 @@ namespace BluePrinceArchipelago.ModRooms
             }
 
         }
+        public void UpdateRoomsInHouse()
+        {
+            PlayMakerArrayListProxy rooms = ModInstance.RoomsInHouse?.GetComponent<PlayMakerArrayListProxy>();
+            if (rooms.arrayList.Count > 0)
+            {
+                foreach (GameObject room in rooms.arrayList)
+                {
+                    GetRoomByName(room.name).RoomInHouseCount++;
+                }
+            }
+        }
+
+        public ModRoom GetRoomByName(string name)
+        {
+            foreach (ModRoom room in _Rooms) { 
+                if (room.Name == name) { return room; }
+            }
+            return null;
+        }
+
         public void AddRoom(string name, List<string> pickerArrays, bool isUnlocked, bool isRandomizable = true) {
             AddRoom(new ModRoom(name, GameObject.Find("__SYSTEM/The Room Engines/" + name), pickerArrays, isUnlocked, isRandomizable));
         }
 
         public void UpdateRoomPools() {
+            UpdateRoomsInHouse();
             Plugin.BepinLogger.LogMessage("Updating Room Pools");
             foreach (ModRoom room in _Rooms) {
                 room.UpdatePools();
@@ -227,10 +248,12 @@ namespace BluePrinceArchipelago.ModRooms
         }
 
         public void UpdatePools() {
-            //TODO update house counts for rooms;
             foreach (string arrayName in _PickerArrays) {
-                PlayMakerArrayListProxy array = ModInstance.PickerDict[arrayName];
-                UpdateArray(array);
+                if (arrayName != "")
+                {
+                    PlayMakerArrayListProxy array = ModInstance.PickerDict[arrayName];
+                    UpdateArray(array);
+                }
             }
         }
     }

@@ -24,6 +24,12 @@ namespace BluePrinceArchipelago
             get { return _Inventory; }
             set { _Inventory = value;  }
         }
+        private static GameObject _RoomsInHouse = new();
+
+        public static GameObject RoomsInHouse{
+            get { return _RoomsInHouse; }
+            set { _RoomsInHouse = value; }
+        }
 
         private static bool _HasInitializedRooms = false;
         public static bool HasInitializedRooms
@@ -45,12 +51,14 @@ namespace BluePrinceArchipelago
             if (scene.name.Equals("Mount Holly Estate"))
             {
                 _PlanPicker = GameObject.Find("PLAN PICKER").gameObject;
-                _Inventory = GameObject.Find("Inventory").gameObject;
+                _Inventory = GameObject.Find("__SYSTEM/Inventory").gameObject;
+                _RoomsInHouse = GameObject.Find("__SYSTEM/Room Lists/Rooms in House").gameObject;
                 LoadArrays();
                 InitializeRooms();
                 HasInitializedRooms = true;
                 Harmony.CreateAndPatchAll(typeof(ItemPatches), "ItemPatches"); //Specify type of patches so they can be applied and removed as required.
                 Harmony.CreateAndPatchAll(typeof(EventPatches), "EventPatches");
+                Harmony.CreateAndPatchAll(typeof(RoomPatches), "RoomPatches");
             }
         }
         // Handles the mod object being destroyed somehow.
@@ -59,6 +67,7 @@ namespace BluePrinceArchipelago
             SceneManager.sceneLoaded -= (Action<Scene, LoadSceneMode>)OnSceneLoaded;
             Harmony.UnpatchID("ItemPatches");
             Harmony.UnpatchID("EventPatches");
+            Harmony.UnpatchID("RoomPatches");
         }
         // Fires off when an event is sent from an FSM to an FSM or GameObject. Currently just for testing. It is pretty buggy.
         public static void OnEventSend(FsmEventTarget target, FsmEvent sendEvent, FsmFloat delay, DelayedEvent delayedEvent, GameObject owner, bool isDelayed) {
@@ -157,7 +166,6 @@ namespace BluePrinceArchipelago
         // loads the list of picker arrays the rooms can be added to. May rewrite to use names instead of the id of the child for better forward compatibility.
         private static void LoadArrays() {
             List<int> childIDs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 55, 56, 58, 59, 60, 61];
-
             for (int i = 0; i < childIDs.Count; i++) {
                 PlayMakerArrayListProxy array = _PlanPicker.transform.GetChild(childIDs[i]).gameObject.GetComponent<PlayMakerArrayListProxy>();
                 PickerDict[array.name.Trim()] = array;
@@ -240,7 +248,7 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.AddRoom("PATIO", ["EDGE ADVANCE WESTWING - G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G"], true);
                 Plugin.ModRoomManager.AddRoom("PLANETARIUM", ["CENTER - Tier 2", "FRONT - Tier 1", "CORNER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST", "NORTH PIERCE"], false);
                 Plugin.ModRoomManager.AddRoom("PUMP ROOM", ["FRONTBACK - RARE", "CORNER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST", "NORTH PIERCE", "CENTER - Tier 2"], true, false);
-                Plugin.ModRoomManager.AddRoom("ROOM 8", ["DOWSING NOMBOS"], false, false);
+                Plugin.ModRoomManager.AddRoom("ROOM 8", [], false, false);
                 Plugin.ModRoomManager.AddRoom("ROOT CELLAR", ["STANDALONE ARRAY", "STANDALONE ARRAY FULL"], true);
                 Plugin.ModRoomManager.AddRoom("ROTUNDA", ["CENTER - Tier 2 G"], true);
                 Plugin.ModRoomManager.AddRoom("RUMPUS ROOM", ["FRONTBACK G - RARE", "CENTER - Tier 2 G", "EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "Center Rare G"], true);
