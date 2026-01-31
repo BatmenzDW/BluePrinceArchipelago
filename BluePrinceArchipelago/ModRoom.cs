@@ -1,4 +1,6 @@
-﻿using System;
+﻿using BluePrinceArchipelago.Utils;
+using HutongGames.PlayMaker.Actions;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -69,10 +71,10 @@ namespace BluePrinceArchipelago.ModRooms
             set {
                 if (value)
                 {
-                    GameObject.Find("__SYSTEM/The Room Engines/" + _Name).GetComponent<PlayMakerFSM>().Fsm.Variables.GetFsmBool("POOL REMOVAL").value = false; // make it available for draft if it's unlocked.
+                    GameObject.Find("__SYSTEM/The Room Engines/" + _Name)?.GetFsm(_Name)?.GetBoolVariable("POOL REMOVAL")?.Value = false;
                 }
                 else {
-                    GameObject.Find("__SYSTEM/The Room Engines/" + _Name).GetComponent<PlayMakerFSM>().Fsm.Variables.GetFsmBool("POOL REMOVAL").value = true; //make it unavailabe for draft if it's not unlocked.
+                    GameObject.Find("__SYSTEM/The Room Engines/" + _Name)?.GetFsm(_Name)?.GetBoolVariable("POOL REMOVAL")?.Value = false; //make it unavailabe for draft if it's not unlocked.
                 }
                 _IsUnlocked = value;
             }
@@ -165,11 +167,11 @@ namespace BluePrinceArchipelago.ModRooms
         {
             if (!IsUnlocked)
             {
-                GameObject.Find("__SYSTEM/The Room Engines/" + _Name).GetComponent<PlayMakerFSM>().Fsm.Variables.GetFsmBool("POOL REMOVAL").value = false;
+                GameObject.Find("__SYSTEM/The Room Engines/" + _Name)?.GetFsm(_Name)?.GetBoolVariable("POOL REMOVAL")?.Value = false;
             }
             else
             {
-                GameObject.Find("__SYSTEM/The Room Engines/" + _Name).GetComponent<PlayMakerFSM>().Fsm.Variables.GetFsmBool("POOL REMOVAL").value = true;
+                GameObject.Find("__SYSTEM/The Room Engines/" + _Name)?.GetFsm(_Name)?.GetBoolVariable("POOL REMOVAL")?.Value = false;
             }
         }
         // Helper function that updates 1 array at a time.
@@ -219,7 +221,7 @@ namespace BluePrinceArchipelago.ModRooms
                 else if (count > 0 && !_UseVanilla)
                 {
                     RemoveFromPool(array, count);
-                    //_GameObj.GetComponent<PlayMakerFSM>().Fsm.Variables.GetFsmBool("POOL REMOVAL").value = true; //Set the FSMBool to true so that it removes the room from the pool.
+                    GameObject.Find("__SYSTEM/The Room Engines/" + _Name)?.GetFsm(_Name)?.GetBoolVariable("POOL REMOVAL")?.Value = false; //Set the FSMBool to true so that it removes the room from the pool.
                 }
             }
         }
