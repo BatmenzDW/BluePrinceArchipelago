@@ -2,14 +2,103 @@
 using HutongGames.PlayMaker;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Utils
 {
-    // Not going to lie all of this is borrowed from: https://github.com/hk-modding/HK.Core.FsmUtil/ with barely any modification. Full Credit to the HK modding team.
+    // Not going to lie alot of this is borrowed from: https://github.com/hk-modding/HK.Core.FsmUtil/ with barely any modification. Full Credit to the HK modding team.
     public static partial class FsmUtil
     {
-        
+        /// <summary>
+        ///     Gets a PlayMakerArrayListProxy.
+        /// </summary>
+        /// <param name="go">The GameObject</param>
+        /// <param name="arrayListProxyName">The name of the PlayMakerArrayListProxy</param>
+        /// <returns>The found PlayMakerArrayListProxy, null if it isn't found</returns>
+        public static PlayMakerArrayListProxy GetArrayListProxy(this GameObject go, string arrayListProxyName)
+        {
+            foreach (PlayMakerArrayListProxy arrayListProxy in go.GetComponents<PlayMakerArrayListProxy>()) {
+                if (arrayListProxy.name == arrayListProxyName) {
+                    return arrayListProxy;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        ///     Gets the Count of a PlayMakerArrayListProxy.
+        /// </summary>
+        /// <param name="arrayListProxy">The PlayMakerArrayListProxy</param>
+        /// <returns>Returns the Count of the PlayMakerArrayListProxy, 0 if it isn't found</returns>
+        public static int GetCount(this PlayMakerArrayListProxy arrayListProxy) {
+            Il2CppSystem.Collections.ArrayList arrayList = arrayListProxy.arrayList;
+            if (arrayList != null) {
+                return arrayList.Count;
+            }
+            return 0;
+        }
+        /// <summary>
+        ///     Gets the Count of a PlayMakerArrayListProxy.
+        /// </summary>
+        /// <param name="arrayListProxy">The PlayMakerArrayListProxy</param>
+        /// <param name="value">The Object to add to the Array</param>
+        public static void Add(this PlayMakerArrayListProxy arrayListProxy, Il2CppSystem.Object value) {
+            Il2CppSystem.Collections.ArrayList arrayList = arrayListProxy.arrayList;
+            if (arrayList != null)
+            {
+                arrayList.Add(value);
+            }
+        }
+        /// <summary>
+        ///     Checks if the PlayMakerArrayListProxy contains a value
+        /// </summary>
+        /// <param name="arrayListProxy">The PlayMakerArrayListProxy</param>
+        /// <param name="value">The Object to add to the Array</param>
+        /// <returns>Returns if the given item is in an ArrayListProxy, false if the array can't be retrieved.</returns>
+        public static bool Contains(this PlayMakerArrayListProxy arrayListProxy, Il2CppSystem.Object value) {
+            Il2CppSystem.Collections.ArrayList arrayList = arrayListProxy.arrayList;
+            if (arrayList != null)
+            {
+                return arrayList.Contains(value);
+            }
+            return false;
+        }
+
+        /// <summary>
+        ///     Removes a value at an index from a PlayMakerArrayListProxy 
+        /// </summary>
+        /// <param name="arrayListProxy">The PlayMakerArrayListProxy</param>
+        /// <param name="index">The index of the item to remove from the array.</param>
+        public static void RemoveAt(this PlayMakerArrayListProxy arrayListProxy, int index)
+        {
+            Il2CppSystem.Collections.ArrayList arrayList = arrayListProxy.arrayList;
+            if (arrayList != null && arrayList.Count > index && index > -1)
+            {
+                arrayList.RemoveAt(index);
+            }
+        }
+
+        /// <summary>
+        ///     Gets a value at an index from a PlayMakerArrayListProxy
+        /// </summary>
+        /// <param name="arrayListProxy">The PlayMakerArrayListProxy</param>
+        /// <param name="index">The index to retrieve</param>
+        /// <returns>Returns an item from the index of the ArrayListProxy, returns null if the index is out of range.</returns>
+        public static Il2CppSystem.Object GetItemAt(this PlayMakerArrayListProxy arrayListProxy, int index) {
+            Il2CppSystem.Collections.ArrayList arrayList = arrayListProxy.arrayList;
+            if (arrayList != null && arrayList.Count > index && index > -1) { 
+                return arrayList[index];
+            }
+            return null;
+        }
+
+        /// <summary>
+        ///     Gets an FSM from a Unity GameObject
+        /// </summary>
+        /// <param name="go">The GameObject</param>
+        /// <param name="fsmName">The name of the FSM to get</param>
+        /// <returns>Returns the fsm with the given name, returns null if it can't be found.</returns>
         public static PlayMakerFSM GetFsm(this GameObject go, string fsmName)
         {
             foreach (PlayMakerFSM fsm in go.GetComponents<PlayMakerFSM>())
@@ -21,6 +110,12 @@ namespace BluePrinceArchipelago.Utils
             }
             return null;
         }
+        /// <summary>
+        ///     Gets a preprocessed FSM from a Unity GameObject
+        /// </summary>
+        /// <param name="go">The GameObject</param>
+        /// <param name="fsmName">The name of the FSM to get</param>
+        /// <returns>Returns the preprocessed fsm with the given name, returns null if it can't be found.</returns>
         public static PlayMakerFSM GetFsmPreprocessed(this GameObject go, string fsmName)
         {
             foreach (PlayMakerFSM fsm in go.GetComponents<PlayMakerFSM>())

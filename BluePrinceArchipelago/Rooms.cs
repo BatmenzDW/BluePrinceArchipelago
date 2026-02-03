@@ -165,7 +165,7 @@ namespace BluePrinceArchipelago.Core
         private void RemoveFromPool(PlayMakerArrayListProxy array, int count) {
             for (int i = 0; i < count; i++)
             {
-                if (array.arrayList.Contains(_GameObj))
+                if (array.Contains(_GameObj))
                 {
                     array.Remove(_GameObj, "GameObject");
                     Plugin.BepinLogger.LogMessage($"Removed {_Name} from {array.name}");
@@ -212,7 +212,7 @@ namespace BluePrinceArchipelago.Core
                 int count = 0;
                 List<int> indexes = [];
                 // Find all copies of the room currently in the list
-                for (int i = 0; i < array.arrayList.Count; i++)
+                for (int i = 0; i < array.GetCount(); i++)
                 {
                     GameObject room = array.arrayList[i].TryCast<GameObject>();
                     if (room != null)

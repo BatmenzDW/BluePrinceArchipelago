@@ -1,11 +1,7 @@
-﻿using BluePrinceArchipelago.Core;
-using BluePrinceArchipelago.Utils;
-using CirrusPlay.PortalLibrary;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace BluePrinceArchipelago
+namespace BluePrinceArchipelago.Core
 {
     public class ModItemManager
     {
@@ -51,11 +47,12 @@ namespace BluePrinceArchipelago
 
             }
         }
-        public void OnItemCheckRecieved() { 
+        public void OnItemCheckRecieved(string itemCheck) { 
+            // Handle the code for recieving an item check that results in receiving an item.
         }
     }
 
-    public class ModItem (string name, GameObject gameObject, bool isUnlocked){
+    public class ModItem( string name, GameObject gameObject, bool isUnlocked, bool isUnique, bool isJunk = false, string junkType = "coins"){
         private string _Name = name;
         public string Name { get { return _Name; } set { _Name = value; } }
 
@@ -81,6 +78,41 @@ namespace BluePrinceArchipelago
                     _HasBeenFound = value;
                 }
                 // No changes to value once the room has been drafted once, or if someone is not trying to set this to true for some stupid reason.
+            }
+        }
+
+        private bool _IsUnique = isUnique;
+        public bool IsUnique { 
+            get { return _IsUnique; }
+            set { _IsUnique = value; }
+        }
+        private bool _IsJunk = isJunk;
+
+        public bool IsJunk { 
+            get { return _IsJunk; }
+            set { _IsJunk = value; }
+        }
+        private string _JunkType = junkType;
+        public string JunkType { 
+            get { return _JunkType; }
+            set { _JunkType = value; }
+        }
+
+        public void AddItemToInventory() { 
+            //TODO add code handling adding the item.
+        }
+        public void AddCoins() {
+            if (_IsJunk && JunkType == "coins") {
+            }
+        }
+        public void AddSteps() {
+            if (_IsJunk && JunkType == "steps")
+            {
+            }
+        }
+        public void AddGems() {
+            if (_IsJunk && JunkType == "gems")
+            {
             }
         }
     }
