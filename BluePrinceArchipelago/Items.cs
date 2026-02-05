@@ -37,7 +37,7 @@ namespace BluePrinceArchipelago.Core
                 Plugin.BepinLogger.LogMessage($"Item {item.Name} already added, can't add multiple copies.");
             }
         }
-        public void StartOfDay() {
+        public void StartOfDay(int dayNum) {
             foreach (ModItem item in _Items) {
                 if (!item.HasBeenFound)
                 {
@@ -52,7 +52,7 @@ namespace BluePrinceArchipelago.Core
         }
     }
 
-    public class ModItem( string name, GameObject gameObject, bool isUnlocked, bool isUnique, bool isJunk = false, string junkType = "coins"){
+    public class ModItem( string name, GameObject gameObject, bool isUnlocked, bool isUnique, bool isJunk = false, string junkType = "coins", bool isPermanent = false){
         private string _Name = name;
         public string Name { get { return _Name; } set { _Name = value; } }
 
@@ -96,6 +96,12 @@ namespace BluePrinceArchipelago.Core
         public string JunkType { 
             get { return _JunkType; }
             set { _JunkType = value; }
+        }
+
+        private bool _IsPermanent = isPermanent;
+        public bool IsPermanent { 
+            get { return _IsPermanent; }
+            set { _IsPermanent = value; }
         }
 
         public void AddItemToInventory() { 

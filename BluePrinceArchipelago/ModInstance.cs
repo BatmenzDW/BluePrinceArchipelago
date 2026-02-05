@@ -141,7 +141,7 @@ namespace BluePrinceArchipelago
         }
         // handles Day start code. Currently unsure if this is good timing for things.
         public static void OnDayStart(int dayNum) {
-            Plugin.ModItemManager.StartOfDay();
+            Plugin.ModItemManager.StartOfDay(dayNum);
         }
 
         // Handles initializing rooms.

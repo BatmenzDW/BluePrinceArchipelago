@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace BluePrinceArchipelago
@@ -56,9 +57,9 @@ namespace BluePrinceArchipelago
             }
             ModInstance.OnEventSend(target, sendEvent, delay, delayedEvent, __instance.owner, isDelayed);
         }
-        [HarmonyPatch(typeof(StatsLogger), "BeginDay")]
+        [HarmonyPatch(typeof(StatsLogger), "BeginDay", [typeof(int)])]
         [HarmonyPrefix]
-        static void Prefix(int dayNum) { 
+        static void PreFix(int dayNum) { 
             ModInstance.OnDayStart(dayNum);
         }
     }

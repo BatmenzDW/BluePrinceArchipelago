@@ -33,6 +33,7 @@ namespace BluePrinceArchipelago {
             BepinLogger = Log;
             ArchipelagoClient = new ArchipelagoClient();
             ModRoomManager = new ModRoomManager();
+            ModItemManager = new ModItemManager();
             ArchipelagoConsole.Awake();
             _instance = this;
             Log.LogInfo($"Plugin {PluginGUID} is loaded!");
