@@ -93,7 +93,9 @@ Please make sure you have Bepinex 6 installed as we need the IL2CPP support.
    git remote set-url origin github_username/repo_name
    git remote -v # confirm the changes
    ```
-4. If nuget didn't install the required dependencies, you will need to run the following to install these packages by running these commands in the **project** folder.
+4. If nuget fails to install the required nuget packages it's probably because you need to add a nuget feed for bepinex packages. Try running this command:
+```dotnet nuget add source https://nuget.bepinex.dev/v3/index.json --name Bepinex```
+5. If nuget didn't install the required dependencies and the previous step didn't fully fix the issue, you will need to run the following to install these packages by running these commands in the **project** folder.
     ```
     dotnet add package BepInEx.Unity.IL2CPP --version 6.0.0-be.753
     dotnet add package Archipelago.MultiClient.Net -- version 6.7.0
