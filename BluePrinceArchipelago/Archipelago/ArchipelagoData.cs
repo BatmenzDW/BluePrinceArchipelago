@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Archipelago.MultiClient.Net.Models;
-using Newtonsoft.Json;
 
 namespace BluePrinceArchipelago.Archipelago;
 
@@ -11,7 +10,7 @@ public class ArchipelagoData
     public string Password;
     public int Index;
 
-    public List<long> CheckedLocations;
+    public List<long> CheckedLocations = new();
     public Dictionary<long, string> LocationDict; //Stores all locationids and what name that represents.
     public Dictionary<long, string> ItemDict; //Stores all items that are in this game, and their name.
     public Dictionary<long, ScoutedItemInfo> LocationItemMap; //Maps the location id to it's associated item reward.
@@ -31,6 +30,7 @@ public class ArchipelagoData
         Uri = "localhost";
         SlotName = "Player1";
         CheckedLocations = new();
+
     }
 
     public ArchipelagoData(string uri, string slotName, string password)
@@ -50,14 +50,5 @@ public class ArchipelagoData
     {
         slotData = roomSlotData;
         seed = roomSeed;
-    }
-
-    /// <summary>
-    /// returns the object as a json string to be written to a file which you can then load
-    /// </summary>
-    /// <returns></returns>
-    public override string ToString()
-    {
-        return JsonConvert.SerializeObject(this);
     }
 }

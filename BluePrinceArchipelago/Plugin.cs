@@ -6,7 +6,6 @@ using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Utils;
 using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
-using BluePrinceArchipelago.Events;
 
 namespace BluePrinceArchipelago {
 
@@ -44,6 +43,8 @@ namespace BluePrinceArchipelago {
             ModObject.hideFlags = HideFlags.HideAndDontSave; //The mod breaks if this is removed. Unsure if different flags could be used to make this more visible.
             ModObject.AddComponent<ModInstance>();
             ArchipelagoConsole.LogMessage($"{ModDisplayInfo} loaded!");
+            State.Initialize();
+            ArchipelagoClient.LoadStateData();
         }
     }
 

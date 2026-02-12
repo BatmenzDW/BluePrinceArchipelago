@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using BluePrinceArchipelago.Utils;
+using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using System.Runtime.InteropServices;
@@ -77,6 +78,21 @@ namespace BluePrinceArchipelago
         static void Postfix()
         {
             ModInstance.OnDayEnd();
+        }
+        [HarmonyPatch(typeof(GameObject), "SetActive")]
+        [HarmonyPostfix]
+        static void Postfix(GameObject __instance, bool value)
+        {
+            string name = __instance.name;
+            if (name == null) {
+                if (name.Contains("LOADING") && value) { 
+                    GameObject currSave = GameObject.Find(name);
+                    if (currSave != null) {
+                        int saveSlot = currSave.GetComponent<PlayMakerFSM>()?.GetIntVariable("current save")?.Value ?? 5;
+                        ModInstance.SaveSlot = saveSlot; //Set the saveSlot to the correct slot.
+                    }
+                }
+            }
         }
     }
 }

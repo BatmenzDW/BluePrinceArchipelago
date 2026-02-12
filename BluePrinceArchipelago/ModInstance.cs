@@ -9,51 +9,55 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Archipelago.MultiClient.Net.Models;
 
 namespace BluePrinceArchipelago
 {
     internal class ModInstance : MonoBehaviour
     {
         public ModEventHandler ModEventHandler = new ModEventHandler(); //Initialize event handler
+        public ArchipelagoQueueManager QueueManager = new ArchipelagoQueueManager();
         public static Dictionary<string, PlayMakerArrayListProxy> PickerDict = [];
         private static GameObject _PlanPicker = new();
         public static ModInstance Instance;
         private static bool _SceneLoaded = false;
-        public static Queue<ItemInfo> ReceivedItemQueue = new();
+        private static bool _StateLoaded = false;
+        public static PlayMakerFSM StepManager = new();
+        public static PlayMakerFSM GoldManager = new();
+        public static PlayMakerFSM DiceManager = new();
+        public static PlayMakerFSM KeyManager = new();
+        public static PlayMakerFSM StarManager = new();
+        public static int SaveSlot = 5;
+
+        public static bool StateLoaded { 
+            get { return _StateLoaded; }
+        }
 
         public static bool SceneLoaded { 
             get { return _SceneLoaded; } 
-            set { _SceneLoaded = value; }
         }
 
         private static bool _IsInRun;
         public static bool IsInRun {
             get { return _IsInRun; }
-            set { _IsInRun = value; }
         }
 
         public static GameObject PlanPicker {
             get { return _PlanPicker; }
-            set { _PlanPicker = value; }
         }
         private static GameObject _Inventory = new();
         public static GameObject Inventory {
             get { return _Inventory; }
-            set { _Inventory = value;  }
         }
         private static GameObject _RoomsInHouse = new();
 
         public static GameObject RoomsInHouse{
             get { return _RoomsInHouse; }
-            set { _RoomsInHouse = value; }
         }
 
         private static bool _HasInitializedRooms = false;
         public static bool HasInitializedRooms
         {
             get { return _HasInitializedRooms; }
-            set { _HasInitializedRooms = value; }
         }
         public ModInstance(IntPtr ptr) : base(ptr)
         {
@@ -67,19 +71,30 @@ namespace BluePrinceArchipelago
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             Plugin.BepinLogger.LogMessage($"Scene: {scene.name} loaded in {mode}");
+            if (scene.name.Equals("Main Menu"))
+            {
+                Harmony.CreateAndPatchAll(typeof(EventPatches), "EventPatches"); //Apply event patches on the main menu to get some data that is not accessible later.  
+            }
             if (scene.name.Equals("Mount Holly Estate"))
             {
                 _SceneLoaded = true;
                 _PlanPicker = GameObject.Find("PLAN PICKER").gameObject;
                 _Inventory = GameObject.Find("__SYSTEM/Inventory").gameObject;
                 _RoomsInHouse = GameObject.Find("__SYSTEM/Room Lists/Rooms in House").gameObject;
+                StepManager = GameObject.Find("__SYSTEM/HUD/Steps")?.GetFsm("Steps");
+                GoldManager = GameObject.Find("__SYSTEM/HUD/Gold")?.GetFsm("Gold");
+                DiceManager = GameObject.Find("__SYSTEM/HUD/Bones")?.GetFsm("Bones");
+                KeyManager = GameObject.Find("__SYSTEM/HUD/Keys")?.GetFsm("Keys");
+                StarManager = GameObject.Find("__SYSTEM/HUD/Stars")?.GetFsm("Stars");
                 LoadArrays();
                 InitializeRooms();
-                HasInitializedRooms = true;
+                _HasInitializedRooms = true;
                 ModEventHandler.LocationFound += OnLocalLocationSent;
                 Harmony.CreateAndPatchAll(typeof(ItemPatches), "ItemPatches"); //Specify type of patches so they can be applied and removed as required.
-                Harmony.CreateAndPatchAll(typeof(EventPatches), "EventPatches");
                 Harmony.CreateAndPatchAll(typeof(RoomPatches), "RoomPatches");
+                if (!verifySaveSlot()) {
+                    ArchipelagoConsole.LogMessage("Save Slot doesn't match expected saveslot");
+                }
             }
             else {
                 // hackish, but based on my knowledge only one scene is loaded at a time.
@@ -152,24 +167,11 @@ namespace BluePrinceArchipelago
                 Plugin.BepinLogger.LogMessage($"Transform: {transformObj.name} - {transformObj.transform.position.ToString()}");
             }
         }
-        public static void ReleaseAllItemsInQueue() {
-            if (ReceivedItemQueue.Count > 0)
-            {
-                for (int i = 0; i < ReceivedItemQueue.Count; i++)
-                {
-                    ItemInfo item = ReceivedItemQueue.Dequeue();
-                    if (!Plugin.ArchipelagoClient.RecieveItem(item))
-                    {
-                        ModInstance.ReceivedItemQueue.Enqueue(item);
-                    }
-                }
-            }
-        }
         // handles Day start code. Currently unsure if this is good timing for things.
         public static void OnDayStart(int dayNum) {
             _IsInRun = true;
             // Attempt to recieve items that were recieved before the game was loaded.
-            ReleaseAllItemsInQueue();
+            Instance.QueueManager.ReleaseAllQueuedItems();
             // Handle Start of day code for Permanent items (and maybe curses later).
             Plugin.ModItemManager.StartOfDay(dayNum);
         }
@@ -250,6 +252,18 @@ namespace BluePrinceArchipelago
             }
             // this is a good place to create and add a bunch of debug buttons
         }
+        public static void OnLocalLocationSent(System.Object sender, LocationEventArgs e)
+        {
+            Plugin.BepinLogger.LogMessage($"Location sent: {e.LocationName} of {e.LocationType}");
+            if (ArchipelagoClient.Authenticated)
+            {
+                Plugin.ArchipelagoClient.CheckLocation(e.LocationName);
+            }
+        }
+        public static void OnGoalComplete() {
+            Plugin.ArchipelagoClient.GoalCompleted();
+        }
+
         // loads the list of picker arrays the rooms can be added to. May rewrite to use names instead of the id of the child for better forward compatibility.
         private static void LoadArrays() {
             List<int> childIDs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 55, 56, 58, 59, 60, 61];
@@ -259,11 +273,28 @@ namespace BluePrinceArchipelago
             }
             
         }
-        public static void OnLocalLocationSent(System.Object sender, LocationEventArgs e) {
-            Plugin.BepinLogger.LogMessage($"Location sent: {e.LocationName} of {e.LocationType}");
+        public static bool verifySaveSlot() {
+            //Check if the client was reconnected, and if the save slot is a valid slot.
+            if (ArchipelagoClient.Authenticated && ArchipelagoClient.Reconnected && SaveSlot > 0 && SaveSlot < 5)
+            {
+                if (State.ContainsKey("SaveSlot")) {
+                    int stateSlot = State.GetData<int>("SaveSlot");
+                    if (stateSlot == 5)
+                    {
+                        SaveSlot.Store<int>("SaveSlot");
+                        return true;
+                    }
+                    else if (stateSlot == SaveSlot) {
+                        return true;
+                    }
+                    Plugin.BepinLogger.LogMessage("Save Slot doesn't match expected saveslot");
+                    return false;
+                }
+            }
+            // defaulting to true for now to avoid issues while testing.
+            return true;
         }
-
-        //TODO add Archipelago seed logic to this function. Also should be used to handle recconnects.
+        
         private static void InitializeRooms()
         {
             Plugin.BepinLogger.LogMessage("Initializing Rooms");

@@ -1,10 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Models;
-using Cpp2IL.Core.ISIL;
-using HutongGames.PlayMaker.Actions;
-using Iced.Intel;
-using System;
+using BluePrinceArchipelago.Utils;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Core
@@ -338,6 +334,36 @@ namespace BluePrinceArchipelago.Core
         public override void AddItemToInventory() {
             //TODO add code handling adding the item.
         }
+
+        private void AdjustSteps(int count = 1) {
+            // change the adjustment amount.
+            ModInstance.StepManager.FindIntVariable("Adjustment Amount").Value += count;
+            // Send the "Update" event and the step counter should update.
+            ModInstance.StepManager.SendEvent("Update");
+        }
+        private void AdjustGold(int count = 1) {
+            ModInstance.GoldManager.FindIntVariable("Adjustment Amount").Value += count;
+            ModInstance.GoldManager.SendEvent("Update"); // Might need to be "Add Coins" instead.
+        }
+        private void AdjustDice(int count = 1) {
+            ModInstance.DiceManager.FindIntVariable("Adjustment Amount").Value += count;
+            ModInstance.DiceManager.SendEvent("Update");
+        }
+        private void AdjustKeys(int count = 1) {
+            ModInstance.KeyManager.FindIntVariable("Adjustment Amount").Value += count;
+            ModInstance.KeyManager.SendEvent("Update");
+        }
+        private void AdjustStars(int count = 1) {
+            int totalStars = ModInstance.StarManager.FindIntVariable("TotalStars").Value;
+            if (totalStars + count > 0)
+            {
+                ModInstance.StarManager.FindIntVariable("TotalStars").Value += count;
+            }
+            else {
+                ModInstance.StarManager.FindIntVariable("TotalStars").Value = 0;
+            }
+        }
+
     }
 
     public class PermanentItem(string name, GameObject gameObject, bool isUnlocked, string itemType) : ModItem(name, gameObject, isUnlocked)
@@ -357,6 +383,29 @@ namespace BluePrinceArchipelago.Core
         }
         public override void AddItemToInventory() {
             //TODO add code handling adding the item.
+        }
+        private void AdjustSteps(int count = 1)
+        {
+            // change the adjustment amount.
+            ModInstance.StepManager.FindIntVariable("Adjustment Amount").Value += count;
+            // Send the "Update" event and the step counter should update.
+            ModInstance.StepManager.SendEvent("Update");
+        }
+        //Todo replace with allowance.
+        private void AdjustGold(int count = 1)
+        {
+            ModInstance.GoldManager.FindIntVariable("Adjustment Amount").Value += count;
+            ModInstance.GoldManager.SendEvent("Update"); // Might need to be "Add Coins" instead.
+        }
+        private void AdjustDice(int count = 1)
+        {
+            ModInstance.DiceManager.FindIntVariable("Adjustment Amount").Value += count;
+            ModInstance.DiceManager.SendEvent("Update");
+        }
+        private void AdjustKeys(int count = 1)
+        {
+            ModInstance.KeyManager.FindIntVariable("Adjustment Amount").Value += count;
+            ModInstance.KeyManager.SendEvent("Update");
         }
     }
 }
