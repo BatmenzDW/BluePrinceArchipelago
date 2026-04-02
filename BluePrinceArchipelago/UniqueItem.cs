@@ -157,8 +157,9 @@ namespace BluePrinceArchipelago.Core
                     //If the custom model exists
                     if (prefab != null)
                     {
-                        //Insantiate the AP item in the you found model's location.
+                        // Insantiate the AP item in the you found model's location.
                         GameObject.Instantiate(prefab, youFoundModel.transform.position, youFoundModel.transform.rotation, youFoundModel);
+                        // Unsure if this will cause an issue, but the original model is not destroyed and this one isn't destroyed.
                     }
                 }
                 else

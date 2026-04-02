@@ -734,7 +734,10 @@ namespace BluePrinceArchipelago.Core
             Plugin.ModItemManager.AddItem(new UniqueItem("PAPER CROWN", Plugin.ModItemManager.GetPreSpawnItem("PAPER CROWN"), false));
             Plugin.ModItemManager.AddItem(new UniqueItem("GEAR WRENCH", Plugin.ModItemManager.GetPreSpawnItem("GEAR WRENCH"), false));
             Plugin.ModItemManager.AddItem(new UniqueItem("COMPASS", Plugin.ModItemManager.GetPreSpawnItem("COMPASS"), false));
-
+            Plugin.ModItemManager.AddItem(new UniqueItem("SAFTEY DEPOSIT KEY 149", Plugin.ModItemManager.GetPreSpawnItem("SAFTEY DEPOSIT KEY 149"), false));
+            Plugin.ModItemManager.AddItem(new UniqueItem("SAFTEY DEPOSIT KEY 233", Plugin.ModItemManager.GetPreSpawnItem("SAFTEY DEPOSIT KEY 233"), false));
+            Plugin.ModItemManager.AddItem(new UniqueItem("SAFTEY DEPOSIT KEY 304", Plugin.ModItemManager.GetPreSpawnItem("SAFTEY DEPOSIT KEY 304"), false));
+            Plugin.ModItemManager.AddItem(new UniqueItem("SAFTEY DEPOSIT KEY 370", Plugin.ModItemManager.GetPreSpawnItem("SAFTEY DEPOSIT KEY 370"), false));
             //TODO once the replacement item code is working.
             //Generic Items
 

@@ -108,34 +108,41 @@ public class ArchipelagoClient
     /// </summary>
     private void TryConnect()
     {
-
+        // Attempt to Connect to the server. 
         LoginResult loginResult = session.TryConnectAndLogin(
                     Game,
                     ServerData.SlotName,
-                    ItemsHandlingFlags.AllItems, // TODO make sure to change this line
+                    ItemsHandlingFlags.AllItems,
                     new Version(APVersion),
                     password: ServerData.Password,
-                    requestSlotData: false // ServerData.NeedSlotData
+                    requestSlotData: true
          );
+        // If failed to login display why.
         if (loginResult is LoginFailure failure) {
             string errors = string.Join(", ", failure.Errors);
             Logging.LogError($"Unable to connect to Archipelago because: {errors}");
             HandleConnectResult(new LoginFailure(errors));
             _AttemptingConnection = false;
         }
+        // Else handle login.
         else if (loginResult is LoginSuccessful success)
         {
+            // Get the slot data
             SlotData slotData = session.DataStorage.GetSlotData<SlotData>();
-            if (ServerData.Options.Equals(slotData) && (ServerData.Seed =="" || ServerData.Seed == session.RoomState.Seed)) {
-                if (!slotData.Equals(new SlotData())) {
+
+            // Check if the Seed and options match the expected Seed and Options.
+            if (ServerData.Options.Equals(slotData) && (ServerData.Seed == "" || ServerData.Seed == session.RoomState.Seed)) {
+                //If the Seed data was already stored this is a recconnect.
+                if (ServerData.Seed == session.RoomState.Seed) {
                     Reconnected = true;
                 }
                 HandleConnectResult(loginResult);
                 _AttemptingConnection = false;
             }
+            // Player Connected to wrong slot (Probably)
             else
             {
-                //TODO once proper Archipelago login has been setup, cause this to assume player attempted to connect to the wrong slot.
+                //TODO once proper Archipelago login has been setup correct to actually disconnect instead. For now this can't be validated and so this will be handled this way for testing purposes.
                 Logging.LogWarning($"SlotData doesn't match expected slot, assuming a new game was started without previous goal finishing. If you have Connected to the wrong slot, please disconnect now.");
                 State.Reset();
                 State.Initialize();
@@ -156,35 +163,44 @@ public class ArchipelagoClient
     /// <param name="result"></param>
     private void HandleConnectResult(LoginResult result)
     {
-        string outText;
+        // Handle Successful connection to AP Server.
         if (result.Successful)
         {
             var success = (LoginSuccessful)result;
             Authenticated = true;
+            // Initialize DeathLinkHandler.
             DeathLinkHandler = new(session.CreateDeathLinkService(), ServerData.SlotName);
             
-            
-            // Checks to see if the state matches or the client recconnecting based on locations already having been checked.
+            // Handles the reconnection to the Server.
             if (Reconnected)
             {
                 Reconnect();
                 ArchipelagoConsole.LogMessage($"Successfully Recconnected to {ServerData.Uri} as {ServerData.SlotName}!");
             }
+            // Handles a new connection to the Server.
             else
             {
+                // Gets the Initial data from the server.
                 ServerData.Options = session.DataStorage.GetSlotData<SlotData>();
                 ServerData.Seed = session.RoomState.Seed;
                 session.Locations.CompleteLocationChecksAsync(ServerData.CheckedLocations.ToArray());
+                // Creates the Locally Stored data for the locations. 
                 CreateLocationDicts(session.Locations.AllLocations.ToArray());
                 ArchipelagoConsole.LogMessage($"Successfully connected to {ServerData.Uri} as {ServerData.SlotName}!");
             }
+            // Receives any Queued Items
             DequeueItems(Reconnected);
+            // Debug: Displaying the data from the server.
             DisplayServerData();
+            // Update the locally stored data to match the current state.
             State.UpdateAll();
+            // Run any additional code that should be run on a successful connection.
             ModInstance.OnConnectToArchipelago();
         }
+        // Output an Error Message and Disconnect.
         else
         {
+            string outText;
             var failure = (LoginFailure)result;
             outText = $"Failed to connect to {ServerData.Uri} as {ServerData.SlotName}.";
             outText += "\n" + failure.Errors.Aggregate(outText, (current, error) => current + $"\n    {error}");
@@ -196,48 +212,60 @@ public class ArchipelagoClient
         }
         _AttemptingConnection = false;
     }
+
+    // Attempts to release any Queued items.
     private void DequeueItems(bool isReconnect = false) {
         // Handle Queue as normal if reconnect.
-        if (isReconnect) {
+        if (isReconnect)
+        {
             foreach (ItemInfo item in session.Items.AllItemsReceived)
             {
-                session.Items.DequeueItem();
-                if (!ModInstance.Instance.QueueManager.RecieveItem(item))
-                {
-                    ModInstance.Instance.QueueManager.AddItemToQueue(item);
-                }
-            }
-        }
-        foreach (ItemInfo item in session.Items.AllItemsReceived) {
-
-            if (item.LocationName == "Server")
-            {
-                Logging.Log($"Attempting to receive Item: {item.ItemName}");
-                // Checks if the item recieved is an item.
-                if (ModRoomManager.VanillaRooms.Contains(item.ItemName.ToUpper()))
-                {
-                    if (!ModInstance.HasInitializedRooms)
+                // Check if the item has already been received.
+                if (!ServerData.ReceivedItems.Contains(item.ItemName)) {
+                    if (!ModInstance.Instance.QueueManager.RecieveItem(item))
                     {
                         ModInstance.Instance.QueueManager.AddItemToQueue(item);
+                    }
+                }
+                session.Items.DequeueItem();
+            }
+        }
+        // Handle Initial connection.
+        else
+        {
+            foreach (ItemInfo item in session.Items.AllItemsReceived)
+            {
+                // If the item was a starting item
+                if (item.LocationName == "Server")
+                {
+                    Logging.Log($"Attempting to receive Item: {item.ItemName}");
+                    // Checks if the item recieved is an item.
+                    if (ModRoomManager.VanillaRooms.Contains(item.ItemName.ToUpper()))
+                    {
+                        if (!ModInstance.HasInitializedRooms)
+                        {
+                            ModInstance.Instance.QueueManager.AddItemToQueue(item);
+                            session.Items.DequeueItem();
+                        }
+                        ModRoom room = Plugin.ModRoomManager.GetRoomByName(item.ItemName.ToUpper());
+                        room.IsUnlocked = true;
+                        if (room.RoomPoolCount == 0) room.RoomPoolCount++;
                         session.Items.DequeueItem();
                     }
-                    ModRoom room = Plugin.ModRoomManager.GetRoomByName(item.ItemName.ToUpper());
-                    room.IsUnlocked = true;
-                    if (room.RoomPoolCount == 0) room.RoomPoolCount++;
-                    session.Items.DequeueItem();
+                    else
+                    {
+                        //TODO add item unlock code (Should not grant the unique items).
+                        session.Items.DequeueItem();
+                    }
                 }
                 else
                 {
-                    //TODO add item unlock code (Should not grant the unique items).
+                    //Handle non-server items normally.
                     session.Items.DequeueItem();
-                }
-            }
-            else {
-                //Handle non-server items normally.
-                session.Items.DequeueItem();
-                if (!ModInstance.Instance.QueueManager.RecieveItem(item))
-                {
-                    ModInstance.Instance.QueueManager.AddItemToQueue(item);
+                    if (!ModInstance.Instance.QueueManager.RecieveItem(item))
+                    {
+                        ModInstance.Instance.QueueManager.AddItemToQueue(item);
+                    }
                 }
             }
         }
@@ -249,7 +277,6 @@ public class ArchipelagoClient
         RebuildCheckedLocations();
         CreateLocationDicts(session.Locations.AllLocations.ToArray());
     }
-    //This might be bugged. Need to confirm. Might currently result i
     private void RebuildCheckedLocations()
     {
         // Make copies of the lists for editing purposes.
@@ -258,9 +285,11 @@ public class ArchipelagoClient
         bool found = false;
         int i = 0;
 
+        // Check each server location.
         foreach (long location in serverLocations) {
             found = false;
             i = 0;
+            // See if the location has been found locally
             while (i < localLocations.Count && !found) {
                 if (localLocations[i] == location) { 
                     found = true;
@@ -268,20 +297,25 @@ public class ArchipelagoClient
                 i++;
             }
             if (!found) {
-                //If the server has locations checked that the local game didn't send while disconnected, add them to the checked locationlist. No need to add to state data until 
+                // If the server has locations checked that the local game didn't send while disconnected, add them to the checked locationlist.
                 ServerData.CheckedLocations.Add(location);
             }
-            if (found) { 
-                localLocations.RemoveAt(i); //Remove the value from the list so we can send the checks that occurred while disconnected.
+            if (found) {
+                // Remove the location from the local list.
+                localLocations.RemoveAt(i); 
             }
 
         }
+        // Any remaining local locations will not have been sent to the server, so send them to the server.
         if (localLocations.Count > 0) {
+
+            // If the scene has been loaded and the client is connected, send the locations
             if (ModInstance.SceneLoaded && ModInstance.HasInitializedRooms && ArchipelagoClient.Authenticated)
             {
                 // Update the session with any local locations that weren't yet sent due to a disconnection.
                 session.Locations.CompleteLocationChecksAsync(localLocations.ToArray());
             }
+            // Otherwise add it to the Queue to be sent later.
             else {
                 ModInstance.Instance.QueueManager.AddLocationsToQueue(localLocations);
             }
@@ -411,9 +445,6 @@ public class ArchipelagoQueueManager {
     public void AddItemToQueue(ItemInfo item) { 
         _ReceivedItemQueue.Enqueue(item);
     }
-    public void RemoveItemFromQueue() { 
-       ItemInfo item = _ReceivedItemQueue.Dequeue();
-    }
     public void AddLocationsToQueue(List<long> locations) {
         List<string> locationNames = new List<string>();
         foreach (int location in locations) {
@@ -421,13 +452,6 @@ public class ArchipelagoQueueManager {
             locationNames.Add(locationName);
         }
         _LocationQueue.Enqueue(locationNames.ToArray());
-    }
-
-    public void AddLocationToQueue(string location) { 
-        _LocationQueue.Enqueue(location);
-    }
-    public void RemoveLocationFromQueue() { 
-        string location = _LocationQueue.Dequeue();
     }
     public void ReleaseAllQueuedLocations() {
         if (_LocationQueue.Count > 0) {

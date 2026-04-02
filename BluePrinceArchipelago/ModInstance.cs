@@ -19,8 +19,11 @@ namespace BluePrinceArchipelago
 {
     internal class ModInstance : MonoBehaviour
     {
+        // A reference to the instance of this MonoBehavior.
+        public static ModInstance Instance;
+
         // Handlers and Managers.
-        public ModEventHandler ModEventHandler = new ModEventHandler(); //Initialize event handler
+        public ModEventHandler ModEventHandler = new ModEventHandler();
         public ArchipelagoQueueManager QueueManager = new ArchipelagoQueueManager();
         public static TrunkManager TrunkManager = new();
 
@@ -57,8 +60,7 @@ namespace BluePrinceArchipelago
 
         // Other
         public static Dictionary<string, PlayMakerArrayListProxy> PickerDict = [];
-        public static ModInstance Instance;
-        public static int SaveSlot = 5;
+        public static int SaveSlot = 5; // Will be used to better confirm the loaded archipelago run.
 
         
         public ModInstance(IntPtr ptr) : base(ptr)
@@ -226,6 +228,7 @@ namespace BluePrinceArchipelago
             {
                 // Attempt to recieve items that were recieved before the game was loaded.
                 Instance.QueueManager.ReleaseAllQueuedItems();
+                Instance.QueueManager.ReleaseAllQueuedLocations();
                 
                 // Handle Start of day code for Permanent items (and maybe curses later).
                 Plugin.ModItemManager.StartOfDay(dayNum);
@@ -367,7 +370,7 @@ namespace BluePrinceArchipelago
             PickAnother.ChangeTransition("FINISHED", "Draft Forced Check");
         }
         public static void OnConnectToArchipelago() {
-            
+            //Handle any additional code that needs to be handled on successfully connecting to AP
         }
         
         private static void InitializeRooms()
