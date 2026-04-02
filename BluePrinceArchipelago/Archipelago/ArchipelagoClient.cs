@@ -220,14 +220,14 @@ public class ArchipelagoClient
         {
             foreach (ItemInfo item in session.Items.AllItemsReceived)
             {
-                if (!ModInstance.Instance.QueueManager.RecieveItem(item))
+                if (!ModInstance.QueueManager.ReceiveItem(item))
                 {
-                    ModInstance.Instance.QueueManager.AddItemToQueue(item);
+                    ModInstance.QueueManager.AddItemToQueue(item);
                 }
                 session.Items.DequeueItem();
             }
         }
-        // Handle Initial connection.
+        // Handle intial connect to AP.
         else
         {
             foreach (ItemInfo item in session.Items.AllItemsReceived)
@@ -236,32 +236,39 @@ public class ArchipelagoClient
                 if (item.LocationName == "Server")
                 {
                     Logging.Log($"Attempting to receive Item: {item.ItemName}");
-                    // Checks if the item recieved is an item.
-                    if (ModRoomManager.VanillaRooms.Contains(item.ItemName.ToUpper()))
+                    // Checks if the item recieved is a room.
+                    if (Plugin.ModRoomManager.GetRoomByName(item.ItemName) != null)
                     {
+                        // If rooms haven't been initialized, add it to the item queue
                         if (!ModInstance.HasInitializedRooms)
                         {
-                            ModInstance.Instance.QueueManager.AddItemToQueue(item);
+                            ModInstance.QueueManager.AddItemToQueue(item);
                             session.Items.DequeueItem();
                         }
-                        ModRoom room = Plugin.ModRoomManager.GetRoomByName(item.ItemName.ToUpper());
-                        room.IsUnlocked = true;
-                        if (room.RoomPoolCount == 0) room.RoomPoolCount++;
-                        session.Items.DequeueItem();
+                        else
+                        {
+                            ModInstance.QueueManager.ReceiveRoom(item);
+                        }
                     }
+                    // Not a Room.
                     else
-                    {
-                        //TODO add item unlock code (Should not grant the unique items).
+                    {   
                         session.Items.DequeueItem();
+                        // Try to recieve item, on failure add it back to the queue.
+                        if (!ModInstance.QueueManager.ReceiveServerItem(item))
+                        {
+                            ModInstance.QueueManager.AddItemToQueue(item);
+                        }
+                        
                     }
                 }
                 else
                 {
                     //Handle non-server items normally.
                     session.Items.DequeueItem();
-                    if (!ModInstance.Instance.QueueManager.RecieveItem(item))
+                    if (!ModInstance.QueueManager.ReceiveItem(item))
                     {
-                        ModInstance.Instance.QueueManager.AddItemToQueue(item);
+                        ModInstance.QueueManager.AddItemToQueue(item);
                     }
                 }
             }
@@ -269,11 +276,13 @@ public class ArchipelagoClient
 
     }
 
+    // Handles everything that should be handled on reconnect.
     private void Reconnect() {
         Reconnected = true;
         RebuildCheckedLocations();
-        CreateLocationDicts(session.Locations.AllLocations.ToArray());
+        CreateLocationDicts(session.Locations.AllLocations.ToArray()); //TODO handle this using state instead so it doesn't need to be rebuilt on every reconnect
     }
+    // Attempts to rebuild the checked location list based on local and server locations.
     private void RebuildCheckedLocations()
     {
         // Make copies of the lists for editing purposes.
@@ -314,11 +323,12 @@ public class ArchipelagoClient
             }
             // Otherwise add it to the Queue to be sent later.
             else {
-                ModInstance.Instance.QueueManager.AddLocationsToQueue(localLocations);
+                ModInstance.QueueManager.AddLocationsToQueue(localLocations);
             }
         }
     }
 
+    // Populates the dictionaries used for looking up location information.
     private void CreateLocationDicts(long[] locationIds)
     {
         for (int i = 0; i < locationIds.Count(); i++)
@@ -354,6 +364,7 @@ public class ArchipelagoClient
         Authenticated = false;
     }
 
+    //Sends a message to the Archipelago Server.
     public void SendMessage(string message)
     {
         session.Socket.SendPacketAsync(new SayPacket { Text = message });
@@ -372,9 +383,9 @@ public class ArchipelagoClient
         ServerData.Index++;
 
         //Attempt to receive item, if it fails, add to queue to be added later.
-        if (!ModInstance.Instance.QueueManager.RecieveItem(receivedItem))
+        if (!ModInstance.QueueManager.ReceiveItem(receivedItem))
         {
-            ModInstance.Instance.QueueManager.AddItemToQueue(receivedItem);
+            ModInstance.QueueManager.AddItemToQueue(receivedItem);
         }
         
     }
@@ -430,18 +441,24 @@ public class ArchipelagoClient
             Logging.Log($"Unable to send location for {ServerData.LocationDict[locationid]}. Location has already been sent.");
         }
     }
+    // Sends the goal completed notification to the server.
     public void GoalCompleted()
     {
         session.SetGoalAchieved();
         State.Reset();
     }
 }
+
 public class ArchipelagoQueueManager {
     private ItemQueue _ReceivedItemQueue = new("Received Item Queue");
     private LocationQueue _LocationQueue = new("Location Queue");
+    
+    // Adds an item to the Item Queue.
     public void AddItemToQueue(ItemInfo item) { 
         _ReceivedItemQueue.Enqueue(item);
     }
+
+    // Adds multible locations to the Location Queue.
     public void AddLocationsToQueue(List<long> locations) {
         List<string> locationNames = new List<string>();
         foreach (int location in locations) {
@@ -450,6 +467,8 @@ public class ArchipelagoQueueManager {
         }
         _LocationQueue.Enqueue(locationNames.ToArray());
     }
+
+    // Releases all the currently Queued locations.
     public void ReleaseAllQueuedLocations() {
         if (_LocationQueue.Count > 0) {
             for (int i = 0; i < _LocationQueue.Count; i++)
@@ -466,58 +485,151 @@ public class ArchipelagoQueueManager {
         }
     }
 
+    //Releases all the currently Queued Items.
     public void ReleaseAllQueuedItems()
     {
         if (_ReceivedItemQueue.Count > 0)
         {
             for (int i = 0; i < _ReceivedItemQueue.Count; i++)
             {
+                // Dequeues the item.
                 ItemInfo item = _ReceivedItemQueue.Dequeue();
-                if (!RecieveItem(item))
+                // Tries to receive the item.
+                if (!ReceiveItem(item))
                 {
+                    // On failure requeue the item.
                     _ReceivedItemQueue.Enqueue(item);
                 }
             }
         }
     }
-    public bool RecieveItem(ItemInfo item)
+
+    // Tries to receive an item, on sucess returns true, on failure returns false.
+    public bool ReceiveItem(ItemInfo item)
     {
         Logging.Log($"Attempting to receive Item: {item.ItemName}");
         if (ModInstance.SceneLoaded && ModInstance.HasInitializedRooms)
         {
             // Checks if the item recieved is a Room.
-            if (Plugin.ModRoomManager.Rooms.Contains(Plugin.ModRoomManager.GetRoomByName(item.ItemName.ToUpper().Trim())))
+            if (Plugin.ModRoomManager.GetRoomByName(item.ItemName) != null)
             {
-                ModRoom room = Plugin.ModRoomManager.GetRoomByName(item.ItemName.ToUpper());
-                room.IsUnlocked = true;
-                if (room.RoomsLeftInPool == 0)
-                {
-                    room.RoomPoolCount++; //Update the rooms in pool count if this item is received and already at it's max number.
-                }
-                ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
-                State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
+                ReceiveRoom(item);
                 return true;
             }
             if (item.Flags.HasFlag(ItemFlags.Trap))
             {
-                Plugin.ModItemManager.OnTrapReceived(item);
-                ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
-                State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
-                return true;
+                // If a trap is received while in run receive it.
+                if (ModInstance.IsInRun)
+                {
+                    ReceiveTrap(item);
+                    return true;
+                }
+                return false;
             }
             // if not handle it as an Item.
-            Plugin.ModItemManager.OnItemCheckRecieved(item);
-            //This may need to be moved to a better place once the item code is better implemented.
-            ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
-            State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
-            return true;
+            string itemType = Plugin.ModItemManager.GetItemType(item.ItemName);
+            if (itemType != null) {
+                Logging.LogWarning($"Error receiving item {item.ItemName}: Item does not exist or is not currently handled by the mod.");
+                return true;
+            }
+            if (itemType == "Permanent")
+            {
+                ReceiveLocalItem(item);
+                return true;
+            }
+            else {
+
+                if (ModInstance.IsInRun)
+                {
+                    ReceiveLocalItem(item);
+                    return true;
+                }
+            }
+           
         }
         return false;
     }
+    public bool ReceiveServerItem(ItemInfo item) {
+        Logging.Log($"Attempting to receive Item: {item.ItemName}");
+        if (ModInstance.SceneLoaded && ModInstance.HasInitializedRooms)
+        {
+            // Checks if the item recieved is a Room.
+            if (Plugin.ModRoomManager.GetRoomByName(item.ItemName) != null)
+            {
+                ReceiveRoom(item);
+                return true;
+            }
+            if (item.Flags.HasFlag(ItemFlags.Trap))
+            {
+                // If a trap is received while in run receive it.
+                if (ModInstance.IsInRun)
+                {
+                    ReceiveTrap(item);
+                    return true;
+                }
+                return false;
+            }
+            // if not handle it as an Item.
+            string itemType = Plugin.ModItemManager.GetItemType(item.ItemName);
+            if (itemType != null)
+            {
+                Logging.LogWarning($"Error receiving item {item.ItemName}: Item does not exist or is not currently handled by the mod.");
+                return true;
+            }
+            if (itemType == "Permanent")
+            {
+                ReceiveLocalItem(item);
+                return true;
+            }
+            else if (itemType == "Unique") {
+
+                return true;
+            }
+            else
+            {
+
+                if (ModInstance.IsInRun)
+                {
+                    ReceiveLocalItem(item);
+                    return true;
+                }
+            }
+
+        }
+        return false;
+    }
+
+    // Handles receiving an item. (doesn't check if it's safe to do so).
+    public void ReceiveRoom(ItemInfo item) {
+        ModRoom room = Plugin.ModRoomManager.GetRoomByName(item.ItemName.ToUpper());
+        room.IsUnlocked = true;
+        if (room.RoomsLeftInPool == 0)
+        {
+            room.RoomPoolCount++; //Update the rooms in pool count if this item is received and already at it's max number.
+        }
+        ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
+        State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
+    }
+    // Handles receiving a trap. (doesn't check if it's safe to do so).
+    public void ReceiveTrap(ItemInfo item) {
+        Plugin.ModItemManager.OnTrapReceived(item);
+        ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
+        State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
+    }
+    // Handles recieving a local item. (doesn't check if it's safe to do so).
+    public void ReceiveLocalItem(ItemInfo item) {
+        Plugin.ModItemManager.OnItemCheckRecieved(item);
+        //This may need to be moved to a better place once the item code is better implemented.
+        ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
+        State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
+    }
+    // Returns true if the location can be sent, Returns false if it can't.
     private bool SendLocationCheck() {
         return ModInstance.SceneLoaded && ModInstance.HasInitializedRooms && ArchipelagoClient.Authenticated;
     }
 }
+
+// Using a list as a Queue due to issues with Queues breaking. May revert back to a proper Queue later.
 public class ItemQueue(string name) {
     private readonly string _Name = name;
     public string Name { 

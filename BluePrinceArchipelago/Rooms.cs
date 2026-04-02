@@ -218,7 +218,7 @@ namespace BluePrinceArchipelago.Core
                 //Send the room drafted event on the first time this room is drafted only.
                 if (!_HasBeenDrafted && value)
                 {
-                        ModInstance.Instance.ModEventHandler.OnFirstDrafted(this);
+                        ModInstance.ModEventHandler.OnFirstDrafted(this);
                         _HasBeenDrafted = value;
                 }
                 // No changes to value once the room has been drafted once, or if someone is not trying to set this to true for some stupid reason.

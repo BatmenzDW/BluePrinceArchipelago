@@ -23,8 +23,8 @@ namespace BluePrinceArchipelago
         public static ModInstance Instance;
 
         // Handlers and Managers.
-        public ModEventHandler ModEventHandler = new ModEventHandler();
-        public ArchipelagoQueueManager QueueManager = new ArchipelagoQueueManager();
+        public static ModEventHandler ModEventHandler = new ModEventHandler();
+        public static ArchipelagoQueueManager QueueManager = new ArchipelagoQueueManager();
         public static TrunkManager TrunkManager = new();
 
         // Game Objects
@@ -227,8 +227,8 @@ namespace BluePrinceArchipelago
             if (ArchipelagoClient.Authenticated)
             {
                 // Attempt to recieve items that were recieved before the game was loaded.
-                Instance.QueueManager.ReleaseAllQueuedItems();
-                Instance.QueueManager.ReleaseAllQueuedLocations();
+                QueueManager.ReleaseAllQueuedItems();
+                QueueManager.ReleaseAllQueuedLocations();
                 
                 // Handle Start of day code for Permanent items (and maybe curses later).
                 Plugin.ModItemManager.StartOfDay(dayNum);

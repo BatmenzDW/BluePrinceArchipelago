@@ -31,7 +31,7 @@ namespace BluePrinceArchipelago.Core
             else {
                 _TrunkCounts[currentRoom]++;
             }
-            ModInstance.Instance.ModEventHandler.OnTrunkOpened(currentRoom, _TrunkCounts[currentRoom]);
+            ModInstance.ModEventHandler.OnTrunkOpened(currentRoom, _TrunkCounts[currentRoom]);
             State.UpdateTrunkCounts();
         }
     }

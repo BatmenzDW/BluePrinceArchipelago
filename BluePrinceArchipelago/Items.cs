@@ -186,15 +186,28 @@ namespace BluePrinceArchipelago.Core
                 Logging.LogError($"Error receiving {itemInfo.ItemName}: No Trap with that name could be found.");
             }
         }
-        
+        public string GetItemType(string itemName) {
+            ModItem item = GetPermanentItem(itemName);
+            if (item != null) {
+                return "Permanent";
+            }
+            item = GetJunkItem(itemName);
+            if (item != null)
+            {
+                return "Junk";
+            }
+            item = GetUniqueItem(itemName);
+            if(item != null)
+            {
+                return "Unique";
+            }
+            return null;
+        }
 
+        // Handle the code for recieving an item check that results in receiving an item.
         public void OnItemCheckRecieved(ItemInfo itemInfo) {
-            // Handle the code for recieving an item check that results in receiving an item.
-            string itemType;
-            bool genItem = false;
-            string[] itemParams = [];
             ModItem item = null;
-            //If item exists, retreive it. If not try to generate it.
+            //If item exists, retreive it.
             if (ItemDict.ContainsKey(itemInfo.ItemName))
             {
                 item = ItemDict[itemInfo.ItemName];
@@ -202,159 +215,11 @@ namespace BluePrinceArchipelago.Core
                 return;
             }
             else {
-                itemParams = TryGetItemParamsFromCheckData(itemInfo);
-                if (itemParams == null)
-                {
-                    return;
-                }
-                itemType = itemParams[0];
-                if (itemType == null)
-                {
-                    Logging.LogWarning($"Unable to give {itemInfo.ItemName} as it couldn't be identified.");
-                    return;
-                }
-                genItem = true;
-            }
-            if (itemType == "Trap") {
-                OnTrapReceived(itemInfo);
-            }
-            else if (itemType == "Permanent")
-            {
-                PermanentItem pItem;
-                if (genItem)
-                {
-                    int count = int.Parse(itemParams[2]);
-                    pItem = new PermanentItem(itemInfo.ItemName, null, true, itemParams[1], count);
-                }
-                else
-                {
-                    pItem = GetPermanentItem(itemInfo.ItemName);
-                }
-
-                if (pItem == null)
-                {
-                    PermanentItemList.Add(pItem);
-                }
-
-            }
-            else if (ModInstance.IsInRun)
-            {
-                UniqueItem uItem;
-                if (itemType == "Unique")
-                {
-                    if (genItem)
-                    {
-                        uItem = new UniqueItem(itemInfo.ItemName, null, true);
-                    }
-                    else
-                    {
-                        uItem = GetUniqueItem(itemInfo.ItemName);
-                    }
-                    if (uItem == null)
-                    {
-                        uItem.AddItemToInventory();
-                    }
-                }
-                else if (itemType == "Junk")
-                {
-                    JunkItem jItem;
-                    if (genItem)
-                    {
-                        int count = int.Parse(itemParams[2]);
-                        jItem = new JunkItem(itemInfo.ItemName, null, true, itemParams[1], count);
-                    }
-                    else
-                    {
-                        jItem = GetJunkItem(itemInfo.ItemName);
-                    }
-
-                    if (jItem == null)
-                    {
-                        jItem.AddItemToInventory();
-                    }
-                }
-                else
-                {
-                    Logging.Log($"Invalid item type: {itemType} for {itemInfo.ItemName}.");
-                }
-            }
-            else
-            {
-                if (itemType == "Unique")
-                {
-                    GetUniqueItem(itemInfo.ItemName).AddItemToInventory();
-                }
-                else if (itemType == "Junk")
-                {
-                    GetJunkItem(itemInfo.ItemName).AddItemToInventory();
-                }
-                else
-                {
-                    Logging.Log($"Invalid item type: {itemType} for {itemInfo.ItemName}.");
-                }
+                Logging.Log($"Unable to give {itemInfo.ItemName} to player. The item doesn't exist or isn't currently handled by the mod.");
             }
         }
-        //Returns a list with the type of ModItem to use, the itemtype for junk/trap/permanent items and the Count of that item (number of that item to add).
-        private string[] TryGetItemParamsFromCheckData(ItemInfo item) {
-            if (item.ItemName != null)
-            {
-                Logging.Log($"{item.ItemName}");
-                string[] itemNameParts = item.ItemName.Split(' ');
-                if (itemNameParts.Length > 2)
-                {
-                    if (itemNameParts[2] == "Coin")
-                        if (item.ItemName.Contains("Extra"))
-                        {
-                            if (itemNameParts.Length == 3)
-                            {
-                                if (itemNameParts[1] == "Allowance")
-                                {
-                                    return ["Permanent", itemNameParts[1], itemNameParts[2]];
-                                }
 
-                                return ["Junk", itemNameParts[1], itemNameParts[2]];
-                            }
-                            else if (itemNameParts.Length == 4)
-                            {
-                                return ["Permanent", itemNameParts[2], itemNameParts[3]];
-                            }
-                            //else { //Could be either a generic item, or Unque item. Unable to differentiate right now.
-
-                            //}
-                        }
-                        else if (item.ItemName.Contains("Trap "))
-                        {
-                            if (itemNameParts.Length == 3)
-                            {
-                                if (itemNameParts[1] == "End")
-                                {
-                                    return ["Trap", "EOD", "-1"];
-                                }
-                                else if (itemNameParts[1] == "Lose")
-                                {
-                                    return ["Trap", "Item", "-1"];
-                                }
-                                else if (itemNameParts[1] == "Freeze") {
-                                    return ["Trap", "Freeze", "-1"];
-                                }
-
-                                return ["Trap", itemNameParts[1], "-1"];
-                            }
-                            else if (itemNameParts.Length == 4)
-                            {
-                                return ["Trap", itemNameParts[2], "-" + itemNameParts[3], itemNameParts[1]];
-                            }
-                        }
-
-                }
-                else {
-                    Logging.Log($"{item.ItemName} is not currently supported or doesn't exist.");
-                    return null;
-                }
-            }
-            Logging.Log($"Item was invalid. Unable to retreive Item.");
-            return null;
-        }
+        // Checks if the item is currently spawnable.
         public bool IsItemSpawnable(GameObject item, bool isPrespawn = true)
         {
             if (CoatCheck.Contains(item))
@@ -383,6 +248,8 @@ namespace BluePrinceArchipelago.Core
 
             return false;
         }
+
+        // Gets an item from the prespawn item list.
         public GameObject GetPreSpawnItem(string itemName) {
             for (int i = 0; i < PreSpawn.GetCount(); i++)
             {
@@ -396,6 +263,8 @@ namespace BluePrinceArchipelago.Core
             }
             return null;
         }
+
+        // Gets an item that the player has picked up.
         public GameObject GetPickedUpItem(string itemName) {
             for (int i = 0; i < PickedUp.GetCount(); i++)
             {
@@ -410,8 +279,10 @@ namespace BluePrinceArchipelago.Core
             }
             return null;
         }
+
+        // Makes the player lose a random item if they have an item. 
         public void LoseRandomItem() {
-            //We don't care if this fails, since it's a trap, and I'm too lazy to handle the edgecase where you are not in a run, and you spawn without an item.
+            //We don't care if this fails, since it's a trap, and I'm too lazy to handle the edgecase where you are not in a run, and you spawn with an item.
             int count = PickedUp.arrayList.Count;
             if (count > 0 && ModInstance.IsInRun) { 
                 int index = Random.Range(0, count);
@@ -455,19 +326,20 @@ namespace BluePrinceArchipelago.Core
                 // Send the item found event on the first time it is found.
                 if (!_HasBeenFound && value)
                 {
-                    ModInstance.Instance.ModEventHandler.OnFirstFound(this);
+                    ModInstance.ModEventHandler.OnFirstFound(this);
                     _HasBeenFound = value;
                 }
                 // No changes to value once the item has been found once, or if someone is trying to set this to false some reason.
             }
         }
 
-        public virtual void AddItemToInventory() { 
-            //TODO add code handling adding the item.
+        public virtual void AddItemToInventory() {
+            // Put out an error if this method was not properly overriden. There should be no base moditems.
+            Logging.LogError("Error: The Base Moditem.AddItemToInventory method should be overriden.");
         }
     }
 
-    // handles junk and trap items (as inverse traps).
+    // Handles junk items.
     public class JunkItem(string name, GameObject gameObject, bool isUnlocked, string itemType, int count = 1) : ModItem(name, gameObject, isUnlocked) {
 
         private string _ItemType = itemType;
@@ -522,21 +394,6 @@ namespace BluePrinceArchipelago.Core
             else if (_ItemType == "Luck")
             {
                 AdjustLuck(_Count);
-            }
-            else if (_IsTrap)
-            {
-                if (_ItemType == "freeze")
-                {
-                    //TODO add freeze trap handler.
-                }
-                else if (_ItemType == "eod")
-                {
-                    //TODO add eod trap handler (worst case just make it set steps to 0).
-                }
-                else if (_ItemType == "item")
-                {
-                    //TODO add lose item trap handler
-                }
             }
             else
             {
