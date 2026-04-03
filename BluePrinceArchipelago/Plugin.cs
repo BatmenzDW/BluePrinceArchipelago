@@ -42,7 +42,11 @@ namespace BluePrinceArchipelago {
             ModItemManager = new ModItemManager();
             UniqueItemManager = new UniqueItemManager();
             _instance = this;
-            AssetBundle = AssetBundle.LoadFromFile(System.IO.Path.Combine(AssetsFolderPath, "blueprinceapassets"));
+            string assetBundlePath = System.IO.Path.Combine(AssetsFolderPath, "blueprinceapassets");
+            if (System.IO.File.Exists(assetBundlePath))
+            {
+                AssetBundle = AssetBundle.LoadFromFile(assetBundlePath);
+            }
             Log.LogInfo($"Plugin {PluginGUID} is loaded!");
             //Inject custom Object for Mod Handling
             ClassInjector.RegisterTypeInIl2Cpp<ModInstance>();

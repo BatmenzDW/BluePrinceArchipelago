@@ -19,7 +19,7 @@ namespace BluePrinceArchipelago.Archipelago;
 
 public class ArchipelagoClient
 {
-    public const string APVersion = "0.6.6";
+    public const string APVersion = "0.6.7";
     private const string Game = "Blue Prince";
 
     public static bool Authenticated;
