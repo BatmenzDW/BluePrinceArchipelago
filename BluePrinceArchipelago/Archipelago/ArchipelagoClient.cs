@@ -19,7 +19,7 @@ namespace BluePrinceArchipelago.Archipelago;
 
 public class ArchipelagoClient
 {
-    public const string APVersion = "0.6.6";
+    public const string APVersion = "0.6.7";
     private const string Game = "Blue Prince";
 
     public static bool Authenticated;
@@ -170,11 +170,16 @@ public class ArchipelagoClient
             Authenticated = true;
             // Initialize DeathLinkHandler.
             DeathLinkHandler = new(session.CreateDeathLinkService(), ServerData.SlotName);
-            
+
             // Handles the reconnection to the Server.
             if (Reconnected)
             {
                 Reconnect();
+                // Reload options on reconnect (they should already be loaded, but ensure consistency)
+                if (!ArchipelagoOptions.IsLoaded && ServerData.Options != null)
+                {
+                    ArchipelagoOptions.LoadFromSlotData(ServerData.Options);
+                }
                 ArchipelagoConsole.LogMessage($"Successfully Recconnected to {ServerData.Uri} as {ServerData.SlotName}!");
             }
             // Handles a new connection to the Server.
@@ -183,6 +188,10 @@ public class ArchipelagoClient
                 // Gets the Initial data from the server.
                 ServerData.Options = session.DataStorage.GetSlotData<SlotData>();
                 ServerData.Seed = session.RoomState.Seed;
+
+                // Load options into the static ArchipelagoOptions class
+                ArchipelagoOptions.LoadFromSlotData(ServerData.Options);
+
                 session.Locations.CompleteLocationChecksAsync(ServerData.CheckedLocations.ToArray());
                 // Creates the Locally Stored data for the locations. 
                 CreateLocationDicts(session.Locations.AllLocations.ToArray());
@@ -510,8 +519,8 @@ public class ArchipelagoQueueManager {
         Logging.Log($"Attempting to receive Item: {item.ItemName}");
         if (ModInstance.SceneLoaded && ModInstance.HasInitializedRooms)
         {
-            // Checks if the item recieved is a Room.
-            if (Plugin.ModRoomManager.GetRoomByName(item.ItemName) != null)
+            // Checks if the item recieved is a Room (includes special mappings like classroom variants)
+            if (Plugin.ModRoomManager.IsRoomItem(item.ItemName))
             {
                 ReceiveRoom(item);
                 return true;
@@ -553,8 +562,8 @@ public class ArchipelagoQueueManager {
         Logging.Log($"Attempting to receive Item: {item.ItemName}");
         if (ModInstance.SceneLoaded && ModInstance.HasInitializedRooms)
         {
-            // Checks if the item recieved is a Room.
-            if (Plugin.ModRoomManager.GetRoomByName(item.ItemName) != null)
+            // Checks if the item recieved is a Room (includes special mappings like classroom variants)
+            if (Plugin.ModRoomManager.IsRoomItem(item.ItemName))
             {
                 ReceiveRoom(item);
                 return true;
@@ -601,14 +610,64 @@ public class ArchipelagoQueueManager {
 
     // Handles receiving an item. (doesn't check if it's safe to do so).
     public void ReceiveRoom(ItemInfo item) {
-        ModRoom room = Plugin.ModRoomManager.GetRoomByName(item.ItemName.ToUpper());
-        room.IsUnlocked = true;
-        if (room.RoomsLeftInPool == 0)
+        // Try to find the room, using mapping for special cases
+        ModRoom room = Plugin.ModRoomManager.GetRoomByName(item.ItemName);
+
+        bool isMappedRoom = false;
+        string mappedName = null;
+
+        // If not found with exact name, try the mapped name
+        if (room == null)
         {
-            room.RoomPoolCount++; //Update the rooms in pool count if this item is received and already at it's max number.
+            mappedName = Plugin.ModRoomManager.GetMappedRoomName(item.ItemName);
+            if (mappedName != null)
+            {
+                room = Plugin.ModRoomManager.GetRoomByName(mappedName);
+                isMappedRoom = true;
+            }
         }
+
+        if (room == null)
+        {
+            Logging.LogWarning($"ReceiveRoom: Could not find room '{item.ItemName}'");
+            return;
+        }
+
+        room.IsUnlocked = true;
+
+        // Special handling for CLASSROOM: always increment pool count
+        // This allows receiving multiple "Classroom" items to add multiple copies to the pool
+        // The base game will randomly pick which grade appears when drafted
+        string roomNameUpper = room.Name.ToUpper().Trim();
+        if (roomNameUpper == "CLASSROOM")
+        {
+            room.RoomPoolCount++;
+            Logging.Log($"Received '{item.ItemName}': Pool count now {room.RoomPoolCount}");
+        }
+        // For mapped rooms, always increment pool count
+        else if (isMappedRoom)
+        {
+            room.RoomPoolCount++;
+            Logging.Log($"Received '{item.ItemName}' (maps to '{mappedName}'): Pool count now {room.RoomPoolCount}");
+        }
+        // For other rooms, only increment if pool is already full
+        else
+        {
+            if (room.RoomsLeftInPool == 0)
+            {
+                room.RoomPoolCount++;
+            }
+        }
+
+        // Update the pools immediately if we're in a run
+        if (ModInstance.IsInRun && ModInstance.HasInitializedRooms)
+        {
+            Plugin.ModRoomManager.UpdateRoomPools();
+        }
+
         ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
         State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
+        Logging.Log($"Room '{room.Name}' unlocked and added to pool.");
     }
     // Handles receiving a trap. (doesn't check if it's safe to do so).
     public void ReceiveTrap(ItemInfo item) {

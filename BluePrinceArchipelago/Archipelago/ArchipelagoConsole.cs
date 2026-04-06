@@ -2,6 +2,7 @@
 using BepInEx.Unity.IL2CPP.UnityEngine;
 using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Utils;
+using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using StableNameDotNet;
 using System.Collections.Generic;
@@ -243,10 +244,14 @@ public static class CommandManager {
     }
     public static void initializeLocalCommands() {
         _LocalCommands["room"] = new RoomCommand("Room");
+        _LocalCommands["roompool"] = new RoomCommand("RoomPool"); // Alias for room command
         _LocalCommands["adjust"] = new AdjustCommand("Adjust");
         _LocalCommands["item"] = new ItemCommand("Item");
         _LocalCommands["help"] = new HelpCommand("Help");
         _LocalCommands["force"] = new ForceCommand("Force");
+        _LocalCommands["sync"] = new SyncCommand("Sync"); // New sync command for Archipelago data
+        _LocalCommands["debug"] = new DebugCommand("Debug"); // Debug command for investigating game systems
+        _LocalCommands["received"] = new ReceivedCommand("Received"); // Show received Archipelago items
     }
     private static ParsedCommand ParseCommand(string command)
     {
@@ -314,60 +319,153 @@ public abstract class Command(string name)
 }
 public class RoomCommand(string name): Command(name)
 {
-    private readonly string _Description = "Adds or removes rooms from the pool";
+    private readonly string _Description = "Manages the room pool - add, remove, list, or clear rooms";
     public override string Description { 
         get { return _Description; }
     }
-    private readonly string _Syntax = "Usage\n\t/RoomPool Add <Room>\n\t/RoomPool Remove <Room>";
+    private readonly string _Syntax = "Usage:\n\t/room add <RoomName> - Add a room to the pool\n\t/room remove <RoomName> - Remove a room from the pool\n\t/room list - List all rooms and their pool status\n\t/room list unlocked - List only unlocked rooms\n\t/room clear - Remove all non-vanilla rooms from pool\n\t/room clearall - Clear ALL rooms (for Archipelago mode)";
     public override string Syntax
     {
         get { return _Syntax; }
     }
     public override void Run(List<string> Args) {
+        if (Args.Count < 1)
+        {
+            ArchipelagoConsole.LogMessage($"Error: No subcommand provided.\n{_Syntax}");
+            return;
+        }
+
+        string subcommand = Args[0].ToLower();
+
+        // List doesn't require being in a run
+        if (subcommand == "list")
+        {
+            bool unlockedOnly = Args.Count > 1 && Args[1].ToLower() == "unlocked";
+            ListRooms(unlockedOnly);
+            return;
+        }
+
+        // Other commands require being in a run
         if (!ModInstance.IsInRun)
         {
-            ArchipelagoConsole.LogMessage("You are not currently in a run, you can only run this command during a run.");
+            ArchipelagoConsole.LogMessage("You are not currently in a run. You can only modify the pool during a run.");
             return;
         }
-        if (Args.Count > 2)
-        {
-            string subcommand = Args[0];
-            if (subcommand.ToLower() == "add")
-            {
-                string roomName = Args[1];
-                for (int i = 2; i < Args.Count; i++)
-                {
-                    roomName += " " + Args[i];
-                }
-                ModRoom room = Plugin.ModRoomManager.GetRoomByName(roomName.ToUpper());
-                if (room != null) {
-                    Plugin.ModRoomManager.AddRoom(room);
-                    ArchipelagoConsole.LogMessage($"Added a copy of {roomName} to the pool.");
-                }
-                ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {roomName} is not a valid Room Name.");
-                return;
-            }
-            else if (subcommand.ToLower() == "remove"){
-                string roomName = "";
-                for (int i = 1; i < Args.Count; i++)
-                {
-                    roomName += Args[i];
-                }
-                ModRoom room = Plugin.ModRoomManager.GetRoomByName(roomName.ToUpper());
-                if (room != null)
-                {
-                    Plugin.ModRoomManager.RemoveRoom(room);
-                    ArchipelagoConsole.LogMessage($"Removed a copy of {roomName} to the pool.");
-                    return;
-                }
-                ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {roomName} is not a valid Room Name.");
-                return;
 
+        if (subcommand == "add")
+        {
+            if (Args.Count < 2)
+            {
+                ArchipelagoConsole.LogMessage("Error: No room name provided.\nUsage: /room add <RoomName>");
+                return;
             }
-            ArchipelagoConsole.LogMessage($"Error Running Command {Name}: invalid subcommand {subcommand}");
+            string roomName = string.Join(" ", Args.Skip(1));
+            AddRoomToPool(roomName);
+        }
+        else if (subcommand == "remove")
+        {
+            if (Args.Count < 2)
+            {
+                ArchipelagoConsole.LogMessage("Error: No room name provided.\nUsage: /room remove <RoomName>");
+                return;
+            }
+            string roomName = string.Join(" ", Args.Skip(1));
+            RemoveRoomFromPool(roomName);
+        }
+        else if (subcommand == "clear")
+        {
+            ClearPool();
+        }
+        else if (subcommand == "clearall")
+        {
+            ClearAllForArchipelago();
+        }
+        else
+        {
+            ArchipelagoConsole.LogMessage($"Error: Unknown subcommand '{subcommand}'.\n{_Syntax}");
+        }
+    }
+
+    private void ListRooms(bool unlockedOnly)
+    {
+        var rooms = Plugin.ModRoomManager.Rooms;
+        if (rooms == null || rooms.Count == 0)
+        {
+            ArchipelagoConsole.LogMessage("No rooms have been initialized yet.");
             return;
         }
-    ArchipelagoConsole.LogMessage($"Error Running Command {Name}: no parameters provided.");
+
+        int unlockedCount = 0;
+        int lockedCount = 0;
+        int vanillaCount = 0;
+
+        ArchipelagoConsole.LogMessage(unlockedOnly ? "=== Unlocked Rooms ===" : "=== All Rooms ===");
+        foreach (var room in rooms)
+        {
+            if (room.IsUnlocked) unlockedCount++;
+            else lockedCount++;
+            if (room.UseVanilla) vanillaCount++;
+
+            if (unlockedOnly && !room.IsUnlocked) continue;
+
+            string status = room.IsUnlocked ? "[UNLOCKED]" : "[LOCKED]";
+            string vanilla = room.UseVanilla ? " (Vanilla)" : " (AP Mode)";
+            string poolInfo = $"Pool: {room.RoomsLeftInPool}/{room.RoomPoolCount}";
+            ArchipelagoConsole.LogMessage($"  {status} {room.Name}{vanilla} - {poolInfo}");
+        }
+        ArchipelagoConsole.LogMessage($"Summary: {unlockedCount} unlocked, {lockedCount} locked, {vanillaCount} vanilla mode");
+    }
+
+    private void AddRoomToPool(string roomName)
+    {
+        ModRoom room = Plugin.ModRoomManager.GetRoomByName(roomName.ToUpper());
+        if (room == null)
+        {
+            ArchipelagoConsole.LogMessage($"Error: '{roomName}' is not a valid room name.");
+            return;
+        }
+
+        room.IsUnlocked = true;
+        room.RoomPoolCount++;
+        Plugin.ModRoomManager.UpdateRoomPools();
+        ArchipelagoConsole.LogMessage($"Added '{room.Name}' to the pool. Pool count: {room.RoomPoolCount}");
+    }
+
+    private void RemoveRoomFromPool(string roomName)
+    {
+        ModRoom room = Plugin.ModRoomManager.GetRoomByName(roomName.ToUpper());
+        if (room == null)
+        {
+            ArchipelagoConsole.LogMessage($"Error: '{roomName}' is not a valid room name.");
+            return;
+        }
+
+        if (!room.IsUnlocked)
+        {
+            ArchipelagoConsole.LogMessage($"'{room.Name}' is already not in the pool.");
+            return;
+        }
+
+        room.IsUnlocked = false;
+        Plugin.ModRoomManager.UpdateRoomPools();
+        ArchipelagoConsole.LogMessage($"Removed '{room.Name}' from the pool.");
+    }
+
+    private void ClearPool()
+    {
+        Plugin.ModRoomManager.EmptyDraftPool();
+        Plugin.ModRoomManager.UpdateRoomPools();
+        ArchipelagoConsole.LogMessage("Cleared all non-vanilla rooms from the pool.");
+    }
+
+    private void ClearAllForArchipelago()
+    {
+        Plugin.ModRoomManager.ClearAllRoomsForArchipelago();
+        if (ModInstance.IsInRun)
+        {
+            Plugin.ModRoomManager.UpdateRoomPools();
+        }
+        ArchipelagoConsole.LogMessage("Cleared ALL rooms and disabled vanilla mode for Archipelago.");
     }
 }
 public class AdjustCommand(string name) : Command(name)
@@ -689,11 +787,618 @@ public class ForceCommand(string name) : Command(name) {
     }
 }
 
+public class SyncCommand(string name) : Command(name)
+{
+    private readonly string _Description = "Syncs room pool with Archipelago received items";
+    public override string Description
+    {
+        get { return _Description; }
+    }
+    private readonly string _Syntax = "Usage:\n\t/sync rooms - Sync room pool from Archipelago received items\n\t/sync status - Show sync status";
+    public override string Syntax
+    {
+        get { return _Syntax; }
+    }
+
+    public override void Run(List<string> Args)
+    {
+        if (Args.Count < 1)
+        {
+            ArchipelagoConsole.LogMessage($"Error: No subcommand provided.\n{_Syntax}");
+            return;
+        }
+
+        string subcommand = Args[0].ToLower();
+
+        if (subcommand == "rooms")
+        {
+            SyncRoomsFromArchipelago();
+        }
+        else if (subcommand == "status")
+        {
+            ShowSyncStatus();
+        }
+        else
+        {
+            ArchipelagoConsole.LogMessage($"Error: Unknown subcommand '{subcommand}'.\n{_Syntax}");
+        }
+    }
+
+    private void SyncRoomsFromArchipelago()
+    {
+        if (!ArchipelagoClient.Authenticated)
+        {
+            ArchipelagoConsole.LogMessage("Error: Not connected to Archipelago. Please connect first.");
+            return;
+        }
+
+        if (!ModInstance.HasInitializedRooms)
+        {
+            ArchipelagoConsole.LogMessage("Error: Rooms have not been initialized yet. Start a run first.");
+            return;
+        }
+
+        // Check if RoomDraftSanity is enabled
+        if (!ArchipelagoOptions.RoomDraftSanity)
+        {
+            ArchipelagoConsole.LogMessage("RoomDraftSanity is disabled in your Archipelago options.");
+            ArchipelagoConsole.LogMessage("Room drafts will use vanilla behavior. No sync needed.");
+            return;
+        }
+
+        var receivedItems = ArchipelagoClient.ServerData.ReceivedItems;
+
+        // Re-load arrays first to ensure we have fresh references
+        ModInstance.ReloadArrays();
+
+        // First, clear ALL rooms for Archipelago mode (disables vanilla handling too)
+        Plugin.ModRoomManager.ClearAllRoomsForArchipelago();
+
+        int syncedCount = 0;
+        int skippedCount = 0;
+
+        // Then unlock rooms that are in received items
+        if (receivedItems != null && receivedItems.Count > 0)
+        {
+            foreach (string itemName in receivedItems)
+            {
+                if (Plugin.ModRoomManager.UnlockRoomForArchipelago(itemName))
+                {
+                    syncedCount++;
+                }
+                else
+                {
+                    // Item is not a room, skip it
+                    skippedCount++;
+                }
+            }
+        }
+
+        // Update the pools after sync
+        Plugin.ModRoomManager.UpdateRoomPools();
+
+        ArchipelagoConsole.LogMessage($"Room sync complete: {syncedCount} rooms unlocked, {skippedCount} non-room items skipped.");
+        ArchipelagoConsole.LogMessage("All rooms set to Archipelago mode (vanilla handling disabled).");
+    }
+
+    private void ShowSyncStatus()
+    {
+        if (!ArchipelagoClient.Authenticated)
+        {
+            ArchipelagoConsole.LogMessage("Status: Not connected to Archipelago");
+            return;
+        }
+
+        var receivedItems = ArchipelagoClient.ServerData.ReceivedItems;
+        int receivedRoomCount = 0;
+        int unlockedRoomCount = 0;
+
+        // Count received rooms
+        if (receivedItems != null)
+        {
+            foreach (string itemName in receivedItems)
+            {
+                if (Plugin.ModRoomManager.GetRoomByName(itemName.ToUpper()) != null)
+                {
+                    receivedRoomCount++;
+                }
+            }
+        }
+
+        // Count unlocked rooms
+        foreach (var room in Plugin.ModRoomManager.Rooms)
+        {
+            if (room.IsUnlocked && !room.UseVanilla)
+            {
+                unlockedRoomCount++;
+            }
+        }
+
+        ArchipelagoConsole.LogMessage($"=== Sync Status ===");
+        ArchipelagoConsole.LogMessage($"Connected: Yes");
+        ArchipelagoConsole.LogMessage($"Received room items: {receivedRoomCount}");
+        ArchipelagoConsole.LogMessage($"Currently unlocked (non-vanilla): {unlockedRoomCount}");
+        ArchipelagoConsole.LogMessage($"Total items received: {receivedItems?.Count ?? 0}");
+    }
+}
+
 public class ParsedCommand {
     public string Command;
     public List<string> Args;
     public ParsedCommand(string command, List<string> args) {
         Command = command;
         Args = args;
+    }
+}
+
+public class ReceivedCommand(string name) : Command(name)
+{
+    private readonly string _Description = "Lists items received from Archipelago";
+    public override string Description
+    {
+        get { return _Description; }
+    }
+    private readonly string _Syntax = "Usage:\n\t/received - List all received items\n\t/received rooms - List only received rooms\n\t/received items - List only received non-room items\n\t/received count - Show counts by category";
+    public override string Syntax
+    {
+        get { return _Syntax; }
+    }
+
+    public override void Run(List<string> Args)
+    {
+        if (!ArchipelagoClient.Authenticated)
+        {
+            ArchipelagoConsole.LogMessage("Not connected to Archipelago.");
+            return;
+        }
+
+        var receivedItems = ArchipelagoClient.ServerData.ReceivedItems;
+        if (receivedItems == null || receivedItems.Count == 0)
+        {
+            ArchipelagoConsole.LogMessage("No items received from Archipelago yet.");
+            return;
+        }
+
+        string subcommand = Args.Count > 0 ? Args[0].ToLower() : "all";
+
+        if (subcommand == "rooms")
+        {
+            ListReceivedRooms(receivedItems);
+        }
+        else if (subcommand == "items")
+        {
+            ListReceivedNonRooms(receivedItems);
+        }
+        else if (subcommand == "count")
+        {
+            ShowCounts(receivedItems);
+        }
+        else
+        {
+            ListAll(receivedItems);
+        }
+    }
+
+    private void ListReceivedRooms(List<string> receivedItems)
+    {
+        var rooms = receivedItems.Where(i => Plugin.ModRoomManager.GetRoomByName(i.ToUpper()) != null).ToList();
+        ArchipelagoConsole.LogMessage($"=== Received Rooms ({rooms.Count}) ===");
+        foreach (var room in rooms)
+        {
+            ModRoom modRoom = Plugin.ModRoomManager.GetRoomByName(room.ToUpper());
+            string poolInfo = modRoom != null ? $" [Pool: {modRoom.RoomsLeftInPool}/{modRoom.RoomPoolCount}]" : "";
+            ArchipelagoConsole.LogMessage($"  {room}{poolInfo}");
+        }
+    }
+
+    private void ListReceivedNonRooms(List<string> receivedItems)
+    {
+        var nonRooms = receivedItems.Where(i => Plugin.ModRoomManager.GetRoomByName(i.ToUpper()) == null).ToList();
+        ArchipelagoConsole.LogMessage($"=== Received Non-Room Items ({nonRooms.Count}) ===");
+        foreach (var item in nonRooms)
+        {
+            string type = Plugin.ModItemManager.GetItemType(item) ?? "Unknown";
+            ArchipelagoConsole.LogMessage($"  [{type}] {item}");
+        }
+    }
+
+    private void ShowCounts(List<string> receivedItems)
+    {
+        int roomCount = 0;
+        int permanentCount = 0;
+        int junkCount = 0;
+        int unknownCount = 0;
+
+        foreach (var item in receivedItems)
+        {
+            if (Plugin.ModRoomManager.GetRoomByName(item.ToUpper()) != null)
+            {
+                roomCount++;
+            }
+            else
+            {
+                string type = Plugin.ModItemManager.GetItemType(item);
+                if (type == "Permanent") permanentCount++;
+                else if (type == "Junk") junkCount++;
+                else unknownCount++;
+            }
+        }
+
+        ArchipelagoConsole.LogMessage($"=== Received Item Counts ===");
+        ArchipelagoConsole.LogMessage($"  Rooms:     {roomCount}");
+        ArchipelagoConsole.LogMessage($"  Permanent: {permanentCount}");
+        ArchipelagoConsole.LogMessage($"  Junk:      {junkCount}");
+        ArchipelagoConsole.LogMessage($"  Unknown:   {unknownCount}");
+        ArchipelagoConsole.LogMessage($"  Total:     {receivedItems.Count}");
+    }
+
+    private void ListAll(List<string> receivedItems)
+    {
+        ArchipelagoConsole.LogMessage($"=== All Received Items ({receivedItems.Count}) ===");
+        foreach (var item in receivedItems)
+        {
+            bool isRoom = Plugin.ModRoomManager.GetRoomByName(item.ToUpper()) != null;
+            string type = isRoom ? "Room" : (Plugin.ModItemManager.GetItemType(item) ?? "Unknown");
+            ArchipelagoConsole.LogMessage($"  [{type}] {item}");
+        }
+    }
+}
+
+
+
+/// <summary>
+/// Debug command to investigate game systems like FSMs, draft pools, and the Entrance Hall.
+/// </summary>
+public class DebugCommand(string name) : Command(name)
+{
+    private readonly string _Description = "Debug tools to investigate game systems";
+    public override string Description
+    {
+        get { return _Description; }
+    }
+    private readonly string _Syntax = "Usage:\n\t/debug entrance - Investigate Entrance Hall FSM\n\t/debug arrays - List all picker arrays\n\t/debug pool <ArrayName> - List rooms in array with status\n\t/debug poolstatus - Check POOL REMOVAL for all rooms\n\t/debug fsm <path> - Inspect FSM at path\n\t/debug grid - Show current grid/draft info";
+    public override string Syntax
+    {
+        get { return _Syntax; }
+    }
+
+    public override void Run(List<string> Args)
+    {
+        if (Args.Count < 1)
+        {
+            ArchipelagoConsole.LogMessage($"Error: No subcommand provided.\n{_Syntax}");
+            return;
+        }
+
+        string subcommand = Args[0].ToLower();
+
+        if (subcommand == "entrance")
+        {
+            InvestigateEntranceHall();
+        }
+        else if (subcommand == "arrays")
+        {
+            ListPickerArrays();
+        }
+        else if (subcommand == "grid")
+        {
+            ShowGridInfo();
+        }
+        else if (subcommand == "fsm" && Args.Count > 1)
+        {
+            string path = string.Join(" ", Args.Skip(1));
+            InspectFSM(path);
+        }
+        else if (subcommand == "pool" && Args.Count > 1)
+        {
+            string arrayName = string.Join(" ", Args.Skip(1));
+            InspectPoolArray(arrayName);
+        }
+        else if (subcommand == "poolstatus")
+        {
+            CheckAllPoolRemoval();
+        }
+        else
+        {
+            ArchipelagoConsole.LogMessage($"Error: Unknown subcommand '{subcommand}'.\n{_Syntax}");
+        }
+    }
+
+    private void InvestigateEntranceHall()
+    {
+        ArchipelagoConsole.LogMessage("=== Investigating Entrance Hall Draft System ===");
+
+        // Look for the Entrance Hall room engine
+        GameObject entranceEngine = GameObject.Find("__SYSTEM/The Room Engines/ENTRANCE HALL");
+        if (entranceEngine != null)
+        {
+            ArchipelagoConsole.LogMessage($"Found Entrance Hall engine at: {entranceEngine.name}");
+
+            // List all FSMs on this object
+            var fsms = entranceEngine.GetComponents<PlayMakerFSM>();
+            foreach (var fsm in fsms)
+            {
+                ArchipelagoConsole.LogMessage($"  FSM: {fsm.FsmName}");
+
+                // Look for relevant variables
+                foreach (var boolVar in fsm.FsmVariables.BoolVariables)
+                {
+                    if (boolVar.Name.ToUpper().Contains("POOL") || boolVar.Name.ToUpper().Contains("DRAFT"))
+                    {
+                        ArchipelagoConsole.LogMessage($"    Bool: {boolVar.Name} = {boolVar.Value}");
+                    }
+                }
+            }
+        }
+        else
+        {
+            ArchipelagoConsole.LogMessage("Entrance Hall engine not found!");
+        }
+
+        // Look for Entrance Hall specific picker/draft components
+        GameObject planPicker = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER");
+        if (planPicker != null)
+        {
+            ArchipelagoConsole.LogMessage($"\nPlan Picker children count: {planPicker.transform.childCount}");
+
+            // Look for anything with "Entrance" or "Hall" in the name
+            for (int i = 0; i < planPicker.transform.childCount; i++)
+            {
+                var child = planPicker.transform.GetChild(i);
+                string childName = child.name.ToUpper();
+                if (childName.Contains("ENTRANCE") || childName.Contains("HALL") || childName.Contains("FRONT") || childName.Contains("FIRST"))
+                {
+                    ArchipelagoConsole.LogMessage($"  [{i}] {child.name}");
+                    var proxy = child.GetComponent<PlayMakerArrayListProxy>();
+                    if (proxy != null)
+                    {
+                        ArchipelagoConsole.LogMessage($"       Array count: {proxy.GetCount()}");
+                    }
+                }
+            }
+        }
+
+        // Look for "Entrance Draft" or similar GameObjects
+        string[] searchPaths = [
+            "__SYSTEM/THE DRAFT/ENTRANCE",
+            "__SYSTEM/THE DRAFT/ENTRANCE HALL",
+            "__SYSTEM/THE DRAFT/FRONT DOOR",
+            "__SYSTEM/THE DRAFT/PLAN PICKER/ENTRANCE",
+            "__SYSTEM/THE DRAFT/PLAN PICKER/FRONT"
+        ];
+
+        foreach (var path in searchPaths)
+        {
+            var obj = GameObject.Find(path);
+            if (obj != null)
+            {
+                ArchipelagoConsole.LogMessage($"\nFound: {path}");
+                var fsms = obj.GetComponents<PlayMakerFSM>();
+                foreach (var fsm in fsms)
+                {
+                    ArchipelagoConsole.LogMessage($"  FSM: {fsm.FsmName}");
+                }
+            }
+        }
+
+        // Check the Grid for current draft info
+        if (ModInstance.TheGrid != null)
+        {
+            ArchipelagoConsole.LogMessage($"\nGrid Variables:");
+            var planPickVar = ModInstance.TheGrid.GetGameObjectVariable("theplanpick");
+            if (planPickVar != null && planPickVar.Value != null)
+            {
+                ArchipelagoConsole.LogMessage($"  Current plan picker: {planPickVar.Value.name}");
+            }
+
+            var currentRoom = ModInstance.TheGrid.GetStringVariable("CURRENT ROOM");
+            if (currentRoom != null)
+            {
+                ArchipelagoConsole.LogMessage($"  Current room: {currentRoom.Value}");
+            }
+        }
+    }
+
+    private void ListPickerArrays()
+    {
+        ArchipelagoConsole.LogMessage("=== All Picker Arrays ===");
+
+        if (ModInstance.PickerDict == null || ModInstance.PickerDict.Count == 0)
+        {
+            ArchipelagoConsole.LogMessage("No picker arrays loaded.");
+            return;
+        }
+
+        foreach (var kvp in ModInstance.PickerDict)
+        {
+            int count = kvp.Value?.GetCount() ?? 0;
+            ArchipelagoConsole.LogMessage($"  {kvp.Key}: {count} rooms");
+        }
+
+        // Also list all children of Plan Picker to find any we might have missed
+        GameObject planPicker = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER");
+        if (planPicker != null)
+        {
+            ArchipelagoConsole.LogMessage($"\nAll Plan Picker children ({planPicker.transform.childCount} total):");
+            for (int i = 0; i < Mathf.Min(planPicker.transform.childCount, 65); i++)
+            {
+                var child = planPicker.transform.GetChild(i);
+                var proxy = child.GetComponent<PlayMakerArrayListProxy>();
+                string proxyInfo = proxy != null ? $" [Array: {proxy.GetCount()}]" : "";
+
+                // Check if this is in our PickerDict
+                bool tracked = ModInstance.PickerDict.ContainsKey(child.name.Trim());
+                string trackedInfo = tracked ? "" : " *NOT TRACKED*";
+
+                ArchipelagoConsole.LogMessage($"  [{i}] {child.name}{proxyInfo}{trackedInfo}");
+            }
+        }
+    }
+
+    private void ShowGridInfo()
+    {
+        ArchipelagoConsole.LogMessage("=== Grid/Draft Info ===");
+
+        if (ModInstance.TheGrid == null)
+        {
+            ArchipelagoConsole.LogMessage("Grid not initialized.");
+            return;
+        }
+
+        // List all variables
+        foreach (var strVar in ModInstance.TheGrid.FsmVariables.StringVariables)
+        {
+            ArchipelagoConsole.LogMessage($"  String: {strVar.Name} = {strVar.Value}");
+        }
+
+        foreach (var boolVar in ModInstance.TheGrid.FsmVariables.BoolVariables)
+        {
+            ArchipelagoConsole.LogMessage($"  Bool: {boolVar.Name} = {boolVar.Value}");
+        }
+
+        foreach (var goVar in ModInstance.TheGrid.FsmVariables.GameObjectVariables)
+        {
+            string goName = goVar.Value != null ? goVar.Value.name : "null";
+            ArchipelagoConsole.LogMessage($"  GameObject: {goVar.Name} = {goName}");
+        }
+    }
+
+    private void InspectFSM(string path)
+    {
+        GameObject obj = GameObject.Find(path);
+        if (obj == null)
+        {
+            ArchipelagoConsole.LogMessage($"GameObject not found at: {path}");
+            return;
+        }
+
+        ArchipelagoConsole.LogMessage($"=== FSMs at {path} ===");
+
+        var fsms = obj.GetComponents<PlayMakerFSM>();
+        if (fsms.Length == 0)
+        {
+            ArchipelagoConsole.LogMessage("No FSMs found on this object.");
+            return;
+        }
+
+        foreach (var fsm in fsms)
+        {
+            ArchipelagoConsole.LogMessage($"\nFSM: {fsm.FsmName}");
+            ArchipelagoConsole.LogMessage($"  Active State: {fsm.ActiveStateName}");
+            ArchipelagoConsole.LogMessage($"  States ({fsm.FsmStates.Length}):");
+
+            foreach (var state in fsm.FsmStates)
+            {
+                ArchipelagoConsole.LogMessage($"    - {state.Name}");
+            }
+
+            ArchipelagoConsole.LogMessage($"  Global Transitions:");
+            foreach (var trans in fsm.FsmGlobalTransitions)
+            {
+                ArchipelagoConsole.LogMessage($"    - {trans.EventName} -> {trans.ToState}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Lists all rooms in a specific picker array and checks their POOL REMOVAL status.
+    /// Usage: /debug pool "FRONT - Tier 1"
+    /// </summary>
+    public void InspectPoolArray(string arrayName)
+    {
+        if (!ModInstance.PickerDict.ContainsKey(arrayName))
+        {
+            ArchipelagoConsole.LogMessage($"Array '{arrayName}' not found in PickerDict.");
+            ArchipelagoConsole.LogMessage("Available arrays:");
+            foreach (var key in ModInstance.PickerDict.Keys.Take(20))
+            {
+                ArchipelagoConsole.LogMessage($"  - {key}");
+            }
+            return;
+        }
+
+        var array = ModInstance.PickerDict[arrayName];
+        ArchipelagoConsole.LogMessage($"=== Pool Array: {arrayName} ({array.GetCount()} rooms) ===");
+
+        for (int i = 0; i < array.GetCount(); i++)
+        {
+            var roomObj = array.arrayList[i].TryCast<GameObject>();
+            if (roomObj != null)
+            {
+                string roomName = roomObj.name;
+
+                // Check the room's POOL REMOVAL status
+                string poolRemovalStatus = "?";
+                var roomEngine = GameObject.Find("__SYSTEM/The Room Engines/" + roomName);
+                if (roomEngine != null)
+                {
+                    var fsm = roomEngine.GetFsm(roomName);
+                    if (fsm != null)
+                    {
+                        var poolRemoval = fsm.GetBoolVariable("POOL REMOVAL");
+                        if (poolRemoval != null)
+                        {
+                            poolRemovalStatus = poolRemoval.Value ? "REMOVED" : "AVAILABLE";
+                        }
+                    }
+                }
+
+                // Check our ModRoom status
+                var modRoom = Plugin.ModRoomManager.GetRoomByName(roomName);
+                string modStatus = modRoom != null ? (modRoom.IsUnlocked ? "Unlocked" : "Locked") : "Not tracked";
+
+                ArchipelagoConsole.LogMessage($"  [{i}] {roomName} - FSM:{poolRemovalStatus}, Mod:{modStatus}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Check POOL REMOVAL status for all room engines.
+    /// </summary>
+    public void CheckAllPoolRemoval()
+    {
+        ArchipelagoConsole.LogMessage("=== Checking POOL REMOVAL for All Room Engines ===");
+
+        var roomEngines = GameObject.Find("__SYSTEM/The Room Engines");
+        if (roomEngines == null)
+        {
+            ArchipelagoConsole.LogMessage("Room Engines not found!");
+            return;
+        }
+
+        int available = 0;
+        int removed = 0;
+        int unknown = 0;
+
+        for (int i = 0; i < roomEngines.transform.childCount; i++)
+        {
+            var child = roomEngines.transform.GetChild(i);
+            var fsm = child.GetComponent<PlayMakerFSM>();
+
+            if (fsm != null)
+            {
+                var poolRemoval = fsm.GetBoolVariable("POOL REMOVAL");
+                if (poolRemoval != null)
+                {
+                    if (poolRemoval.Value)
+                    {
+                        removed++;
+                        // Only log removed rooms (to keep output manageable)
+                        // ArchipelagoConsole.LogMessage($"  REMOVED: {child.name}");
+                    }
+                    else
+                    {
+                        available++;
+                    }
+                }
+                else
+                {
+                    unknown++;
+                }
+            }
+        }
+
+        ArchipelagoConsole.LogMessage($"Summary: {available} available, {removed} removed, {unknown} unknown");
+        ArchipelagoConsole.LogMessage($"Total room engines: {roomEngines.transform.childCount}");
     }
 }

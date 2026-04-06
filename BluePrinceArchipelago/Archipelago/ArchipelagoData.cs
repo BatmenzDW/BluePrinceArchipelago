@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Archipelago.MultiClient.Net.Models;
 using BluePrinceArchipelago.Models;
+using HutongGames.PlayMaker.Actions;
 namespace BluePrinceArchipelago.Archipelago;
 
 public class ArchipelagoData (string uri = "localhost:38281", string slotName = "Player1", string password = "")
@@ -18,4 +19,5 @@ public class ArchipelagoData (string uri = "localhost:38281", string slotName = 
     public Dictionary<long, string> LocationDict = new(); //Stores all locationids and what name that represents.
     public Dictionary<long, string> ItemDict = new(); //Stores all items that are in this game, and their name.
     public Dictionary<long, ScoutedItemInfo> LocationItemMap = new(); //Maps the location id to it's associated item reward.
+    public Dictionary<string, Object> OptionsDict = new(); //Stores all options and their values. Key is the option name, value is the option value.
 }
