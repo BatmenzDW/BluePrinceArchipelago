@@ -36,6 +36,15 @@ namespace BluePrinceArchipelago.Models
         [JsonProperty("item_logic_mode")]
         public ItemLogicMode ItemLogicMode { get; set; }
 
+        [JsonProperty("filler_item_distribution")]
+        public Dictionary<string, int> FillerItemDistribution { get; set; }
+
+        [JsonProperty("trap_type_distribution")]
+        public Dictionary<string, int> TrapTypeDistribution { get; set; }
+
+        [JsonProperty("trap_percentage")]
+        public int TrapPercentage { get; set; }
+
         [JsonProperty("death_link_type")]
         public DeathLinkType DeathLinkType { get; set; }
 
@@ -53,5 +62,6 @@ namespace BluePrinceArchipelago.Models
 
         [JsonProperty("start_inventory")]
         public Dictionary<string, int> StartInventory { get; set; }
+
     }
 }
