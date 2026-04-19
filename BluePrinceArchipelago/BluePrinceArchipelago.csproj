@@ -22,7 +22,11 @@
         <OutputPath>$(BluePrinceDir)\BepInEx\plugins\$(AssemblyName)</OutputPath>
         <DefineConstants>DEBUG;TRACE</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
+<<<<<<< HEAD
         <IsPublishable>False</IsPublishable>
+=======
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+>>>>>>> 6f302da (Update to tweak the build process and to start adding ListItems)
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
         <DebugType>none</DebugType>
@@ -50,7 +54,8 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.755" IncludeAssets="compile" />
+        <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.755" IncludeAssets="compile"/>
+        <PackageReference Include="Samboy063.Cpp2IL.Core" Version="2022.1.0-development.1452" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">

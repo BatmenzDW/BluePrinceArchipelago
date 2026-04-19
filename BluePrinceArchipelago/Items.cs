@@ -59,6 +59,23 @@ namespace BluePrinceArchipelago.Core
                 Logging.Log($"Item {item.Name} already added, can't add multiple copies.");
             }
         }
+
+        public string ListItems()
+        {
+            string output = "";
+            for (int i = 0; i < PreSpawn.GetCount(); i++)
+            {
+                GameObject pickedupItem = PreSpawn.arrayList[i].TryCast<GameObject>();
+                if (pickedupItem != null)
+                {
+                    output += pickedupItem.name;
+                    output += "\n";
+                }
+            }
+            return output;
+
+        }
+
         public void AddTrap(Trap trap)
         {
             TrapList.Add(trap);

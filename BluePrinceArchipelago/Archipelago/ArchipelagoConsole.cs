@@ -638,7 +638,7 @@ public class ItemCommand(string name) : Command(name) {
     {
         get { return _Description; }
     }
-    private string _Syntax = "Usage\n/Item Add <Item>\n/Item Remove <Item>";
+    private string _Syntax = "Usage\n/Item Add <Item>\n/Item Remove <Item>\n/Item List";
     public override string Syntax
     {
         get { return _Syntax; }
@@ -660,6 +660,9 @@ public class ItemCommand(string name) : Command(name) {
                 {
                     itemName += " " + Args[i];
                 }
+
+                ArchipelagoConsole.LogMessage($"Attemping to add item {itemName}");
+
                 GameObject item = Plugin.ModItemManager.GetPreSpawnItem(itemName);
                 if (item == null) {
                     ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {itemName} Has already been spawned or is not in the spawn pool");
@@ -757,7 +760,15 @@ public class ItemCommand(string name) : Command(name) {
             ArchipelagoConsole.LogMessage($"Error Running Command {Name}: invalid subcommand {subcommand}");
             return;
         }
-        ArchipelagoConsole.LogMessage($"Error Running Command {Name}: no parameters provided.");
+        if ((Args.Count == 1) && Args[0].ToLower() == "list")
+        {
+            ArchipelagoConsole.LogMessage("Running Item List");
+           ArchipelagoConsole.LogMessage($"Item list \n{Plugin.ModItemManager.ListItems()}");
+
+            
+        }
+        else
+            ArchipelagoConsole.LogMessage($"Error Running Command {Name}: no parameters provided.");
     }
 }
 public class HelpCommand(string name) : Command(name) {
