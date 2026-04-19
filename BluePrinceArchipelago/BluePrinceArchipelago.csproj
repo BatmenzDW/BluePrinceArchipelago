@@ -22,11 +22,8 @@
         <OutputPath>$(BluePrinceDir)\BepInEx\plugins\$(AssemblyName)</OutputPath>
         <DefineConstants>DEBUG;TRACE</DefineConstants>
         <ErrorReport>prompt</ErrorReport>
-<<<<<<< HEAD
         <IsPublishable>False</IsPublishable>
-=======
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
->>>>>>> 6f302da (Update to tweak the build process and to start adding ListItems)
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
         <DebugType>none</DebugType>

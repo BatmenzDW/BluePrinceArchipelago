@@ -63,9 +63,9 @@ namespace BluePrinceArchipelago.Core
         public string ListItems()
         {
             string output = "";
-            for (int i = 0; i < PreSpawn.GetCount(); i++)
+            foreach (var pickedupItem in PreSpawn.arrayList)
             {
-                GameObject pickedupItem = PreSpawn.arrayList[i].TryCast<GameObject>();
+                GameObject itemAsGO = pickedupItem.TryCast<Gameobject>();
                 if (pickedupItem != null)
                 {
                     output += pickedupItem.name;
