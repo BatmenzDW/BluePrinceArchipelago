@@ -492,11 +492,19 @@ namespace BluePrinceArchipelago.Core
         {
             if (!IsUnlocked)
             {
-                GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL")?.Value = false;
+                FsmBool poolRemoval = GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL");
+                if (poolRemoval != null)
+                {
+                    GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL")?.Value = false;
+                }
             }
             else
             {
-                GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL")?.Value = false;
+                FsmBool poolRemoval = GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL");
+                if (poolRemoval != null)
+                {
+                    GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL")?.Value = false;
+                }
             }
         }
         // Helper function that updates 1 array at a time.
@@ -547,7 +555,11 @@ namespace BluePrinceArchipelago.Core
                 else if (count > 0 && !_UseVanilla)
                 {
                     RemoveFromPool(array, count);
-                    GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL")?.Value = false; //Set the FSMBool to true so that it removes the room from the pool.
+                    FsmBool poolRemoval = GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL");
+                    if (poolRemoval != null)
+                    {
+                        GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL")?.Value = false;
+                    } //Set the FSMBool to true so that it removes the room from the pool.
                 }
             }
         }
