@@ -12,13 +12,14 @@ namespace BluePrinceArchipelago.Models
 
         public string GetScoutHint()
         {
+            if (!ArchipelagoClient.Authenticated || ArchipelagoClient.ServerData.ReceivedItems.Contains(Name))
+                return Name;
+
             if (ScoutHint != null)
                 return ScoutHint;
 
-            string locationName;
-            if (Name.Contains("Upgrade Disk"))
-                locationName = Name + " - Commissary";
-            else
+            string locationName = Name;
+            if (!Name.Contains("Upgrade Disk"))
                 locationName = Name + " First Pickup";
 
             long locationid = Plugin.ArchipelagoClient.GetLocationFromName(locationName);

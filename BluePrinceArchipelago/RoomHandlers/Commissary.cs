@@ -77,6 +77,9 @@ public class Commissary : RoomHandler
                         {
                             var itemName = setFsmString.setValue.Value;
 
+                            if (itemName.Contains("Upgrade Disk"))
+                                itemName += " - Commissary";
+
                             if (!LocationMap.ContainsKey(itemName))
                             {
                                 LocationMap.Add(itemName, new Models.ShopItem
