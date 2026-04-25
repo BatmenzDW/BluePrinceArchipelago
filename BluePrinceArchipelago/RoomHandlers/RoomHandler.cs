@@ -11,7 +11,8 @@ public abstract class RoomHandler
     {
         return roomName switch
         {
-            "COMMISSARY" => new Commissary(), // Placeholder values, eventually these should be set in the yaml
+            "COMMISSARY" => new Commissary(),
+            "SHOWROOM" => new Showroom(),
             _ => null
         };
     }

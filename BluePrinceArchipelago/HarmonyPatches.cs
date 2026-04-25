@@ -16,6 +16,7 @@ namespace BluePrinceArchipelago
         {
             if (__instance != null)
             {
+                Logging.Log("PmtSpawn OnEnter Postfix called.");
                 GameObject obj = __instance.gameObject?.value;
                 string poolName = __instance.poolName?.value;
                 GameObject transformObj = __instance.spawnTransform?.value;
