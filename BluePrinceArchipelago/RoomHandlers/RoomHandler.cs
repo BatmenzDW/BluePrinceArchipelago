@@ -16,6 +16,7 @@ public abstract class RoomHandler
             "SHOWROOM" => new Showroom(),
             "THE ARMORY" => new Armory(),
             "BOOKSHOP" => new Bookshop(),
+            "GIFT SHOP" => new GiftShop(),
             _ => null
         };
     }

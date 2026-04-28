@@ -11,11 +11,6 @@ namespace BluePrinceArchipelago.RoomHandlers
         {
             Logging.Log("Initializing Bookshop.");
             _BookshopMenu = GameObject.Find("UI OVERLAY CAM").transform.Find("Bookshop Menu")?.gameObject;
-
-            if (_BookshopMenu == null)
-            {
-                Logging.LogError("Failed to find Bookshop Menu GameObject.");
-            }
         }
 
         public override void OnRoomDrafted(GameObject roomGameObject)
@@ -53,7 +48,7 @@ namespace BluePrinceArchipelago.RoomHandlers
 
                 if (!Showroom.LocationMap.ContainsKey(target))
                 {
-                    Showroom.LocationMap.Add(target, new Models.ShopItem
+                    Showroom.LocationMap.Add(target, new Models.BookshopItem
                     {
                         Name = target,
                     });
