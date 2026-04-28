@@ -15,6 +15,7 @@ public abstract class RoomHandler
             "COMMISSARY" => new Commissary(),
             "SHOWROOM" => new Showroom(),
             "THE ARMORY" => new Armory(),
+            "BOOKSHOP" => new Bookshop(),
             _ => null
         };
     }
