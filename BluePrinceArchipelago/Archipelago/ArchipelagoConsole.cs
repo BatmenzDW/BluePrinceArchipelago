@@ -1462,9 +1462,15 @@ public class CollectCommand(string name) : Command(name)
 
     public override void Run(List<string> Args)
     {
-        var locationName = string.Join(" ", Args.Skip(1));
+        var locationName = string.Join(" ", Args);
         if (locationName.StartsWith("\"") && locationName.EndsWith("\""))
             locationName = locationName[1..^1];
+
+        if (locationName == "goal")
+        {
+            Plugin.ArchipelagoClient.GoalCompleted();
+            return;
+        }
 
         ModInstance.ModEventHandler.OnOtherLocation(locationName);
     }
