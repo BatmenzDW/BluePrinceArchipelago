@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using HutongGames.PlayMaker.Actions;
 using HutongGames.PlayMaker;
+using Il2CppSystem.Runtime.Remoting.Messaging;
 
 namespace BluePrinceArchipelago.Core
 {
@@ -17,7 +18,7 @@ namespace BluePrinceArchipelago.Core
         public bool IsForcingDraft = false;
 
         public static List<string> VanillaRooms = [];
-        public static List<string> CantCopy = ["ANTECHAMBER", "ENTERANCE HALL", "ROOM 46", "FOUNDATION"];
+        public static List<string> CantCopy = ["ANTECHAMBER", "ENTERANCE HALL", "ROOM 46", "FOUNDATION", ""];
 
         public static List<string> CurrentPickerArrays = [];
 
@@ -39,7 +40,7 @@ namespace BluePrinceArchipelago.Core
             Logging.Log("ModRoomManager reset.");
         }
 
-        public void AddRoom(ModRoom room) {
+        public ModRoom AddRoom(ModRoom room) {
             bool found = false;
             int counter = -1;
             // check if room already exists in the room pool
@@ -61,7 +62,7 @@ namespace BluePrinceArchipelago.Core
                     VanillaRooms.Add(room.Name);
                 }
             }
-
+            return room;
         }
         public void ForceDraft(string roomname) {
             ModRoom room = GetRoomByName(roomname);
@@ -183,8 +184,8 @@ namespace BluePrinceArchipelago.Core
             /// <summary>
             /// Adds a room with the same name for both the room and its game object path.
             /// </summary>
-            public void AddRoom(string name, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false) {
-                AddRoom(name, name, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted);
+            public ModRoom AddRoom(string name, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false) {
+                return AddRoom(name, name, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted);
             }
 
             /// <summary>
@@ -192,14 +193,14 @@ namespace BluePrinceArchipelago.Core
             /// </summary>
             /// <param name="name">The name used internally by the mod (e.g., "CLASSROOM (1)")</param>
             /// <param name="gameObjectName">The actual name of the game object in Room Engines (e.g., "CLASSROOM")</param>
-            public void AddRoom(string name, string gameObjectName, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false) {
+            public ModRoom AddRoom(string name, string gameObjectName, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false) {
                 string roomPath = "__SYSTEM/The Room Engines/" + gameObjectName;
                 GameObject roomObj = GameObject.Find(roomPath);
                 if (roomObj == null)
                 {
                     Logging.LogWarning($"Could not find room GameObject at '{roomPath}' for room '{name}'");
                 }
-                AddRoom(new ModRoom(name, gameObjectName, roomObj, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted));
+                return AddRoom(new ModRoom(name, gameObjectName, roomObj, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted));
             }
 
             public void UpdateRoomPools() {
@@ -352,6 +353,9 @@ namespace BluePrinceArchipelago.Core
         public List<string> PickerArrays { get { return _PickerArrays; } set { _PickerArrays = value; } }
 
         private bool _IsUnlocked = isUnlocked;
+
+        public List<Func<ModRoom,bool>> Dependencies = new List<Func<ModRoom, bool>>();
+
         public bool IsUnlocked {
             get { return _IsUnlocked; }
             set {
@@ -360,7 +364,7 @@ namespace BluePrinceArchipelago.Core
                 GameObject roomEngine = GameObject.Find(roomPath);
                 if (roomEngine != null)
                 {
-                    PlayMakerFSM fsm = roomEngine.GetFsm(_GameObjectName);
+                    PlayMakerFSM fsm = roomEngine.GetComponent<PlayMakerFSM>();
                     if (fsm != null)
                     {
                         FsmBool poolRemovalVar = fsm.GetBoolVariable("POOL REMOVAL");
@@ -460,6 +464,13 @@ namespace BluePrinceArchipelago.Core
                     return;
                 }
             }
+            //Checks dependencies of the room before adding it to the draft pool.
+            foreach (Func<ModRoom, bool> dependency in Dependencies) {
+                if (!dependency(this)) {
+                    Logging.LogWarning($"Cannot add {_Name} to pool: Dependency not met");
+                    return;
+                }
+            }
 
             for (int i = 0; i < count; i++)
             {
@@ -495,7 +506,7 @@ namespace BluePrinceArchipelago.Core
                 FsmBool poolRemoval = GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL");
                 if (poolRemoval != null)
                 {
-                    GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL")?.Value = false;
+                    GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL")?.Value = true;
                 }
             }
             else
@@ -551,15 +562,15 @@ namespace BluePrinceArchipelago.Core
                 else if (_RoomPoolCount > 1 && _RoomPoolCount -1 != count && _UseVanilla && ! ModRoomManager.CantCopy.Contains(_Name)) {
                     AddToPool(array, _RoomPoolCount -1);
                 }
-                // If the room is in the pool and shouldn't be remove it if it isn't using vanilla logic.
+                // If copies in pool and not set to use vanilla logic, remove from pool.
                 else if (count > 0 && !_UseVanilla)
                 {
                     RemoveFromPool(array, count);
                     FsmBool poolRemoval = GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL");
                     if (poolRemoval != null)
                     {
-                        GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL")?.Value = false;
-                    } //Set the FSMBool to true so that it removes the room from the pool.
+                        poolRemoval.Value = true;
+                    }
                 }
             }
         }
@@ -611,6 +622,13 @@ namespace BluePrinceArchipelago.Core
                 }
             }
         }
-    }
 
+        public void AddDependency(Func<ModRoom, bool> dependency)
+        {
+            Dependencies.Add(dependency);
+        }
+        public void AddDependencies(params Func<ModRoom, bool>[] dependencies) {
+            Dependencies.AddRange(dependencies);
+        }
+    }
 }

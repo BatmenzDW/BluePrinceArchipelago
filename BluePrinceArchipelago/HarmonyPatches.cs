@@ -1,4 +1,6 @@
-﻿using BluePrinceArchipelago.Utils;
+﻿using BluePrince;
+using BluePrinceArchipelago.Core;
+using BluePrinceArchipelago.Utils;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
@@ -23,7 +25,6 @@ namespace BluePrinceArchipelago
                 // Unsure why this results in a null object in some instances.
                 if (poolName == "Pickup" && obj != null)
                 {
-                    
                     Plugin.UniqueItemManager.OnItemSpawn(obj, poolName, transformObj, spawnedObj);
                     //Can theoritically replace the game object spawned by replacing the __instance.gameObject.
                 }
@@ -118,6 +119,23 @@ namespace BluePrinceArchipelago
                     }
                 }
             }
+        }
+    }
+
+    public class ManagerPatches() 
+    {
+        [HarmonyPatch(typeof(ActionPromptData), "TriggerCallback")]
+        [HarmonyPrefix]
+        static void Prefix(ActionPromptData __instance) {
+            string callbackName = __instance.Callback_TargetFSM?.GameObject?.name;
+            if (callbackName == null) {
+                callbackName = __instance.Callback_TargetEvent?.Name;
+            }
+            if (callbackName == null)
+            {
+                callbackName = __instance.Callback_Method.Method.Name ?? "Not Found";
+            }
+            Logging.Log($"BP Action {__instance.Type.ToString()} was triggered with the callback: {callbackName}.");
         }
     }
 }

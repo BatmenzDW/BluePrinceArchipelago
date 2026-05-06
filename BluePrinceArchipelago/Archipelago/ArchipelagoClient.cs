@@ -447,7 +447,7 @@ public class ArchipelagoClient
             ServerData.CheckedLocations.Add(locationid);
             State.UpdateLocations(ServerData.CheckedLocations);
         }
-        else {
+        else if (locationid > 1) {
             Logging.Log($"Unable to send location for {ServerData.LocationDict[locationid]}. Location has already been sent or is not being used for this seed.");
         }
     }
@@ -538,9 +538,20 @@ public class ArchipelagoQueueManager {
                 }
                 return false;
             }
+            // If the item is an upgrade disk.
+            if (item.ItemName.ToUpper().Contains("UPGRADE DISK"))
+            {
+                if (ModInstance.IsInRun)
+                {
+                    // Trim the name of the item to remove the upgrade disk part.
+                    ModItemManager.UpgradeDisks.AddItemToInventory(item.ItemName.ToUpper().Replace("UPGRADE DISK ", ""));
+                    return true;
+                }
+                return false;
+            }
             // if not handle it as an Item.
             string itemType = Plugin.ModItemManager.GetItemType(item.ItemName);
-            if (itemType != null) {
+            if (itemType == null) {
                 Logging.LogWarning($"Error receiving item {item.ItemName}: Item does not exist or is not currently handled by the mod.");
                 return true;
             }
@@ -581,9 +592,20 @@ public class ArchipelagoQueueManager {
                 }
                 return false;
             }
+            // If the item is an upgrade disk.
+            if (item.ItemName.ToUpper().Contains("UPGRADE DISK")) {
+                if (ModInstance.IsInRun)
+                {
+                    // Trim the name of the item to remove the upgrade disk part.
+                    ModItemManager.UpgradeDisks.AddItemToInventory(item.ItemName.ToUpper().Replace("UPGRADE DISK ", ""));
+                    State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
+                    return true;
+                }
+                return false;
+            }
             // if not handle it as an Item.
             string itemType = Plugin.ModItemManager.GetItemType(item.ItemName);
-            if (itemType != null)
+            if (itemType == null)
             {
                 Logging.LogWarning($"Error receiving item {item.ItemName}: Item does not exist or is not currently handled by the mod.");
                 return true;

@@ -30,6 +30,9 @@ namespace BluePrinceArchipelago.Events
         public void OnFirstFound(ModItem item) {
             LocationFound.Invoke(this, new LocationEventArgs($"{item.Name.ToTitleCase()} First Pickup", "Item First Pickup"));
         }
+        public void OnFirstFound(string itemName) {
+            LocationFound.Invoke(this, new LocationEventArgs($"{itemName.ToTitleCase()}", "Item First Pickup"));
+        }
         public void OnTrunkOpened(string roomName, int trunkCount) {
             LocationFound.Invoke(this, new LocationEventArgs($"{roomName.ToTitleCase()} Locked Trunk {trunkCount}", "Locked Trunk Unlocked"));
         }

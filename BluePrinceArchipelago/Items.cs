@@ -1,10 +1,15 @@
 ﻿using Archipelago.MultiClient.Net.Models;
+using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Utils;
+using HutongGames.PlayMaker;
 using Il2CppSystem.Collections;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Xml.Linq;
 using UnityEngine;
+using static Rewired.UI.ControlMapper.ControlMapper;
 
 namespace BluePrinceArchipelago.Core
 {
@@ -20,6 +25,9 @@ namespace BluePrinceArchipelago.Core
         public static PlayMakerArrayListProxy CoatCheck = new();
         public static PlayMakerArrayListProxy UsedItems = new();
         public static List<Trap> TrapList = new();
+
+        public static UpgradeDisks UpgradeDisks = new UpgradeDisks(null);
+
         public ModItemManager()
         {
         }
@@ -35,7 +43,104 @@ namespace BluePrinceArchipelago.Core
             PickedUp = GameObject.Find("__SYSTEM/Inventory/Inventory (PickedUp)")?.GetArrayListProxy("Inventory (PickedUp)");
             CoatCheck = GameObject.Find("__SYSTEM/Inventory/Inventory (CoatCheck)")?.GetArrayListProxy("Inventory (CoatCheck)");
             UsedItems = GameObject.Find("__SYSTEM/Inventory/Inventory (UsedItems)")?.GetArrayListProxy("Inventory (UsedItems)");
+            UpgradeDisks.GameObj = GameObject.Find("__SYSTEM/Upgrade Disks");
         }
+        public void ReplaceItemsWithAP()
+        {
+            ReplaceUniqueItemsWithAP();
+            ReplaceUpgradeDisksWithAP();
+        }
+
+        public void ReplaceUniqueItemsWithAP()
+        {
+            GameObject prefab = null;
+            foreach (UniqueItem item in UniqueItemList)
+            {
+                if (Plugin.AssetBundle.Contains(item.Name))
+                {
+                    prefab = Plugin.AssetBundle.LoadAsset(item.Name).TryCast<GameObject>();
+                    if (prefab != null)
+                    {
+                        // Get the APswirly Component of the Prefab and reparent it to the spawn prefab.
+                        GameObject APswirly = prefab.transform.GetChild(0)?.gameObject;
+                        if (APswirly != null)
+                        {
+                            GameObject spawnObj = FindSpawnObject(item.Name);
+                            if (spawnObj != null)
+                            {
+                                APswirly.transform.parent = spawnObj.transform;
+                                item.ModelReplaced = true;
+                            }
+                            else {
+                                Logging.LogWarning($"Unable to change spawn prefab for {item.Name}, error finding prefab with name: {item.Name}(Clone)001");
+                            }
+                        }
+                        else
+                        {
+                            Logging.LogWarning($"Unable to find APSwirly for {item.Name}.");
+                        }
+                    }
+                    else
+                    {
+                        Logging.LogWarning($"Unable to find prefab for {item.Name}. Item is either unimplemented or not present in the assets.");
+                    }
+                }
+                else
+                {
+                    Logging.LogWarning($"Unable to find prefab for {item.Name}. Item is either unimplemented or not present in the assets.");
+                }
+                prefab = null;
+            }
+        }
+
+        public void ReplaceYou___Text(string itemName) { 
+
+        }
+
+        // Removes the AP Swirlies from Unique Items. Not needed for regular items.
+        public void RemoveUniqueItemAPSwirly(UniqueItem item) {
+            GameObject spawnObj = FindSpawnObject(item.Name);
+            if (spawnObj == null)
+            {
+                Logging.LogWarning($"Unable to change spawn prefab for {item.Name}, error finding prefab with name: {item.Name}(Clone)001");
+                return;
+            }
+            // Delete the AP Swirly SubObject.
+            GameObject.Destroy(spawnObj.transform.FindChild("AP Swirlie"));
+            item.ModelReplaced = false;
+        }
+
+        public void ReplaceUpgradeDisksWithAP() {
+            GameObject prefab = null;
+            if (Plugin.AssetBundle.Contains("UPGRADE DISK"))
+            {
+                prefab = Plugin.AssetBundle.LoadAsset("UPGRADE DISK").TryCast<GameObject>();
+
+            }
+            if (prefab != null) {
+                GameObject APswirly = prefab.transform.GetChild(0)?.gameObject;
+                for (int i = 1; i < 17; i++)
+                {
+                
+                    if (APswirly != null)
+                    {
+                        // Get the APswirly Component of the Prefab and reparent it to the spawn prefab.
+                        GameObject spawnObj = ModInstance.PickupSpawnPool.transform.FindChild($"UPGRADEDISK(Clone)00{i}")?.gameObject;
+                        if (spawnObj != null)
+                        {
+                            APswirly.transform.parent = spawnObj.transform;
+                        }
+                    }
+                }
+            }
+        }
+
+        private GameObject FindSpawnObject(string name) {
+            name = name + "(Clone)001";
+            GameObject spawnObj = ModInstance.PickupSpawnPool.transform.FindChild(name).gameObject;
+            return spawnObj;
+        }
+
         // Adds a unique item if it doesn't already exist.
         public void AddItem(UniqueItem item)
         {
@@ -178,9 +283,10 @@ namespace BluePrinceArchipelago.Core
         }
         public UniqueItem GetUniqueItem(string name)
         {
+           
             foreach (UniqueItem item in UniqueItemList)
             {
-                if (item.Name.ToLower().Equals(name.ToLower()))
+                if (item.Name.ToLower() == name.ToLower())
                 {
                     return item;
                 }
@@ -192,7 +298,8 @@ namespace BluePrinceArchipelago.Core
         {
             foreach (JunkItem item in JunkItemList)
             {
-                if (item.Name.ToLower().Equals(name.ToLower()))
+                
+                if (item.Name.ToLower() == name.ToLower())
                 {
                     return item;
                 }
@@ -203,7 +310,7 @@ namespace BluePrinceArchipelago.Core
         {
             foreach (PermanentItem item in PermanentItemList)
             {
-                if (item.Name.ToLower().Equals(name.ToLower()))
+                if (item.Name.ToLower() == name.ToLower())
                 {
                     return item;
                 }
@@ -249,6 +356,7 @@ namespace BluePrinceArchipelago.Core
         public string GetItemType(string itemName)
         {
             ModItem item = GetPermanentItem(itemName);
+            itemName = itemName.Trim();
             if (item != null)
             {
                 return "Permanent";
@@ -355,7 +463,7 @@ namespace BluePrinceArchipelago.Core
             int count = PickedUp.arrayList.Count;
             if (count > 0 && ModInstance.IsInRun)
             {
-                int index = Random.Range(0, count);
+                int index = UnityEngine.Random.Range(0, count);
                 PickedUp.RemoveAt(index);
             }
         }
@@ -618,16 +726,21 @@ namespace BluePrinceArchipelago.Core
             {
                 //Activate stars to ensure it can properly be updated.
                 GameObject.Find("__SYSTEM/HUD/Stars").SetActive(true);
-            }
-            int totalStars = ModInstance.StarManager.FindIntVariable("TotalStars").Value;
-            if (totalStars + count > 0)
-            {
-                ModInstance.StarManager.FindIntVariable("TotalStars").Value += count;
+                ModInstance.StarManager.GetIntVariable("TotalStars").Value = count;
             }
             else
             {
-                ModInstance.StarManager.FindIntVariable("TotalStars").Value = 0;
+                int totalStars = ModInstance.StarManager.GetIntVariable("TotalStars").Value;
+                if (totalStars + count > 0)
+                {
+                    ModInstance.StarManager.GetIntVariable("TotalStars").Value += count;
+                }
+                else
+                {
+                    ModInstance.StarManager.GetIntVariable("TotalStars").Value = 0;
+                }
             }
+            ModInstance.StarManager.SendEvent("Update");
         }
     }
     public class ProgressiveItems(string name, GameObject gameObject, bool isUnlocked, int count = 0, bool isPreSpawn = true) : ModItem(name, gameObject, isUnlocked)
@@ -649,6 +762,9 @@ namespace BluePrinceArchipelago.Core
         public List<string> FoundLocations = new List<string>();
         // The locations to which the upgrade disk received has been found at.
         public List<string> RecievedLocations = new List<string>();
+        // The locations to which the upgrade disk received has been used.
+        public List<string> UsedLocations = new List<string>();
+
         public int totalFound
         {
             get
@@ -661,16 +777,66 @@ namespace BluePrinceArchipelago.Core
     public class UpgradeDisks(GameObject gameObject) : ProgressiveItems("UPGRADE DISK", gameObject, false, 16, true)
     {
         public new List<string> Locations = ["ARCHIVES", "TRADING POST DYNAMITE", "TOMB", "COMMISSARY", "FOUNDATION", "FREEZER", "GARAGE", "GREAT HALL", "LOST AND FOUND", "HER LADYSHIPS CHAMBER", "MECHANARIUM", "MORNING ROOM", "OFFICE", "TRADING POST TRADE", "VAULT", "ABANDONED MINE"];
+        public List<EventID> EventNames = [EventID.Upgrade_Disk_Archives_found, EventID.Upgrade_Disk_BootLeg_found, EventID.Upgrade_Disk_Cloister_found, EventID.Upgrade_Disk_Commissary_found, EventID.Upgrade_Disk_Foundation_found, EventID.Upgrade_Disk_Freezer_found, EventID.Upgrade_Disk_Garage_found, EventID.Upgrade_Disk_GreatHall_found, EventID.Upgrade_Disk_LostFound_found, EventID.Upgrade_Disk_MasterBedroom_found, EventID.Upgrade_Disk_Mechanarium_found, EventID.Upgrade_Disk_MorningRoom_found, EventID.Upgrade_Disk_Office_found, EventID.Upgrade_Disk_TradingPost_found, EventID.Upgrade_Disk_Vault_found, EventID.Upgrade_Disk_TorchRoom_found];
+        public List<string> usedVariables = ["Upgrade Disc - Archives", "Upgrade Disc - Bootleg", "Upgrade Disc - Cloister", "Upgrade Disc - Commissary", "Upgrade Disc - Foundation", "Upgrade Disc - Freezer", "Upgrade Disc - Garage", "Upgrade Disc - Great Hall", "Upgrade Disc - LostFound", "Upgrade Disc - Master Bedroom", "Upgrade Disc - Mechanarium", "Upgrade Disc - Morning Room", "Upgrade Disc - Office", "Upgrade Disc - Shop", "Upgrade Disc - Tomb", "Upgrade Disc - Torch Room"];
+        public new GameObject GameObj = gameObject;
 
-        public void OnFind(string location)
+        // Updates the unlocked status of the upgrade disks.
+        public void UpdateUnlocked() {
+            // Updates the unlocked state of the upgrade disk. (A fallback for some edgecases.)
+            foreach (string location in Locations) {
+                FsmBool unlocked = ModInstance.GlobalManager.GetBoolVariable(location.ToTitleCase() + " Disk");
+                if (unlocked != null)
+                {
+                    if (ArchipelagoClient.Authenticated)
+                    {
+                        if (RecievedLocations.Contains(location))
+                        {
+                            unlocked.Value = true;
+                        }
+                        else
+                        {
+                            unlocked.Value = false;
+                        }
+                    }
+                    else {
+                        unlocked.Value = true; // Forces default behaviour on not connected.
+                    }
+                }
+            }
+        }
+        // Handles adding unlocked upgrade disks to the the players inventory until they are used.
+        public void StartOfDay() {
+            int i = 0;
+            foreach (string location in RecievedLocations) {
+                if (!ModInstance.GlobalManager.GetBoolVariable(usedVariables[i]).Value) { 
+                    AddItemToInventory(location);
+                }
+                i++;
+            }
+        }
+
+        // Handles the pickup of the Upgrade Disk. The Vanilla code handles the rest.
+        public void OnPickup() {
+            string roomname = ModInstance.RoomText.GetStringVariable("Current Room").Value;
+            roomname = roomname.ToUpper().Replace("'", "").Replace("POST", "POST DYNAMITE").Replace(" AND", "&"); // HLC, TP Dynamite, and Lost & Found name fix
+            OnFind(roomname);
+        }
+
+        // Sends the location for the found upgrade disk.
+        private void OnFind(string location)
         {
             if (!FoundLocations.Contains(location.ToUpper()))
             {
                 FoundLocations.Add(location.ToUpper());
+
                 if (RecievedLocations.Contains(location.ToUpper()))
                 {
-
+                    AddItemToInventory(location);
                 }
+                //Fix location name for pickup event.
+                location = location.Replace("LADYSHIPS", "LADYSHIP's");
+                ModInstance.ModEventHandler.OnFirstFound("Upgrade Disk - " + location.ToTitleCase());
             }
         }
 
@@ -679,6 +845,38 @@ namespace BluePrinceArchipelago.Core
             if (!RecievedLocations.Contains(location.ToUpper()))
             {
                 RecievedLocations.Add(location.ToUpper());
+
+            }
+            int locationIndex = Locations.IndexOf(location) + 1; //Blue Prince tends to use 1-indexing for some things.
+            if (locationIndex != -1) {
+                PlayMakerArrayListProxy pickedUp = GameObj?.GetArrayListProxy("upgrade disk pickup");
+                if (pickedUp != null)
+                {
+                    if (!pickedUp.Contains(locationIndex)) {
+                        PlayMakerArrayListProxy InventoryIcons = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/")?.GetArrayListProxy("Inventory");
+                        if (InventoryIcons != null) {
+                            string iconName = Name.ToTitleCase() + " Icon(Clone)001"; //Unsure if multiple clones will be needed when multiple disks are present.
+                            GameObject icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
+                            if (icon != null)
+                            {
+                                // Set the pickup of the upgrade disk to true to prevent future spawns
+                                ModInstance.GlobalManager.GetBoolVariable("DISK - Garage").Value = true;
+                                ModInstance.GlobalPersistentManager.GetBoolVariable("?Upgrade").Value = true;
+                                // Unsure why this is set, but probably important
+                                ModInstance.GlobalManager.GetIntVariable("NewCursor").Value = 0;
+                                // Add item to inventory icons
+                                InventoryIcons.Add(icon, "GameObject");
+                                // Add the index to the list of picked up upgrade disks.
+                                pickedUp.Add(locationIndex, "Int");
+                                // Add item to prespawn icons.
+                                ModItemManager.PickedUp.Add(Plugin.ModItemManager.GetPreSpawnItem("UPGRADE DISK"), "GameObject");
+                                // Record the Upgrade disk being picked up.
+                                return;
+                            }
+                        }
+                    }
+                    Logging.Log($"Upgrade disk for {location} has already been picked up. Unable to add to inventory");
+                }
             }
         }
     }

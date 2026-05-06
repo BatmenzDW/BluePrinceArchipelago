@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using UnityEngine;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 
 namespace BluePrinceArchipelago.Utils
 {
@@ -81,6 +84,23 @@ namespace BluePrinceArchipelago.Utils
 
         public static string ToTitleCase(this string str) {
             return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(str.ToLower());
+        }
+    }
+    public static class GameObjectExtensions {
+
+        public static GameObject FindGameObject(string name) {
+            Logging.Log(name);
+            foreach (GameObject go in Resources.FindObjectsOfTypeAll<GameObject>())
+            {
+                if (go != null)
+                {
+                    if (go?.name?.ToUpper()?.Trim() == name.ToUpper().Trim())
+                    {
+                        return go;
+                    }
+                }
+            }
+            return null;
         }
     }
 }
