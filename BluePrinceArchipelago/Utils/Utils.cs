@@ -89,7 +89,8 @@ namespace BluePrinceArchipelago.Utils
     }
     public static class GameObjectExtensions {
 
-        public static GameObject FindGameObject(string name) {
+        public static GameObject FindGameObject(string name)
+        {
             Logging.Log(name);
             foreach (GameObject go in Resources.FindObjectsOfTypeAll<GameObject>())
             {
@@ -103,6 +104,7 @@ namespace BluePrinceArchipelago.Utils
             }
             return null;
 
+        }
     }
     public static class EnumExtensions
     {

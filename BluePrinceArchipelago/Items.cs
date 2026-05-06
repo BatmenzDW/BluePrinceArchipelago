@@ -842,7 +842,7 @@ namespace BluePrinceArchipelago.Core
                 }
                 //Fix location name for pickup event.
                 location = location.Replace("LADYSHIPS", "LADYSHIP's");
-                ModInstance.ModEventHandler.OnFirstFound("Upgrade Disk - " + location.ToTitleCase());
+                ModInstance.ModEventHandler.OnUgradeDiskFound(location);
             }
         }
 

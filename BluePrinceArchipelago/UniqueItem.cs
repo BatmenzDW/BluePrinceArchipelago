@@ -131,12 +131,8 @@ namespace BluePrinceArchipelago.Core
     {
         public List<UniqueItem> SpawnedItems = new List<UniqueItem>();
 
-        public class UniqueItemManager
-        {
-            public List<UniqueItem> SpawnedItems = new List<UniqueItem>();
-
-            // A Map of item names to the states in the Comissary.
-            public static readonly Dictionary<string, string> ComissaryStates = new Dictionary<string, string>{
+        // A Map of item names to the states in the Comissary.
+        public static readonly Dictionary<string, string> ComissaryStates = new Dictionary<string, string>{
             {"MAGNIFYING GLASS", "Mag Glass" },
             {"SHOVEL", "Shovel Purchase"},
             {"SALT SHAKER", "Salt Shaker Purchase"},
@@ -160,7 +156,7 @@ namespace BluePrinceArchipelago.Core
                     {
 
                     }
-                    else if (item.ModelReplaced){ 
+                    else if (item.ModelReplaced) {
 
                     }
                 }
@@ -366,46 +362,8 @@ namespace BluePrinceArchipelago.Core
                         }
                         else
                         {
-                            // Insantiate the AP item in the you found model's location.
-                            GameObject.Instantiate(prefab, youFoundModel.transform.position, youFoundModel.transform.rotation, youFoundModel);
-                        }
-                    }
-                    else
-                    {
-                        Logging.LogError("No 'You Found' object model found for: " + item.Name);
-                    }
-
-                    // Add special text for what you found
-                    // Find the transform of the text.
-                    Transform textGameObject = youFoundParent.Find("Text/GameObject");
-                    if (textGameObject != null)
-                    {
-                        //Load and instantiate our custom "You Found" Text Template
-                        GameObject textPrefab = Plugin.AssetBundle.LoadAsset<GameObject>("You Found Text Template");
-                        GameObject textObject = GameObject.Instantiate(textPrefab, textGameObject.position, textGameObject.rotation, textGameObject.parent);
-
-                        // Get the location ID of our it's first pickup.
-                        long locationid = Plugin.ArchipelagoClient.GetLocationFromName(item.Name + " First Pickup");
-                        // Find the the details of the item that will be sent on pickup.
-                        ScoutedItemInfo scout = null;
-                        if (locationid != -1)
-                        {
-                            scout = ArchipelagoClient.ServerData.LocationItemMap[locationid];
-                        }
-                        // Get the variables for creating our custom pickup message.
-                        string playerName = scout?.Player?.Name ?? "";
-                        string itemName = scout?.ItemName ?? "";
-                        string description = scout?.Flags.ItemFlagDescription();
-
-                        // Get correct font assets for our prefab
-                        TMP_FontAsset prescFont = null;
-                        TMP_FontAsset mainFont = null;
-                        TMP_FontAsset descFont = null;
-                        for (int i = 0; i < textGameObject.childCount; i++)
-                        {
-                            TextMeshPro text;
-                            Transform child = textGameObject.GetChild(i);
-                            if (child.TryGetComponent<TextMeshPro>(out text))
+                            string lastWord = "";
+                            while (i < itemWords.Length)
                             {
                                 lastWord += itemWords[i].ToUpper();
                                 i++;
@@ -500,6 +458,7 @@ namespace BluePrinceArchipelago.Core
                 Logging.LogError("No 'You Found' parent found for: " + item.Name);
             }
         }
+
 
         private void ReplaceWithAPItem(GameObject obj, GameObject transformObj, GameObject spawnedObj, UniqueItem item)
         {
