@@ -2,6 +2,7 @@ using System;
 using BluePrinceArchipelago.Utils;
 using BluePrinceArchipelago.Utils.Actions;
 using HarmonyLib;
+using HutongGames.PlayMaker;
 using Il2CppSystem.Linq;
 using UnityEngine;
 
@@ -14,6 +15,8 @@ namespace BluePrinceArchipelago.RoomHandlers
         public TradingPost()
         {
             Logging.Log("Initializing Trading Post.");
+            ObservedFSMs.Add("Click Trading Post Collider");
+            ObservedFSMs.Add("more button");
         }
 
         public override void OnRoomDrafted(GameObject roomGameObject)
@@ -25,59 +28,23 @@ namespace BluePrinceArchipelago.RoomHandlers
 
         public override void OnAfterRoomDrafted()
         {
-            Logging.Log("Trading Post drafted. Setting up FSM hooks.");
-            SetupTradingPost();
+            // Logging.Log("Trading Post drafted. Setting up FSM hooks.");
         }
 
-        private void SetupTradingPost()
+        private static string _previousStateName = "";
+        public override void OnFSMStateChanged(Fsm fsm, string gameObjectName)
         {
-            if (_ClickTradingPostColliderFSM == null || _MoreButtonFSM == null)
+            if (gameObjectName == "Click Trading Post Collider")
             {
-                Logging.LogError("Trading Post FSMs not found. Cannot set up Trading Post.");
-                return;
+                var state = fsm.ActiveState;
+                if (state == null) return;
+
+                if (state.Name == "Click" && _previousStateName != "Click")
+                {
+                    Logging.Log("Trading Post Clicked.");
+                }
+                _previousStateName = state.Name;
             }
-
-            var clickState = _ClickTradingPostColliderFSM.GetState("Click");
-            if (clickState == null)
-            {
-                Logging.LogError("Click state not found in Click Trading Post Collider FSM.");
-                return;
-            }
-
-            var moreClickState = _MoreButtonFSM.GetState("State 2");
-            if (moreClickState == null)
-            {
-                Logging.LogError("State 2 not found in More Button FSM.");
-                return;
-            }
-
-            clickState.AddLambdaMethod(OnTradingPostClicked);
-
-            for (int i = 0; i < clickState.Actions.Length; i++)
-            {
-                var action = clickState.Actions[i];
-                Logging.Log($"Click Trading Post Collider FSM Action {i}: {action.GetType().FullName}: {(action is MethodAction methodAction ? methodAction.Method?.Method.Name : "N/A")}");
-            }
-
-            moreClickState.AddLambdaMethod(OnMoreClicked);
-
-            for (int i = 0; i < moreClickState.Actions.Length; i++)
-            {
-                var action = moreClickState.Actions[i];
-                Logging.Log($"More Button FSM Action {i}: {action.GetType().FullName}: {(action is MethodAction methodAction ? methodAction.Method?.Method.Name : "N/A")}");
-            }
-        }
-
-        public static void OnTradingPostClicked(Action finishAction)
-        {
-            Logging.Log("Trading Post clicked.");
-            Logging.Log($"Finish action: {finishAction?.Method.Name ?? "null"}");
-        }
-
-        public static void OnMoreClicked(Action finishAction)
-        {
-            Logging.Log("Trading Post 'More' button clicked.");
-            Logging.Log($"Finish action: {finishAction?.Method.Name ?? "null"}");
         }
     }
 }   

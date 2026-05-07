@@ -3,6 +3,7 @@ using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Models;
+using BluePrinceArchipelago.RoomHandlers;
 using BluePrinceArchipelago.Utils;
 using BluePrinceArchipelago.Utils.Actions;
 using HarmonyLib;
@@ -136,6 +137,7 @@ namespace BluePrinceArchipelago
                 ModEventHandler.LocationFound += OnLocalLocationSent;
                 Harmony.CreateAndPatchAll(typeof(RoomPatches), "RoomPatches");
                 Harmony.CreateAndPatchAll(typeof(ItemPatches), "ItemPatches");
+                Harmony.CreateAndPatchAll(typeof(FsmRoomPatches), "FsmRoomPatch");
                 // If already connected to Archipelago when loading in, sync after a delay
                 // to ensure the game has finished initializing all draft pools
                 if (ArchipelagoClient.Authenticated)
@@ -161,6 +163,7 @@ namespace BluePrinceArchipelago
             Harmony.UnpatchID("ItemPatches");
             Harmony.UnpatchID("EventPatches");
             Harmony.UnpatchID("RoomPatches");
+            Harmony.UnpatchID("FsmRoomPatch");
         }
         // Fires off when an event is sent from an FSM to an FSM or GameObject. Sometime fails,
         public static void OnEventSend(FsmEventTarget target, FsmEvent sendEvent, FsmFloat delay, DelayedEvent delayedEvent, GameObject owner, bool isDelayed) {
