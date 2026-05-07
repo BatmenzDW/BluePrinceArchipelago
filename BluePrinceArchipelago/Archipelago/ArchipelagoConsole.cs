@@ -689,47 +689,69 @@ public class ItemCommand(string name) : Command(name)
                 ArchipelagoConsole.LogMessage($"Attemping to add item {itemName}");
 
                 GameObject item = Plugin.ModItemManager.GetPreSpawnItem(itemName);
+                
+                //Handle items that don't start in the prespawn pool.
                 if (item == null)
                 {
-                    ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {itemName} Has already been spawned or is not in the spawn pool");
-                    return;
-                }
-
-                // Check PreSpawn EstateItems, PickedUp, CoatCheck, UsedItems
-                if (Plugin.ModItemManager.IsItemSpawnable(item))
-                {
-
-                    string iconName = itemName.ToTitleCase() + " Icon(Clone)001";
-                    GameObject icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
-                    // Some icons use 
-                    if (icon == null)
-                    {
-                        iconName = itemName.ToTitleCase() + " icon(Clone)001";
-                        icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
-                    }
-                    if (icon == null)
-                    {
-                        iconName = itemName.ToTitleCase();
-                        icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
-                    }
+                    Logging.Log(itemName);
+                    item = GameObjectExtensions.FindGameObject(itemName);
+                    GameObject icon = GameObjectExtensions.FindGameObject(itemName.ToTitleCase().Trim() + " Icon");
                     PlayMakerArrayListProxy InventoryIcons = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/")?.GetArrayListProxy("Inventory");
-                    if (icon != null && InventoryIcons != null)
+                    if (item == null)
                     {
-
-                        if (ModItemManager.PreSpawn.Contains(item))
-                        {
-                            //ModItemManager.PreSpawn.Remove(item, "GameObject");
-                            ModItemManager.PickedUp.Add(item, "GameObject");
-                            InventoryIcons.Add(icon, "GameObject");
-                            ArchipelagoConsole.LogMessage($"Added {itemName} to inventory.");
-                            return;
-                        }
-                        ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {itemName} Has already been spawned.");
+                        ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {itemName} Has already been spawned or is not in the spawn pool");
                         return;
                     }
+                    Logging.Log(icon == null);
+                    if (icon != null && InventoryIcons != null)
+                    {
+                       ModItemManager.PickedUp.Add(item, "GameObject");
+                       InventoryIcons.Add(icon, "GameObject");
+                       ArchipelagoConsole.LogMessage($"Added {itemName} to inventory.");
+                       return;
+                    }
                     ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {itemName} is not a valid Item Name");
-                    return;
+                    return; 
                 }
+                else {
+                    // Check PreSpawn EstateItems, PickedUp, CoatCheck, UsedItems
+                    if (Plugin.ModItemManager.IsItemSpawnable(item) || true)
+                    {
+
+                        string iconName = itemName.ToTitleCase() + " Icon(Clone)001";
+                        GameObject icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
+                        // Some icons use 
+                        if (icon == null)
+                        {
+                            iconName = itemName.ToTitleCase() + " icon(Clone)001";
+                            icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
+                        }
+                        if (icon == null)
+                        {
+                            iconName = itemName.ToTitleCase();
+                            icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
+                        }
+                        PlayMakerArrayListProxy InventoryIcons = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/")?.GetArrayListProxy("Inventory");
+                        if (icon != null && InventoryIcons != null)
+                        {
+
+                            if (ModItemManager.PreSpawn.Contains(item))
+                            {
+                                ModItemManager.PreSpawn.Remove(item, "GameObject");
+                                ModItemManager.PickedUp.Add(item, "GameObject");
+                                InventoryIcons.Add(icon, "GameObject");
+                                ArchipelagoConsole.LogMessage($"Added {itemName} to inventory.");
+                                return;
+                            }
+                            ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {itemName} Has already been spawned.");
+                            return;
+                        }
+                        ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {itemName} is not a valid Item Name");
+                        return;
+                    }
+                }
+
+               
 
                 ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {itemName} Can't be added to inventory.");
                 return;

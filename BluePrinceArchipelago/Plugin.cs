@@ -5,6 +5,7 @@ using BluePrince;
 using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Utils;
+using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppSystem.IO;
@@ -42,8 +43,9 @@ namespace BluePrinceArchipelago {
             ModRoomManager = new ModRoomManager();
             ModItemManager = new ModItemManager();
             UniqueItemManager = new UniqueItemManager();
+            Harmony.CreateAndPatchAll(typeof(ManagerPatches), "ManagerPatches");
             _instance = this;
-            string assetBundlePath = System.IO.Path.Combine(AssetsFolderPath, "blueprinceapassets");
+            string assetBundlePath = System.IO.Path.Combine(AssetsFolderPath, "apprefabs.ap");
             if (System.IO.File.Exists(assetBundlePath))
             {
                 AssetBundle = AssetExtensions.LoadAssetFile(assetBundlePath);

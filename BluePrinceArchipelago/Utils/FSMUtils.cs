@@ -1,6 +1,7 @@
 ﻿using BluePrinceArchipelago.Utils.Actions;
 using HarmonyLib;
 using HutongGames.PlayMaker;
+using HutongGames.PlayMaker.Actions;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using System;
 using System.Collections;
@@ -1696,6 +1697,5 @@ namespace BluePrinceArchipelago.Utils
                 return tmp;
             return fsm.AddGameObjectVariable(name);
         }
-
     }
 }
