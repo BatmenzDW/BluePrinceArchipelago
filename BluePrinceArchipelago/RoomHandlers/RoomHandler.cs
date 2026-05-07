@@ -53,25 +53,6 @@ public abstract class RoomHandler
 
 public static class FsmRoomPatches
 {
-    // [HarmonyPatch(typeof(PlayMakerFSM), nameof(PlayMakerFSM.Start))]
-    // [HarmonyPostfix]
-    // public static void FSMStartPostfix(PlayMakerFSM __instance)
-    // {
-        
-    // }
-
-    // [HarmonyPatch(typeof(FsmStateAction), nameof(FsmStateAction.OnEnter))]
-    // [HarmonyPrefix]
-    // public static void FsmStateEnterPrefix(FsmStateAction __instance)
-    // {
-    //     var fsm = __instance.Fsm;
-
-    //     string fsmName = fsm?.Name ?? "UnknownFSM";
-    //     string stateName = __instance.State?.Name ?? "UnknownState";
-
-    //     Logging.Log($"[ENTER] {fsmName} -> {stateName}");
-    // }
-
     [HarmonyPatch(typeof(Fsm), nameof(Fsm.UpdateStateChanges))]
     [HarmonyPostfix]
     static void Postfix(Fsm __instance)
@@ -83,7 +64,6 @@ public static class FsmRoomPatches
         {
             if (roomHandler.ObservedFSMs.Contains(gameObjectName))
             {
-                Logging.Log($"[FSM Update] {__instance.Name} on {gameObjectName}");
                 roomHandler.OnFSMStateChanged(__instance, gameObjectName);
             }
         }
