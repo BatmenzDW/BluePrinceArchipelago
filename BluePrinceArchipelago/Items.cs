@@ -623,6 +623,8 @@ namespace BluePrinceArchipelago.Core
             set { _ItemType = value; }
         }
 
+        private bool _HasBeenAdded = false;
+
         private bool _IsUnlocked = isUnlocked;
         public new bool IsUnlocked
         {
@@ -653,9 +655,10 @@ namespace BluePrinceArchipelago.Core
             {
                 AdjustGold(_Count);
             }
-            else if (_ItemType == "Allowance")
+            else if (_ItemType == "Allowance" && !_HasBeenAdded)
             {
                 AdjustAllowance(_Count * 2);
+                _HasBeenAdded = true;
             }
             else if (_ItemType == "Dice")
             {
@@ -985,9 +988,9 @@ namespace BluePrinceArchipelago.Core
             Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Steps 1", "Steps", -1));
             Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Steps 2", "Steps", -2));
             Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Steps 5", "Steps", -5));
-            Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Steps 1", "Stars", -1));
-            Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Steps 2", "Stars", -2));
-            Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Steps 5", "Stars", -5));
+            Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Stars 1", "Stars", -1));
+            Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Stars 2", "Stars", -2));
+            Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Stars 5", "Stars", -5));
             Plugin.ModItemManager.AddTrap(new EndOfDayTrap("Trap End Day", "EOD"));
             Plugin.ModItemManager.AddTrap(new FreezeTrap("Trap Freeze Items", "Freeze"));
             Plugin.ModItemManager.AddTrap(new LoseItemTrap("Trap Lose Item", "Lose Item"));
