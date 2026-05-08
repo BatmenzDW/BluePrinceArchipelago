@@ -7,12 +7,13 @@
         <Version>0.1.0</Version>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>latest</LangVersion>
-        <!-- you may need this for getting the multiclient dll to output for .net 6 and netstandard 2.0 -->
-        <!--        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>-->
+        <!-- you may need this for getting the multiclient dll and Newtonsoft.Json.dll to output for .net 6 and netstandard 2.0 -->
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <RootNamespace>BluePrinceArchipelago</RootNamespace>
         <Configurations>Debug;Release</Configurations>
+        <PlatformTarget>AnyCPU</PlatformTarget>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -35,23 +36,25 @@
 
 	<ItemGroup>
 		<_Assets Include="$(MSBuildProjectDirectory)\assets\*" />
-		<_Libs Include="$(MSBuildProjectDirectory)\libs\*.*" />
 	</ItemGroup>
 
-    <Target Name="ZipMod" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-		<Copy SourceFiles="@(Assets)" DestinationFolder="bin\Release\$(AssemblyName)\assets" />
-		<Copy SourceFiles="@(Libs)" DestinationFolder="bin\Release\$(AssemblyName)" />
+    <Target Name="ZipMod" AfterTargets="Build" Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <Copy SourceFiles="@(Assets)" DestinationFolder="bin\Release\$(AssemblyName)\assets" />
         <ZipDirectory SourceDirectory="bin\Release\$(AssemblyName)" DestinationFile="bin\Release\$(AssemblyName)-$(Version).zip" Overwrite="true" />
     </Target>
 
+	<Target Name="PostBuild" AfterTargets="Build">
+		<Copy SourceFiles="@(Assets)" DestinationFolder="bin\Release\$(AssemblyName)\assets" />
+	</Target>
+
     <ItemGroup>
-        <PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.1" IncludeAssets="compile" />
+        <PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.1" IncludeAssets="all" />
         <PackageReference Include="Archipelago.MultiClient.Net.Analyzers" Version="2.0.3">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.755" IncludeAssets="compile" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" IncludeAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
@@ -78,6 +81,9 @@
       <Reference Include="PlayMaker">
         <HintPath>$(BluePrinceDir)\BepInEx\interop\PlayMaker.dll</HintPath>
         <Private>False</Private>
+      </Reference>
+      <Reference Include="Unity.Addressables">
+        <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Blue Prince\BepInEx\interop\Unity.Addressables.dll</HintPath>
       </Reference>
       <Reference Include="Unity.TextMeshPro">
         <HintPath>$(BluePrinceDir)\BepInEx\interop\Unity.TextMeshPro.dll</HintPath>
