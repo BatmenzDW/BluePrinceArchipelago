@@ -24,7 +24,8 @@ public abstract class RoomHandler
     
     public static readonly Dictionary<string, RoomHandler> RoomHandlers = new Dictionary<string, RoomHandler>()
     {
-        { "ENTRANCE HALL", new EntranceHall() },
+        {"BASEMENT", new Basement()},
+        {"THE WELL", new Well()},
     };
 
     public static RoomHandler CreateRoomHandler(string roomName)
@@ -43,6 +44,8 @@ public abstract class RoomHandler
             "GIFT SHOP" => new GiftShop(),
             "LOCKSMITH" => new Locksmith(),
             "TRADING POST" => new TradingPost(),
+            "CLOISTER" => new Cloister(),
+            "ENTRANCE HALL" => new EntranceHall(),
             _ => null
         };
 
