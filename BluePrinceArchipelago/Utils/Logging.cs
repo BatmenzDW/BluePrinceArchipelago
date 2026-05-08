@@ -7,16 +7,16 @@ namespace BluePrinceArchipelago
     public static class Logging {
 
         public static Logger Logger { get; } = new Logger();
-        public static void Log(object message) => Logger.Log(message);
+        public static void Log(object message, [CallerMemberName] string logTag = null) => Logger.Log(message, logTag);
 
 
-        public static void LogWarning(object message) => Logger.LogWarning(message);
+        public static void LogWarning(object message, [CallerMemberName] string logTag = null) => Logger.LogWarning(message, logTag);
 
-        public static void LogError(object message) => Logger.LogError(message);
+        public static void LogError(object message, [CallerMemberName] string logTag = null) => Logger.LogError(message, logTag);
 
-        public static void LogDebug(object message) => Logger.LogDebug(message);
+        public static void LogDebug(object message, [CallerMemberName] string logTag = null) => Logger.LogDebug(message, logTag);
 
-        public static void LogFatal(object message) => Logger.LogFatal(message);
+        public static void LogFatal(object message, [CallerMemberName] string logTag = null) => Logger.LogFatal(message, logTag);
 
         public static void SetLogLevel(string category, LogLevel level)
         {
