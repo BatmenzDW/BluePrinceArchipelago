@@ -21,10 +21,12 @@ public class EntranceHall : RoomHandler
         {
             if (gameObjectName == "Vase 1")
             {
+                Logging.Log("Vase 1 broken in Entrance Hall.");
                 ModInstance.ModEventHandler.OnVaseBroken("Entrance Hall East");
             }
             else if (gameObjectName == "Vase 2")
             {
+                Logging.Log("Vase 2 broken in Entrance Hall.");
                 ModInstance.ModEventHandler.OnVaseBroken("Entrance Hall West");
             }
         }

@@ -15,14 +15,16 @@ public abstract class RoomHandler
     public GameObject RoomGameObject { get; set; }
 
     public Dictionary<string, HashSet<string>> ObservedFSMStates { get; } = [];
+    public HashSet<string> MorajaiPuzzles { get; } = [];
 
     public virtual void OnRoomDrafted(GameObject roomGameObject) {}
     public virtual void OnAfterRoomDrafted() { }
     public virtual void OnFSMStateChanged(Fsm fsm, string gameObjectName, string newState) { }
+    public virtual void OnMorajaiPuzzleSolved(string puzzleName) { }
     
     public static readonly Dictionary<string, RoomHandler> RoomHandlers = new Dictionary<string, RoomHandler>()
     {
-        
+        { "ENTRANCE HALL", new EntranceHall() },
     };
 
     public static RoomHandler CreateRoomHandler(string roomName)
@@ -77,4 +79,26 @@ public static class FsmRoomPatches
             }
         }
     }
+
+    // TODO: Find a hook that works for Mora Jai Boxes
+    // [HarmonyPatch(typeof(MorajaiController), nameof(MorajaiController.hasSolved), MethodType.Setter)]
+    // [HarmonyPostfix]
+    // static void MorajaiPostfix(MorajaiController __instance)
+    // {
+    //     if (__instance == null) return;
+    //     var gameObject = __instance.gameObject?.transform?.parent?.gameObject;
+    //     if (gameObject == null) return;
+
+    //     var value = __instance.hasSolved;
+
+    //     Logging.Log($"Morajai Puzzle {gameObject.name} solved: {value}");
+
+    //     foreach (var roomHandler in RoomHandler.RoomHandlers.Values)
+    //     {
+    //         if (roomHandler.MorajaiPuzzles.Contains(gameObject.name) && value)
+    //         {
+    //             roomHandler.OnMorajaiPuzzleSolved(gameObject.name);
+    //         }
+    //     }
+    // }
 }
