@@ -14,14 +14,16 @@ public abstract class RoomHandler
     protected static GameObject UIOverlayCam => GameObject.Find("UI OVERLAY CAM");
     public GameObject RoomGameObject { get; set; }
 
-    public HashSet<string> ObservedFSMs { get; } = [];
+    public Dictionary<string, HashSet<string>> ObservedFSMStates { get; } = [];
 
-    public abstract void OnRoomDrafted(GameObject roomGameObject);
+    public virtual void OnRoomDrafted(GameObject roomGameObject) {}
     public virtual void OnAfterRoomDrafted() { }
-    public virtual void OnFSMStateChanged(Fsm fsm, string gameObjectName) { }
+    public virtual void OnFSMStateChanged(Fsm fsm, string gameObjectName, string newState) { }
     
-
-    public static readonly Dictionary<string, RoomHandler> RoomHandlers = new();
+    public static readonly Dictionary<string, RoomHandler> RoomHandlers = new Dictionary<string, RoomHandler>()
+    {
+        
+    };
 
     public static RoomHandler CreateRoomHandler(string roomName)
     {
@@ -53,6 +55,7 @@ public abstract class RoomHandler
 
 public static class FsmRoomPatches
 {
+    private static readonly Dictionary<string, string> _LastStates = [];
     [HarmonyPatch(typeof(Fsm), nameof(Fsm.UpdateStateChanges))]
     [HarmonyPostfix]
     static void Postfix(Fsm __instance)
@@ -62,9 +65,15 @@ public static class FsmRoomPatches
         
         foreach (var roomHandler in RoomHandler.RoomHandlers.Values)
         {
-            if (roomHandler.ObservedFSMs.Contains(gameObjectName))
+            if (roomHandler.ObservedFSMStates.ContainsKey(gameObjectName))
             {
-                roomHandler.OnFSMStateChanged(__instance, gameObjectName);
+                var lastState = _LastStates.GetValueOrDefault(gameObjectName);
+                var currentState = __instance.ActiveStateName;
+                if (lastState != currentState)
+                {
+                    _LastStates[gameObjectName] = currentState;
+                    roomHandler.OnFSMStateChanged(__instance, gameObjectName, currentState);
+                }
             }
         }
     }
