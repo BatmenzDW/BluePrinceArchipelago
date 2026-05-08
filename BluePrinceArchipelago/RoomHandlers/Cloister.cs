@@ -8,7 +8,7 @@ class Cloister : RoomHandler
 {
     public Cloister()
     {
-        ObservedFSMStates.Add("Allowance Token", ["State"]);
+        ObservedFSMStates.Add("ALLOWANCE TOKEN", ["State"]);
     }
 
     public override void OnFSMStateChanged(Fsm fsm, string gameObjectName, string newState)

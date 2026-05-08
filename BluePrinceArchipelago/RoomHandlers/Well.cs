@@ -20,9 +20,7 @@ public class Well : RoomHandler
         {
             var doorNum = fsm.GetState("Open Door").GetActionsOfType<SetFsmBool>().FirstOrDefault()?.variableName.value;
 
-            Logging.Log($"Door {doorNum} opened in Well.", "The Well");
-
-            if (doorNum != "Basement Door 1") return;
+            if (doorNum != "Basement Door 2") return;
 
             ModInstance.ModEventHandler.OnUnlockBasementDoor("The Foundation");
         }
