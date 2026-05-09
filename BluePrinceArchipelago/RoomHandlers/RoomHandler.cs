@@ -52,7 +52,7 @@ public abstract class RoomHandler
         if (handler != null)
         {
             RoomHandlers[roomName] = handler;
-            Logging.Log($"Created RoomHandler for {roomName}.");
+            Logging.Log($"Created RoomHandler for {roomName}.", "RoomHandler");
         }
         return handler;
     }

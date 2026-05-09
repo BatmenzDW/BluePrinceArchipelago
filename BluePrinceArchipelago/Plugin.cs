@@ -42,6 +42,7 @@ namespace BluePrinceArchipelago {
             Logging.SetLogLevel("Cloister", LogLevel.Info);
             Logging.SetLogLevel("Basement", LogLevel.Info);
             Logging.SetLogLevel("The Well", LogLevel.Info);
+            Logging.SetLogLevel("RoomHandler", LogLevel.Info);
 
             // Plugin startup logic
             ArchipelagoClient = new ArchipelagoClient();

@@ -1,4 +1,5 @@
 
+using System.Linq;
 using HutongGames.PlayMaker;
 using UnityEngine;
 
@@ -8,11 +9,18 @@ class Cloister : RoomHandler
 {
     public Cloister()
     {
-        ObservedFSMStates.Add("ALLOWANCE TOKEN", ["State"]);
+        ObservedFSMStates.Add("ALLOWANCE TOKEN", ["State", "Click"]);
     }
 
     public override void OnFSMStateChanged(Fsm fsm, string gameObjectName, string newState)
     {
+        if (newState == "Click")
+        {
+            var states = fsm.States.Select(s => $"\"{s.Name}\"").ToArray();
+            Logging.Log($"FSM {fsm.Name} changed to state {newState}. All states: {string.Join(", ", states)}", "Cloister");
+            return;
+        }
+
         var gameObject = fsm.GameObject;
         while (gameObject.name.ToUpper() == "ALLOWANCE TOKEN") // several objects called allowance token are nested
         {

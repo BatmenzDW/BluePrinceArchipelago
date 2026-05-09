@@ -178,8 +178,8 @@ namespace BluePrinceArchipelago.Core
                     return room; 
                 }
             }
-                    return null;
-            }
+                return null;
+        }
 
             /// <summary>
             /// Adds a room with the same name for both the room and its game object path.
@@ -302,7 +302,11 @@ namespace BluePrinceArchipelago.Core
 
             // Add other special mappings here as needed in the future
 
-            return null;
+            return apRoomName switch
+            {
+                "Progressive Classroom" => "CLASSROOM", // Map all classroom variants to the base classroom name
+                _ => null
+            };
         }
 
         public void UpdateCurrentPickerArrays() {
