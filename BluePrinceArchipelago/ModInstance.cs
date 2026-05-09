@@ -739,7 +739,12 @@ namespace BluePrinceArchipelago
                 // Checks if the pool is in the house.
                 Func<ModRoom, bool> poolCheck = (room) => { return (Plugin.ModRoomManager.GetRoomByName("THE POOL").RoomInHouseCount > 0); };
                 // Checks if the garage is already in the house and can currently be drafted.
-                Func<ModRoom, bool> garageRankCheck = (room) => { return room.RoomInHouseCount == 0 && TheGrid.GetIntVariable("Taret Rank").Value > 2; };
+                Func<ModRoom, bool> garageRankCheck = (room) => { 
+                    int targetRank = TheGrid.GetIntVariable("Taret Rank").Value;
+                    int currentRank = TheGrid.GetIntVariable("Current Rank").Value;
+                    int targetTile = TheGrid.GetIntVariable("Target Tile").Value;
+                    return room.RoomInHouseCount == 0 && targetRank > 3 && targetRank < 9 && currentRank <= targetRank && targetTile % 5 != 0; // Rank 4-8, not drafted south, and only on the west side of the house.
+                    };
                 // Checks if the player is drafting north or south (not east/west).
                 Func<ModRoom, bool> verticalDraftCheck = (room) => { return TheGrid.GetBoolVariable("NorthSouth").Value; };
                 // Checks if the foundation can be drafted here.

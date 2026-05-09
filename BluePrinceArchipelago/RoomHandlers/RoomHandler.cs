@@ -105,3 +105,5 @@ public static class FsmRoomPatches
     //     }
     // }
 }
+
+// Vault 053 FSM = "LOCK CLICK"
