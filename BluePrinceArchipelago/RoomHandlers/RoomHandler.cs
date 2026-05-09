@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BluePrinceArchipelago.Archipelago;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
@@ -46,6 +47,7 @@ public abstract class RoomHandler
             "TRADING POST" => new TradingPost(),
             "CLOISTER" => new Cloister(),
             "ENTRANCE HALL" => new EntranceHall(),
+            "CLOSED EXHIBIT" => new ClosedExhibit(),
             _ => null
         };
 
@@ -61,30 +63,74 @@ public abstract class RoomHandler
 public static class FsmRoomPatches
 {
     private static readonly Dictionary<string, string> _LastStates = [];
+    private static readonly Dictionary<string, (HashSet<string>, Action<Fsm, string, string>)> _ObservedFSMs = new(){
+        {"ZERO STEP ENDING", (["State 3"], OnZeroStepsEnding)},
+        {"END OF DAYS CHECKS", (["State 3"], OnEndOfDaysChecks)},
+    };
+
     [HarmonyPatch(typeof(Fsm), nameof(Fsm.UpdateStateChanges))]
     [HarmonyPostfix]
-    static void Postfix(Fsm __instance)
+    public static void Postfix(Fsm __instance)
     {
-        if (__instance == null) return;
-        var gameObjectName = __instance.GameObjectName;
-        
-        foreach (var roomHandler in RoomHandler.RoomHandlers.Values)
+        try
         {
-            if (roomHandler.ObservedFSMStates.ContainsKey(gameObjectName))
+            if (__instance == null) return;
+            var gameObjectName = __instance.GameObjectName;
+            
+            foreach (var roomHandler in RoomHandler.RoomHandlers.Values)
             {
-                var lastState = _LastStates.GetValueOrDefault(gameObjectName);
-                var currentState = __instance.ActiveStateName;
-                if (lastState != currentState)
+                if (roomHandler.ObservedFSMStates.ContainsKey(gameObjectName))
                 {
-                    _LastStates[gameObjectName] = currentState;
-                    roomHandler.OnFSMStateChanged(__instance, gameObjectName, currentState);
+                    var lastState = _LastStates.GetValueOrDefault(gameObjectName);
+                    var currentState = __instance?.ActiveStateName;
+                    if ((lastState == null || lastState != currentState) && roomHandler.ObservedFSMStates[gameObjectName].Contains(currentState))
+                    {
+                        _LastStates[gameObjectName] = currentState;
+                        roomHandler.OnFSMStateChanged(__instance, gameObjectName, currentState);
+                    }
                 }
             }
+
+            foreach (var (fsmIdentifier, (observedStates, callback)) in _ObservedFSMs)
+            {
+                if (fsmIdentifier == gameObjectName)
+                {
+                    var lastState = _LastStates.GetValueOrDefault(gameObjectName);
+                    var currentState = __instance?.ActiveStateName;
+                    if ((lastState == null || lastState != currentState) && observedStates.Contains(currentState))
+                    {
+                        _LastStates[gameObjectName] = currentState;
+                        callback(__instance, gameObjectName, currentState);
+                    }
+                }
+            }
+        } 
+        catch (Exception)
+        {
+            // Logging.Log($"Error in FSM state change postfix: {ex}", "RoomHandler");
+        }
+    }
+
+    private static void OnZeroStepsEnding(Fsm fsm, string gameObjectName, string newState)
+    {
+        if (newState == "State 3")
+        {
+            Logging.Log("Zero Steps Ending reached, sending death link...", "DeathLink");
+            Plugin.ArchipelagoClient.DeathLinkHandler.SendStepsDeathLink();
+        }
+    }
+
+    private static void OnEndOfDaysChecks(Fsm fsm, string gameObjectName, string newState)
+    {
+        if (newState == "State 3")
+        {
+            Logging.Log("End of Days Checks reached, sending death link if needed...", "DeathLink");
+            Plugin.ArchipelagoClient.DeathLinkHandler.SendEndOfDayDeathLink(fsm);
         }
     }
 
     // TODO: Find a hook that works for Mora Jai Boxes
-    // [HarmonyPatch(typeof(MorajaiController), nameof(MorajaiController.hasSolved), MethodType.Setter)]
+    // [HarmonyPatch(typeof(MorajaiController), nameof(MorajaiController.CheckCorners))]
     // [HarmonyPostfix]
     // static void MorajaiPostfix(MorajaiController __instance)
     // {

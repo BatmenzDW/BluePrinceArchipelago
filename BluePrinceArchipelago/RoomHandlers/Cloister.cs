@@ -7,32 +7,29 @@ namespace BluePrinceArchipelago.RoomHandlers;
 
 class Cloister : RoomHandler
 {
+    private static bool _collected = false;
     public Cloister()
     {
-        ObservedFSMStates.Add("ALLOWANCE TOKEN", ["State", "Click"]);
+        ObservedFSMStates.Add("ALLOWANCE TOKEN", ["State"]); // The FSM state name is empty for some reason
     }
 
     public override void OnFSMStateChanged(Fsm fsm, string gameObjectName, string newState)
     {
-        if (newState == "Click")
-        {
-            var states = fsm.States.Select(s => $"\"{s.Name}\"").ToArray();
-            Logging.Log($"FSM {fsm.Name} changed to state {newState}. All states: {string.Join(", ", states)}", "Cloister");
-            return;
-        }
-
+        if (_collected) return;
         var gameObject = fsm.GameObject;
         while (gameObject.name.ToUpper() == "ALLOWANCE TOKEN") // several objects called allowance token are nested
         {
             gameObject = gameObject.transform.parent.gameObject;
         }
 
-        var parent = gameObject.transform.parent.gameObject;
-        Logging.Log($"Allowance Token state changed to {newState} in. Parent is: {parent.name}", "Cloister");
-        var parent2 = parent.transform.parent.gameObject;
-        Logging.Log($"Parent's parent is: {parent2.name}", "Cloister");
-        var parent3 = parent2.transform.parent.gameObject;
-        Logging.Log($"Parent's parent's parent is: {parent3.name}", "Cloister");
+        var parent = gameObject.transform.parent.parent.gameObject;
+
+        if (parent.name.ToUpper().Contains("CLOISTER") && newState == "State")
+        {
+            Logging.Log("Allowance Token state changed in Cloister.", "Cloister");
+            ModInstance.ModEventHandler.OnAllowanceCollected("Cloister Statue");
+            _collected = true;
+        }
     }
 
     public override void OnRoomDrafted(GameObject roomGameObject)

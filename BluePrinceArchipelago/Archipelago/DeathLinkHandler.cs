@@ -2,12 +2,25 @@
 using System.Collections.Generic;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using BepInEx;
+using BluePrinceArchipelago.Utils;
+using HutongGames.PlayMaker;
+using UnityEngine;
 
 namespace BluePrinceArchipelago.Archipelago;
 
 public class DeathLinkHandler
 {
-    private static bool deathLinkEnabled;
+    private static bool _deathLinkEnabled;
+    public static bool deathLinkEnabled
+    {
+        get => _deathLinkEnabled && ArchipelagoOptions.DeathLinkType != DeathLinkType.option_none;
+        private set
+        {
+            _deathLinkEnabled = value;
+        }
+    }
+
+    private int _deathLinkCount = 0;
     private string slotName;
     private readonly DeathLinkService service;
     private readonly Queue<DeathLink> deathLinks = new();
@@ -74,13 +87,37 @@ public class DeathLinkHandler
             var deathLink = deathLinks.Dequeue();
             var cause = deathLink.Cause.IsNullOrWhiteSpace() ? GetDeathLinkCause(deathLink) : deathLink.Cause;
 
-            //TODO kill the player
-            Logging.Log(cause);
+            KillPlayer(cause);
         }
         catch (Exception e)
         {
-            Logging.LogError(e);
+            Logging.LogError(e, "DeathLink");
         }
+    }
+
+    public static void ForceKillPlayer(string cause)
+    {
+        try
+        {
+            KillPlayer(cause);
+        }
+        catch (Exception e)
+        {
+            Logging.LogError(e, "DeathLink");
+        }
+    }
+
+    private static bool _localDeathInProgress = false;
+
+    private static void KillPlayer(string cause)
+    {
+        _localDeathInProgress = true;
+        ArchipelagoConsole.LogMessage(cause, "DeathLink");
+
+        ModInstance.StepManager.FindIntVariable("Adjustment Amount").Value = -1000;
+        ModInstance.StepManager.SendEvent("Update");
+
+        // ZERO STEP ENDING: Send Event- State 8
     }
 
     /// <summary>
@@ -93,25 +130,75 @@ public class DeathLinkHandler
         return $"Received death from {deathLink.Source}";
     }
 
+    private bool _bedroom = false;
+
+    public void SendStepsDeathLink()
+    {
+        if (_localDeathInProgress)
+        {
+            _localDeathInProgress = false;
+            return;
+        }
+
+        if (!deathLinkEnabled) return;
+
+        if (ArchipelagoOptions.DeathLinkType != DeathLinkType.option_steps) return;
+
+        SendDeathLink("Ran out of steps");
+    }
+
+    public void SendEndOfDayDeathLink(Fsm fsm)
+    {
+        if (_localDeathInProgress)
+        {
+            _localDeathInProgress = false;
+            return;
+        }
+
+        if (!deathLinkEnabled) return;
+
+        var currentRoom = fsm.GetStringVariable("Current Room String").Value;
+
+        if (currentRoom.Contains("adyship") || currentRoom.Contains("aster") || currentRoom.Contains("ervants") || currentRoom.Contains("unk"))
+        {
+            _bedroom = true;
+        }
+
+        if (ArchipelagoOptions.DeathLinkType != DeathLinkType.option_steps) SendDeathLink("End of Day");
+    }
+
     /// <summary>
     /// called to send a death link to the multiworld
     /// </summary>
-    public void SendDeathLink()
+    public void SendDeathLink(string cause = null)
     {
         try
         {
             if (!deathLinkEnabled) return;
 
-            Logging.Log("sharing your death...");
+            if (_bedroom)
+            {
+                _bedroom = false;
+                return;
+            }
+
+            if (ArchipelagoOptions.DeathLinkGrace > _deathLinkCount)
+            {
+                _deathLinkCount++;
+                ArchipelagoConsole.LogMessage($"Death Link grace active. Deaths until next deathlink can be sent: {ArchipelagoOptions.DeathLinkGrace - _deathLinkCount}", "DeathLink");
+                return;
+            }
+
+            ArchipelagoConsole.LogMessage($"Sent {cause} DeathLink", "DeathLink");
 
             // add the cause here
-            var linkToSend = new DeathLink(slotName);
+            var linkToSend = new DeathLink(slotName, cause);
 
             service.SendDeathLink(linkToSend);
         }
         catch (Exception e)
         {
-            Logging.LogError(e);
+            Logging.LogError(e, "DeathLink");
         }
     }
 }

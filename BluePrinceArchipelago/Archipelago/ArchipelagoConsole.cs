@@ -39,16 +39,16 @@ public static class ArchipelagoConsole
         UpdateWindow();
     }
 
-    public static void LogMessage(string message)
+    public static void LogMessage(string message, string logTag = "ArchipelagoConsole")
     {
         if (message.IsNullOrWhiteSpace()) return;
         //Handle multiline messages.
-        if (message.Contains("\n"))
+        if (message.Contains('\n'))
         {
             foreach (string submessage in message.Split("\n"))
             {
                 logLines.Add(submessage);
-                Logging.Log(message);
+                Logging.Log(submessage, logTag);
                 lastUpdateTime = Time.time;
                 UpdateWindow();
             }
@@ -56,7 +56,7 @@ public static class ArchipelagoConsole
         else
         {
             logLines.Add(message);
-            Logging.Log(message);
+            Logging.Log(message, logTag);
             lastUpdateTime = Time.time;
             UpdateWindow();
         }
@@ -84,8 +84,8 @@ public static class ArchipelagoConsole
             {
                 if (PreviousCommandPointer > 0)
                 {
-                    PreviousCommandPointer--;
                     CommandText = PreviousCommands[PreviousCommandPointer];
+                    PreviousCommandPointer--;
                 }
                 else
                 {
@@ -1491,6 +1491,12 @@ public class CollectCommand(string name) : Command(name)
         if (locationName == "goal")
         {
             Plugin.ArchipelagoClient.GoalCompleted();
+            return;
+        }
+
+        if (locationName == "death")
+        {
+            DeathLinkHandler.ForceKillPlayer("KillPlayer called from console.");
             return;
         }
 

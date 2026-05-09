@@ -28,7 +28,7 @@ public class ArchipelagoClient
     public static bool Reconnected = false;
 
     public static ArchipelagoData ServerData = new();
-    private DeathLinkHandler DeathLinkHandler;
+    public DeathLinkHandler DeathLinkHandler;
     private ArchipelagoSession session;
 
     public ArchipelagoClient()
