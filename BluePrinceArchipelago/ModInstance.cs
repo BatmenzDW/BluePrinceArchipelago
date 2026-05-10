@@ -128,7 +128,7 @@ namespace BluePrinceArchipelago
                 InitializeRooms();
                 Plugin.ModRoomManager.SetAllVanilla();
                 TrunkManager.Initialize();
-                RegisterItems.Register(); // Register the initial state of the items.
+                // RegisterItems.Register(); // Register the initial state of the items.
                 HasInitializedRooms = true;
                 ModEventHandler.LocationFound += OnLocalLocationSent;
                 Harmony.CreateAndPatchAll(typeof(RoomPatches), "RoomPatches");
