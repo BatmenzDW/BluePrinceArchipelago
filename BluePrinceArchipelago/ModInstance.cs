@@ -534,6 +534,16 @@ namespace BluePrinceArchipelago
             
         }
 
+        public static string GetPersistentDataString(string key)
+        {
+            return GlobalPersistentManager.GetStringVariable(key).Value;
+        }
+
+        public static int GetPersistentDataInt(string key)
+        {
+            return GlobalPersistentManager.GetIntVariable(key).Value;
+        }
+
         public static void OnRecordEvent(EventID id)
         {
             Logging.Log($"Stats being recorded for {id}.");

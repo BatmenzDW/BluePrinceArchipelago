@@ -69,9 +69,9 @@ public class DeathLinkHandler
     {
         deathLinks.Enqueue(deathLink);
 
-        Logging.LogDebug(deathLink.Cause.IsNullOrWhiteSpace()
+        Logging.Log(deathLink.Cause.IsNullOrWhiteSpace()
             ? $"Received Death Link from: {deathLink.Source}"
-            : deathLink.Cause);
+            : deathLink.Cause, "DeathLink");
     }
 
     /// <summary>
@@ -179,6 +179,12 @@ public class DeathLinkHandler
             if (_bedroom)
             {
                 _bedroom = false;
+                return;
+            }
+
+            if (ArchipelagoOptions.DeathLinkMonkException && ModInstance.GetPersistentDataString("Blessing") == "Monk")
+            {
+                ArchipelagoConsole.LogMessage("Death Link prevented due to Monk blessing.", "DeathLink");
                 return;
             }
 
