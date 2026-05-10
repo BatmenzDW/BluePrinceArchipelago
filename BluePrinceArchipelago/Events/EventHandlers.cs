@@ -28,6 +28,10 @@ namespace BluePrinceArchipelago.Events
         public void OnFirstDrafted(string roomName) {
             LocationFound.Invoke(this, new LocationEventArgs($"{roomName.ToTitleCase()} First Entering", "First Draft Room"));
         }
+        public void OnClassroomFirstDrafted(string classroomNumber) {
+            LocationFound.Invoke(this, new LocationEventArgs($"Classroom {classroomNumber} First Entering", "First Draft Room"));
+        }
+
         public void OnFirstFound(ModItem item) {
             LocationFound.Invoke(this, new LocationEventArgs($"{item.Name.ToTitleCase()} First Pickup", "Item First Pickup"));
         }
