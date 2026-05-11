@@ -309,7 +309,6 @@ namespace BluePrinceArchipelago.Core
             return apRoomName switch
             {
                 "Progressive Classroom" => "CLASSROOM", // Map all classroom variants to the base classroom name
-                "Her Ladyship's Chambers" => "HER LADYSHIP'S CHAMBER", // Map to the correct room name with proper pluralization
                 _ => null
             };
         }

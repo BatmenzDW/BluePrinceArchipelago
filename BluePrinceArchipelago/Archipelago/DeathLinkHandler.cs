@@ -72,6 +72,8 @@ public class DeathLinkHandler
         Logging.Log(deathLink.Cause.IsNullOrWhiteSpace()
             ? $"Received Death Link from: {deathLink.Source}"
             : deathLink.Cause, "DeathLink");
+
+        KillPlayer();
     }
 
     /// <summary>
@@ -82,6 +84,7 @@ public class DeathLinkHandler
     {
         try
         {
+            if (!ModInstance.IsInRun) return;
             if (deathLinks.Count < 1) return;
 
             var deathLink = deathLinks.Dequeue();
@@ -147,7 +150,7 @@ public class DeathLinkHandler
         SendDeathLink("Ran out of steps");
     }
 
-    public void SendEndOfDayDeathLink(Fsm fsm)
+    public void SendEndOfDayDeathLink(PlayMakerFSM fsm)
     {
         if (_localDeathInProgress)
         {

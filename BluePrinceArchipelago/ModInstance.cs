@@ -279,6 +279,8 @@ namespace BluePrinceArchipelago
                 // Handle Start of day code for Permanent items (and maybe curses later).
                 Plugin.ModItemManager.StartOfDay(dayNum);
                 Plugin.UniqueItemManager.StartOfDay();
+
+                Plugin.ArchipelagoClient.DeathLinkHandler.KillPlayer(); // If we have any queued death links, kill the player at the start of the day.
             }
         }
 
@@ -405,6 +407,8 @@ namespace BluePrinceArchipelago
         public static void OnDayEnd() {
             IsInRun = false;
             Plugin.UniqueItemManager.EndOfDay();
+            var fsm = GameObject.Find("UI OVERLAY CAM")?.transform?.Find("END OF DAYS CHECKS")?.gameObject?.GetFsm("FSM");
+            Plugin.ArchipelagoClient.DeathLinkHandler.SendEndOfDayDeathLink(fsm);
         }
         public static void OnDraftBeforeInitialize(RoomDraftHelper instance)
         {

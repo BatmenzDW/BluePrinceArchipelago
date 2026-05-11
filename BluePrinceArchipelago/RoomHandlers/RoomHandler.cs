@@ -65,7 +65,6 @@ public static class FsmRoomPatches
     private static readonly Dictionary<string, string> _LastStates = [];
     private static readonly Dictionary<string, (HashSet<string>, Action<Fsm, string, string>)> _ObservedFSMs = new(){
         {"ZERO STEP ENDING", (["State 3"], OnZeroStepsEnding)},
-        {"END OF DAYS CHECKS", (["State 3"], OnEndOfDaysChecks)},
     };
 
     [HarmonyPatch(typeof(Fsm), nameof(Fsm.UpdateStateChanges))]
@@ -117,15 +116,6 @@ public static class FsmRoomPatches
         {
             Logging.Log("Zero Steps Ending reached, sending death link...", "DeathLink");
             Plugin.ArchipelagoClient.DeathLinkHandler.SendStepsDeathLink();
-        }
-    }
-
-    private static void OnEndOfDaysChecks(Fsm fsm, string gameObjectName, string newState)
-    {
-        if (newState == "State 3")
-        {
-            Logging.Log("End of Days Checks reached, sending death link if needed...", "DeathLink");
-            Plugin.ArchipelagoClient.DeathLinkHandler.SendEndOfDayDeathLink(fsm);
         }
     }
 
