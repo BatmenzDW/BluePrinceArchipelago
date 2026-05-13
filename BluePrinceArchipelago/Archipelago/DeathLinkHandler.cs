@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using BepInEx;
 using BluePrinceArchipelago.Utils;
@@ -112,13 +113,18 @@ public class DeathLinkHandler
 
     private static bool _localDeathInProgress = false;
 
+    public static void OnRoom46FirstEntered()
+    {
+        _localDeathInProgress = true;
+    }
+
     private static void KillPlayer(string cause)
     {
         _localDeathInProgress = true;
         ArchipelagoConsole.LogMessage(cause, "DeathLink");
 
         ModInstance.StepManager.FindIntVariable("Adjustment Amount").Value = -1000;
-        ModInstance.StepManager.SendEvent("Update");
+        // ModInstance.StepManager.SendEvent("Update");
 
         // ZERO STEP ENDING: Send Event- State 8
     }
@@ -134,7 +140,7 @@ public class DeathLinkHandler
     }
 
     private bool _bedroom = false;
-
+    private static readonly string[] _bedroomStrings = ["adyship", "aster", "ervants", "unk", "edroom", "quarium", "oudoir", "ormitory", "ovel", "aid", "ursery"];
     public void SendStepsDeathLink()
     {
         if (_localDeathInProgress)
@@ -163,7 +169,7 @@ public class DeathLinkHandler
 
         var currentRoom = fsm.GetStringVariable("Current Room String").Value;
 
-        if (currentRoom.Contains("adyship") || currentRoom.Contains("aster") || currentRoom.Contains("ervants") || currentRoom.Contains("unk"))
+        if (_bedroomStrings.Any(s => currentRoom.Contains(s)))
         {
             _bedroom = true;
         }

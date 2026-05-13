@@ -541,12 +541,12 @@ namespace BluePrinceArchipelago
 
         public static string GetPersistentDataString(string key)
         {
-            return GlobalPersistentManager.GetStringVariable(key).Value;
+            return GlobalPersistentManager?.GetStringVariable(key)?.Value;
         }
 
         public static int GetPersistentDataInt(string key)
         {
-            return GlobalPersistentManager.GetIntVariable(key).Value;
+            return GlobalPersistentManager?.GetIntVariable(key)?.Value ?? 0;
         }
 
         public static void OnRecordEvent(EventID id)
@@ -560,6 +560,7 @@ namespace BluePrinceArchipelago
                     if (ArchipelagoOptions.GoalType == GoalType.option_room46)
                     {
                         Plugin.ArchipelagoClient.GoalCompleted();
+                        DeathLinkHandler.OnRoom46FirstEntered(); // prevent death link from triggering before the goal completion is sent
                     }
                     else
                     {
