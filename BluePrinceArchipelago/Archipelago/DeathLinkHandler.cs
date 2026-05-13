@@ -152,6 +152,7 @@ public class DeathLinkHandler
 
     public void SendEndOfDayDeathLink(PlayMakerFSM fsm)
     {
+        Logging.Log("End of Day, checking for deathlink send", "DeathLink");
         if (_localDeathInProgress)
         {
             _localDeathInProgress = false;
