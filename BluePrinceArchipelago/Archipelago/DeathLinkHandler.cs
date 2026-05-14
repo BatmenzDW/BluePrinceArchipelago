@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using BepInEx;
+using BepInEx.Unity.IL2CPP.Utils;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
+using System.Collections;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Archipelago;
@@ -91,11 +93,11 @@ public class DeathLinkHandler
             var deathLink = deathLinks.Dequeue();
             var cause = deathLink.Cause.IsNullOrWhiteSpace() ? GetDeathLinkCause(deathLink) : deathLink.Cause;
 
-            KillPlayer(cause);
+            ModInstance.Instance.StartCoroutine(KillPlayer(cause, deathLink));
         }
         catch (Exception e)
         {
-            Logging.LogError(e, "DeathLink");
+            Logging.Log(e, "DeathLink");
         }
     }
 
@@ -103,7 +105,7 @@ public class DeathLinkHandler
     {
         try
         {
-            KillPlayer(cause);
+            ModInstance.Instance.StartCoroutine(KillPlayer(cause));
         }
         catch (Exception e)
         {
@@ -111,20 +113,33 @@ public class DeathLinkHandler
         }
     }
 
-    private static bool _localDeathInProgress = false;
+    private static int _localDeathsInProgress = 0;
 
     public static void OnRoom46FirstEntered()
     {
-        _localDeathInProgress = true;
+        _localDeathsInProgress += 1;
     }
 
-    private static void KillPlayer(string cause)
+    private static IEnumerator KillPlayer(string cause, DeathLink deathLink = null)
     {
-        _localDeathInProgress = true;
-        ArchipelagoConsole.LogMessage(cause, "DeathLink");
+        yield return null;
+        _localDeathsInProgress += 1;
+        ArchipelagoConsole.LogMessage($"{cause}, {_localDeathsInProgress} local deaths in progress.", "DeathLink");
 
         ModInstance.StepManager.FindIntVariable("Adjustment Amount").Value = -1000;
-        // ModInstance.StepManager.SendEvent("Update");
+        yield return null;
+        try
+        {
+            ModInstance.StepManager.SendEvent("Update");
+        }
+        catch (Exception e)
+        {
+            Logging.LogFatal(e, "DeathLink");
+            if (deathLink != null)
+            {
+                Plugin.ArchipelagoClient.DeathLinkHandler.deathLinks.Enqueue(deathLink);
+            }
+        }
 
         // ZERO STEP ENDING: Send Event- State 8
     }
@@ -143,25 +158,29 @@ public class DeathLinkHandler
     private static readonly string[] _bedroomStrings = ["adyship", "aster", "ervants", "unk", "edroom", "quarium", "oudoir", "ormitory", "ovel", "aid", "ursery"];
     public void SendStepsDeathLink()
     {
-        if (_localDeathInProgress)
+        if (ArchipelagoOptions.DeathLinkType != DeathLinkType.option_steps) return;
+
+        if (_localDeathsInProgress > 0)
         {
-            _localDeathInProgress = false;
+            Logging.Log($"Steps deathlink prevented due to local death in progress. {_localDeathsInProgress} local deaths in progress.", "DeathLink");
+            _localDeathsInProgress -= 1;
             return;
         }
 
         if (!deathLinkEnabled) return;
-
-        if (ArchipelagoOptions.DeathLinkType != DeathLinkType.option_steps) return;
 
         SendDeathLink("Ran out of steps");
     }
 
     public void SendEndOfDayDeathLink(PlayMakerFSM fsm)
     {
+        if (ArchipelagoOptions.DeathLinkType == DeathLinkType.option_steps) return;
+
         Logging.Log("End of Day, checking for deathlink send", "DeathLink");
-        if (_localDeathInProgress)
+        if (_localDeathsInProgress > 0)
         {
-            _localDeathInProgress = false;
+            Logging.Log($"End of Day deathlink prevented due to local death in progress. {_localDeathsInProgress} local deaths in progress.", "DeathLink");
+            _localDeathsInProgress -= 1;
             return;
         }
 
