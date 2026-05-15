@@ -45,6 +45,7 @@ namespace BluePrinceArchipelago {
             Logging.SetLogLevel("RoomHandler", LogLevel.Info);
             Logging.SetLogLevel("ArchipelagoOptions", LogLevel.Info);
             Logging.SetLogLevel("DeathLink", LogLevel.Info);
+            Logging.SetLogLevel("ModRoomManager", LogLevel.Info);
 
             // Plugin startup logic
             ArchipelagoClient = new ArchipelagoClient();

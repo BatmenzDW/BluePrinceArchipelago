@@ -198,7 +198,7 @@ namespace BluePrinceArchipelago.Core
             GameObject roomObj = GameObject.Find(roomPath);
             if (roomObj == null)
             {
-                Logging.LogWarning($"Could not find room GameObject at '{roomPath}' for room '{name}'");
+                Logging.LogWarning($"Could not find room GameObject at '{roomPath}' for room '{name}'", "ModRoomManager");
             }
             if (name == "CLASSROOM")
             {
