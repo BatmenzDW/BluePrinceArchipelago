@@ -51,6 +51,9 @@ namespace BluePrinceArchipelago.Models
         [JsonProperty("death_link_grace")]
         public int DeathLinkGrace { get; set; }
 
+        [JsonProperty("death_link_protection")]
+        public int DeathLinkProtection { get; set; }
+
         [JsonProperty("death_link_monk_exception")]
         public bool DeathLinkMonkException { get; set; }
 

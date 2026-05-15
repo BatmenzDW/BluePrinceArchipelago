@@ -79,9 +79,15 @@ public static class ArchipelagoOptions
     public static DeathLinkType DeathLinkType { get; private set; } = DeathLinkType.option_none;
 
     /// <summary>
-    /// Death link grace period.
+    /// Death link grace.
     /// </summary>
     public static int DeathLinkGrace { get; private set; } = 0;
+
+    /// <summary>
+    /// Death link protection.
+    /// </summary>
+    public static int DeathLinkProtection { get; private set; } = 0;
+
 
     /// <summary>
     /// Death link monk exception setting.
@@ -130,6 +136,7 @@ public static class ArchipelagoOptions
             KeySanity = slotData.KeySanity;
             DeathLinkType = slotData.DeathLinkType;
             DeathLinkGrace = slotData.DeathLinkGrace;
+            DeathLinkProtection = slotData.DeathLinkProtection;
             DeathLinkMonkException = slotData.DeathLinkMonkException;
             GoalType = slotData.GoalType;
             GoalSanctumSolves = slotData.GoalSanctumSolves;

@@ -79,6 +79,8 @@ public class DeathLinkHandler
         KillPlayer();
     }
 
+    private int _blockedDeathLinks = 0;
+
     /// <summary>
     /// can be called when in a valid state to kill the player, dequeueing and immediately killing the player with a
     /// message if we have a death link in the queue
@@ -92,6 +94,13 @@ public class DeathLinkHandler
 
             var deathLink = deathLinks.Dequeue();
             var cause = deathLink.Cause.IsNullOrWhiteSpace() ? GetDeathLinkCause(deathLink) : deathLink.Cause;
+
+            if (ArchipelagoOptions.DeathLinkProtection > _blockedDeathLinks)
+            {
+                _blockedDeathLinks++;
+                ArchipelagoConsole.LogMessage($"{cause}. Blocked by protection. Blocks remaining until next: {ArchipelagoOptions.DeathLinkProtection - _blockedDeathLinks}", "DeathLink");
+                return;
+            }
 
             ModInstance.Instance.StartCoroutine(KillPlayer(cause, deathLink));
         }
@@ -199,6 +208,7 @@ public class DeathLinkHandler
     /// <summary>
     /// called to send a death link to the multiworld
     /// </summary>
+    /// <param name="cause">The cause of the death link.</param>
     public void SendDeathLink(string cause = null)
     {
         try
