@@ -5,6 +5,7 @@ using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using StableNameDotNet;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -644,6 +645,22 @@ public class AdjustCommand(string name) : Command(name)
                     return;
                 }
 
+            }
+            else if (subcommand.ToLower() == "allowance")
+            {
+                try
+                {
+                    int count = int.Parse(Args[1]);
+
+                    GameObject.Find("DAY").GetComponent<PlayMakerFSM>().FindIntVariable("allowance").Value += count;
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    ArchipelagoConsole.LogMessage(ex.Message);
+                    Logging.Log(ex, "Items");
+                    return;
+                }
             }
             ArchipelagoConsole.LogMessage($"Error Running Command {Name}: invalid subcommand {subcommand}");
             return;

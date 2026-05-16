@@ -2,6 +2,7 @@
 using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
+using HutongGames.PlayMaker.Actions;
 using Il2CppSystem.Collections;
 using System;
 using System.Collections.Generic;
@@ -615,7 +616,7 @@ namespace BluePrinceArchipelago.Core
     public class PermanentItem(string name, GameObject gameObject, bool isUnlocked, string itemType, int count = 1) : ModItem(name, gameObject, isUnlocked)
     {
         private string _ItemType = itemType;
-        private PlayMakerFSM _DayFSM => GameObject.Find("UI OVERLAY CAM").transform.Find("PAUSE").Find("SYSTEM MENU").Find("DAY").gameObject.GetFsm("FSM");
+        private PlayMakerFSM _DayFSM => GameObject.Find("DAY").GetComponent<PlayMakerFSM>();
 
         public string ItemType
         {
