@@ -79,14 +79,20 @@ public static class ArchipelagoOptions
     public static DeathLinkType DeathLinkType { get; private set; } = DeathLinkType.option_none;
 
     /// <summary>
-    /// Death link grace period.
+    /// Death link grace.
     /// </summary>
     public static int DeathLinkGrace { get; private set; } = 0;
 
     /// <summary>
+    /// Death link protection.
+    /// </summary>
+    public static int DeathLinkProtection { get; private set; } = 0;
+
+
+    /// <summary>
     /// Death link monk exception setting.
     /// </summary>
-    public static int DeathLinkMonkException { get; private set; } = 0;
+    public static bool DeathLinkMonkException { get; private set; } = true;
 
     /// <summary>
     /// Goal type for winning.
@@ -141,6 +147,7 @@ public static class ArchipelagoOptions
             KeySanity = slotData.KeySanity;
             DeathLinkType = slotData.DeathLinkType;
             DeathLinkGrace = slotData.DeathLinkGrace;
+            DeathLinkProtection = slotData.DeathLinkProtection;
             DeathLinkMonkException = slotData.DeathLinkMonkException;
             GoalType = slotData.GoalType;
             GoalSanctumSolves = slotData.GoalSanctumSolves;
@@ -151,7 +158,7 @@ public static class ArchipelagoOptions
         }
         catch (Exception ex)
         {
-            Logging.LogError($"Failed to load options: {ex.Message}");
+            Logging.LogError($"Failed to load options: {ex.Message}", "ArchipelagoOptions");
             IsLoaded = false;
         }
     }
@@ -164,7 +171,7 @@ public static class ArchipelagoOptions
     {
         if (slotData == null)
         {
-            Logging.LogWarning("SlotData dictionary is null - using default options");
+            Logging.LogWarning("SlotData dictionary is null - using default options", "ArchipelagoOptions");
             IsLoaded = true;
             return;
         }
@@ -185,7 +192,7 @@ public static class ArchipelagoOptions
             KeySanity = GetBool(slotData, "key_sanity", false);
             DeathLinkType = (DeathLinkType)GetInt(slotData, "death_link_type", 0);
             DeathLinkGrace = GetInt(slotData, "death_link_grace", 0);
-            DeathLinkMonkException = GetInt(slotData, "death_link_monk_exception", 0);
+            DeathLinkMonkException = GetBool(slotData, "death_link_monk_exception", true);
             GoalType = (GoalType)GetInt(slotData, "goal_type", 0);
             GoalSanctumSolves = GetInt(slotData, "goal_sanctum_solves", 1);
             FillerItemDistribution = GetDictionary<string, int>(slotData, "filler_item_distribution");
@@ -195,7 +202,7 @@ public static class ArchipelagoOptions
         }
         catch (Exception ex)
         {
-            Logging.LogError($"Failed to load options from dictionary: {ex.Message}");
+            Logging.LogError($"Failed to load options from dictionary: {ex.Message}", "ArchipelagoOptions");
             IsLoaded = false;
         }
     }
@@ -216,7 +223,7 @@ public static class ArchipelagoOptions
         KeySanity = false;
         DeathLinkType = DeathLinkType.option_none;
         DeathLinkGrace = 0;
-        DeathLinkMonkException = 0;
+        DeathLinkMonkException = true;
         GoalType = GoalType.option_sanctum;
         GoalSanctumSolves = 1;
         FillerItemDistribution = new Dictionary<string, int>();

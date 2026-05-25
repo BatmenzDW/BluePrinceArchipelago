@@ -29,7 +29,7 @@ public class ArchipelagoClient
     public static bool Reconnected = false;
 
     public static ArchipelagoData ServerData = new();
-    private DeathLinkHandler DeathLinkHandler;
+    public DeathLinkHandler DeathLinkHandler;
     private ArchipelagoSession session;
 
     public ArchipelagoClient()
@@ -116,6 +116,7 @@ public class ArchipelagoClient
                     ServerData.SlotName,
                     ItemsHandlingFlags.AllItems,
                     new Version(APVersion),
+                    tags: ["AP", "DeathLink"],
                     password: ServerData.Password,
                     requestSlotData: true
          );

@@ -6,6 +6,7 @@ using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using StableNameDotNet;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -40,16 +41,16 @@ public static class ArchipelagoConsole
         UpdateWindow();
     }
 
-    public static void LogMessage(string message)
+    public static void LogMessage(string message, string logTag = "ArchipelagoConsole")
     {
         if (message.IsNullOrWhiteSpace()) return;
         //Handle multiline messages.
-        if (message.Contains("\n"))
+        if (message.Contains('\n'))
         {
             foreach (string submessage in message.Split("\n"))
             {
                 logLines.Add(submessage);
-                Logging.Log(message);
+                Logging.Log(submessage, logTag);
                 lastUpdateTime = Time.time;
                 UpdateWindow();
             }
@@ -57,7 +58,7 @@ public static class ArchipelagoConsole
         else
         {
             logLines.Add(message);
-            Logging.Log(message);
+            Logging.Log(message, logTag);
             lastUpdateTime = Time.time;
             UpdateWindow();
         }
@@ -85,8 +86,8 @@ public static class ArchipelagoConsole
             {
                 if (PreviousCommandPointer > 0)
                 {
-                    PreviousCommandPointer--;
                     CommandText = PreviousCommands[PreviousCommandPointer];
+                    PreviousCommandPointer--;
                 }
                 else
                 {
@@ -645,6 +646,22 @@ public class AdjustCommand(string name) : Command(name)
                     return;
                 }
 
+            }
+            else if (subcommand.ToLower() == "allowance")
+            {
+                try
+                {
+                    int count = int.Parse(Args[1]);
+
+                    GameObject.Find("DAY").GetComponent<PlayMakerFSM>().FindIntVariable("allowance").Value += count;
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    ArchipelagoConsole.LogMessage(ex.Message);
+                    Logging.Log(ex, "Items");
+                    return;
+                }
             }
             ArchipelagoConsole.LogMessage($"Error Running Command {Name}: invalid subcommand {subcommand}");
             return;
@@ -1492,6 +1509,12 @@ public class CollectCommand(string name) : Command(name)
         if (locationName == "goal")
         {
             Plugin.ArchipelagoClient.GoalCompleted();
+            return;
+        }
+
+        if (locationName == "death")
+        {
+            DeathLinkHandler.ForceKillPlayer("KillPlayer called from console.");
             return;
         }
 
