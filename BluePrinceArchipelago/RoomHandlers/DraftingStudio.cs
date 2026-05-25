@@ -12,7 +12,7 @@ namespace BluePrinceArchipelago.RoomHandlers
 
         public override void OnRoomDrafted(GameObject roomGameObject)
         {
-            throw new System.NotImplementedException();
+            
         }
     }
 }

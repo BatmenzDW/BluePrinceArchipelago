@@ -905,7 +905,7 @@ namespace BluePrinceArchipelago.Items
             {
                 AdjustGold(unlockedCount * _Count);
             }
-            else if (_ItemType == "Allowance" && !_HasBeenAdded)
+            else if (_ItemType == "Allowance")
             {
                 AdjustAllowance(unlockedCount * _Count);
             }

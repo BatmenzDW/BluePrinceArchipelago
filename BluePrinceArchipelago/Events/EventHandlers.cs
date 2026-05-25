@@ -1,3 +1,4 @@
+using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
