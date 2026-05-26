@@ -39,7 +39,7 @@ namespace BluePrinceArchipelago.Events
                     sendToChildren = false,
                     excludeSelf = false
                 },
-                sendEvent = Plugin.ModObject.GetComponent<PlayMakerFSM>().GetGlobalTransition(name).FsmEvent,
+                sendEvent = Plugin.ModObject.GetComponent<PlayMakerFSM>().GetGlobalTransition(Name).FsmEvent,
                 everyFrame = false,
                 delay = 0f
             };
