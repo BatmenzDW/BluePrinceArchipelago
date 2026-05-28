@@ -149,8 +149,6 @@ public static class ArchipelagoOptions
             DeathLinkMonkException = slotData.DeathLinkMonkException;
             GoalType = slotData.GoalType;
             GoalSanctumSolves = slotData.GoalSanctumSolves;
-            FillerItemDistribution = slotData.FillerItemDistribution;
-            TrapTypeDistribution = slotData.TrapTypeDistribution;
             IsLoaded = true;
             LogOptions();
         }
@@ -193,8 +191,6 @@ public static class ArchipelagoOptions
             DeathLinkMonkException = GetBool(slotData, "death_link_monk_exception", true);
             GoalType = (GoalType)GetInt(slotData, "goal_type", 0);
             GoalSanctumSolves = GetInt(slotData, "goal_sanctum_solves", 1);
-            FillerItemDistribution = GetDictionary<string, int>(slotData, "filler_item_distribution");
-            TrapTypeDistribution = GetDictionary<string, int>(slotData, "trap_type_distribution");
             IsLoaded = true;
             LogOptions();
         }

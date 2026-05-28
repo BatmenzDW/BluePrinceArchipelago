@@ -33,7 +33,7 @@ namespace BluePrinceArchipelago.Utils
             InitializeSentLocations();
             InitializeSessionData();
             InitializeServerDetails();
-            InitializeServerOptions();
+            //InitializeServerOptions();
         }
 
         public static void UpdateAll() {

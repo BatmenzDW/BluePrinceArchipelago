@@ -7,6 +7,7 @@ using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Patches;
 using BluePrinceArchipelago.Utils;
 using HarmonyLib;
+using HutongGames.PlayMaker;
 using Il2CppInterop.Runtime.Injection;
 using System.Reflection;
 using UnityEngine;
@@ -44,15 +45,15 @@ namespace BluePrinceArchipelago {
             Logging.SetLogLevel("DeathLink", LogLevel.Info);
             Logging.SetLogLevel("ModRoomManager", LogLevel.Info);
             Logging.SetLogLevel("Items", LogLevel.Info);
-            //Logging.SetLogLevel("Events", LogLevel.Info);
-            //Logging.SetLogLevel("StatEvents", LogLevel.Info);
+            Logging.SetLogLevel("Events", LogLevel.Info);
+            Logging.SetLogLevel("StatEvents", LogLevel.Info);
+            Logging.SetLogLevel("APData", LogLevel.Info);
 
             // Plugin startup logic
             ArchipelagoClient = new ArchipelagoClient();
             ModRoomManager = new ModRoomManager();
             ModItemManager = new ModItemManager();
             UniqueItemManager = new UniqueItemManager();
-            Harmony.CreateAndPatchAll(typeof(ManagerPatches), "ManagerPatches");
             _instance = this;
             string assetBundlePath = System.IO.Path.Combine(AssetsFolderPath, "apprefabs");
             AssetBundle = AssetExtensions.LoadAssetFile(assetBundlePath);

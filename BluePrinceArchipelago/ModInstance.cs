@@ -33,6 +33,7 @@ namespace BluePrinceArchipelago
         public static GameObject RoomsInHouse = new();
         public static GameObject StatsLogger = new();
         public static GameObject PickupSpawnPool = new();
+        public static GameObject Prefabs = new();
 
         // FSMs
         public static PlayMakerFSM GemManager = new();
@@ -73,6 +74,7 @@ namespace BluePrinceArchipelago
         public static HashSet<string> SanctumsSolved = [];
 
         public static string PreviousSceneName { get; private set; } = "";
+        public static bool AppliedHarmony { get; private set; } = false;
 
         public ModInstance(IntPtr ptr) : base(ptr)
         {
@@ -85,6 +87,10 @@ namespace BluePrinceArchipelago
             Harmony.CreateAndPatchAll(typeof(RoomPatches), "RoomPatches");
             Harmony.CreateAndPatchAll(typeof(ItemPatches), "ItemPatches");
             Harmony.CreateAndPatchAll(typeof(FsmRoomPatches), "FsmRoomPatch");
+            
+            Prefabs = GameObject.Instantiate(new GameObject("Prefabs"), Plugin.ModObject.transform);
+            Prefabs.name = "prefabs";
+            Instance.StartCoroutine(Instance.LoadAllAssets().WrapToIl2Cpp());
         }
         IEnumerator LoadAllAssets()
         {
@@ -97,7 +103,11 @@ namespace BluePrinceArchipelago
                     var loadAsset = bundle.LoadAssetAsync<GameObject>(asset);
                     yield return loadAsset.asset;
 
-                    ArchipelagoPrefabs.Prefabs.Add(loadAsset.asset.TryCast<GameObject>()); //Store the prefab for later.
+                    // Make the prefab a child of the modobject so it is preloaded and not deloaded on scene transitions.
+                    GameObject assetGameObject = loadAsset.asset.TryCast<GameObject>();
+                    GameObject obj = GameObject.Instantiate(loadAsset.asset.TryCast<GameObject>(), Prefabs.transform);
+                    obj.name = assetGameObject.name;
+                    obj.SetActive(false);
                 }
             }
             ArchipelagoPrefabsLoaded = true;
@@ -109,8 +119,11 @@ namespace BluePrinceArchipelago
             Logging.Log($"Scene: {scene.name} loaded in {mode}");
             if (scene.name.Equals("Main Menu"))
             {
-                Harmony.CreateAndPatchAll(typeof(EventPatches), "EventPatches"); //Apply event patches on the main menu to get some data that is not accessible later.  
-
+                if (!AppliedHarmony) {
+                    Harmony.CreateAndPatchAll(typeof(EventPatches), "EventPatches"); //Apply event patches on the main menu to get some data that is not accessible later. 
+                    AppliedHarmony = true;
+                }
+               
                 FSMPatches.IntroSkip();
             }
             if (scene.name.Equals("Mount Holly Estate"))
@@ -130,7 +143,7 @@ namespace BluePrinceArchipelago
                 StarManager = GameObject.Find("__SYSTEM/HUD/Stars")?.GetFsm("FSM");
                 YouFoundText = GameObject.Find("/UI OVERLAY CAM/You Found Text").transform;
                 LuckManager = GameObject.Find("__SYSTEM/Luck Calculator")?.GetFsm("Luck Calculator");
-                GlobalPersistentManager = GameObject.Find("Global Persitent Manager")?.GetComponent<PlayMakerFSM>();
+                GlobalPersistentManager = GameObjectExtensions.FindGameObject("Global Persitent Manager")?.GetComponent<PlayMakerFSM>();
                 GlobalManager = GameObject.Find("Global Manager")?.GetComponent<PlayMakerFSM>();
                 TheGrid = GameObject.Find("__SYSTEM/THE GRID")?.GetComponent<PlayMakerFSM>();
                 MasterPicker = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE")?.GetComponent<PlayMakerFSM>();
@@ -144,21 +157,17 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.Reset(); // Clear stale room state from any previous scene load
                 InitializeRooms();
                 Plugin.ModRoomManager.SetAllVanilla();
-                
-               
-
-               
+                RegisterItems.Register();
 
                 // If already connected to Archipelago when loading in, sync after a delay
                 // to ensure the game has finished initializing all draft pools
                 if (scene.name != PreviousSceneName)
                 {
-                    StartCoroutine(LoadAllAssets().WrapToIl2Cpp());
                     ModEventHandler.LocationFound += OnLocalLocationSent;
                     TrunkManager.Initialize();
                     if (ArchipelagoClient.Authenticated)
                     {
-                        RegisterItems.Register(); // Register the initial state of the items.
+                        ; // Register the initial state of the items.
                         Logging.Log("Scheduling delayed sync after scene load...");
                     }
                 }
@@ -232,7 +241,9 @@ namespace BluePrinceArchipelago
                             state.EnableActionsOfType<ArrayListAdd>();
                         }
                     }
+                    
                     item.HasBeenFound = true;
+                    ModEventHandler.OnFirstFound(item);
                 }
                 else if (eventName.Contains("Upgrade"))
                 {
@@ -734,9 +745,6 @@ namespace BluePrinceArchipelago
             {
                 SyncRoomPoolsWithArchipelago();
                 Plugin.ModItemManager.ReplaceItemsWithAP();
-            }
-            if (IsInRun) {
-                RegisterItems.Register();
             }
         }
         

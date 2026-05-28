@@ -66,10 +66,6 @@ public static class ArchipelagoConsole
 
     public static void OnGUI()
     {
-        // Theoretically Should Prevent Keyboard Input when textinputs are focused.
-        
-        //TODO add keyboard shortcut for hiding/unhiding. Prevent the input from causing the player to move until input has been submitted or window has been rehidden.
-        // if (logLines.Count == 0) return;  
         Event e = Event.current;
         //Shows the Input Window
         if (Hidden && Input.GetKeyInt(BepInEx.Unity.IL2CPP.UnityEngine.KeyCode.Slash))

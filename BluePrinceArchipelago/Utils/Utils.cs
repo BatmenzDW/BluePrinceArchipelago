@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Utils
@@ -193,6 +194,17 @@ namespace BluePrinceArchipelago.Utils
             foreach (Transform child in children) {
                 child.parent = to.transform;
             }
+        }
+        public static GameObject GetChild(this GameObject parent, string name) {
+            for (int i = 0; i < parent.transform.childCount; i++)
+            {
+                Transform child = parent.transform.GetChild(i);
+                
+                if (child.name.ToLower() == name.ToLower()) {
+                    return child.gameObject;
+                }
+            }
+            return null;
         }
     }
     public static class EnumExtensions
