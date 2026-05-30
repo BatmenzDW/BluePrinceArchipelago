@@ -8,8 +8,6 @@ using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Models;
 using BluePrinceArchipelago.Utils;
-using HutongGames.PlayMaker;
-using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -64,10 +62,10 @@ public class ArchipelagoClient
         {
             Logging.Log($"\t{entry.Key}:{entry.Value}");
         }
-        Logging.Log("Location Item Map:");
+        Logging.Log("Location Item Map:", "APData");
         foreach (var entry in ServerData.LocationItemMap)
         {
-            Logging.Log($"\t{entry.Key}:{entry.Value.ItemName}");
+            Logging.Log($"\t{entry.Key}:{entry.Value.ItemName}", "APData");
         }
     }
 
@@ -134,7 +132,7 @@ public class ArchipelagoClient
             SlotData slotData = session.DataStorage.GetSlotData<SlotData>();
 
             // Check if the Seed and options match the expected Seed and Options.
-            if (ServerData.Options.Equals(slotData) && (ServerData.Seed == "" || ServerData.Seed == session.RoomState.Seed)) {
+            if (ServerData.Seed == "" || ServerData.Seed == session.RoomState.Seed) {
                 //If the Seed data was already stored this is a recconnect.
                 if (ServerData.Seed == session.RoomState.Seed) {
                     Reconnected = true;
@@ -318,7 +316,8 @@ public class ArchipelagoClient
                 // If the server has locations checked that the local game didn't send while disconnected, add them to the checked locationlist.
                 ServerData.CheckedLocations.Add(location);
             }
-            if (found) {
+            if (found && i < localLocations.Count) {
+                Logging.LogWarning($"{i}");
                 // Remove the location from the local list.
                 localLocations.RemoveAt(i); 
             }
@@ -485,8 +484,14 @@ public class ArchipelagoQueueManager {
     public void AddLocationsToQueue(List<long> locations) {
         List<string> locationNames = new List<string>();
         foreach (int location in locations) {
-            string locationName = ArchipelagoClient.ServerData.LocationDict[location];
-            locationNames.Add(locationName);
+            try
+            {
+                string locationName = ArchipelagoClient.ServerData.LocationDict[location];
+                locationNames.Add(locationName);
+            }
+            catch {
+                Logging.LogWarning($"Error Loading location {location}");
+            }
         }
         _LocationQueue.Enqueue(locationNames.ToArray());
     }
@@ -616,6 +621,7 @@ public class ArchipelagoQueueManager {
             }
             // if not handle it as an Item.
             string itemType = Plugin.ModItemManager.GetItemType(item.ItemName);
+            Logging.LogWarning($"{itemType}");
             if (itemType == null)
             {
                 Logging.LogWarning($"Error receiving item {item.ItemName}: Item does not exist or is not currently handled by the mod.");

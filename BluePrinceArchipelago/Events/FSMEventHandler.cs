@@ -1,18 +1,23 @@
-﻿using BluePrinceArchipelago.Items;
-using BluePrinceArchipelago.Utils;
+﻿using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BluePrinceArchipelago.Events
 {
     public static class FSMEventHandler
     {
         public static Dictionary<string, RegisteredFSMEvent> RegisteredEvents = new();
+
+        public static void RegisterEvents() {
+            RegisteredEvents["Apple Orchard Unlock"] = new AppleOrchardUnlock();
+            RegisteredEvents["West Gate Path Unlock"] = new WestGatePathUnlock();
+            RegisteredEvents["Blackbridge Grotto Unlock"] = new BlackBridgeGrotto();
+
+            foreach (var REvent in RegisteredEvents){
+                REvent.Value.OnRegister();
+            }
+        }
     }
     public abstract class RegisteredFSMEvent {
 
@@ -51,12 +56,40 @@ namespace BluePrinceArchipelago.Events
 
         public override void OnRegister()
         {
-            throw new NotImplementedException();
+            
         }
 
         public override void OnTrigger()
         {
-            PermanentUnlocks.Unlocks.AppleOrchard.Unlock();
+            PermanentUnlocks.Unlocks.AppleOrchard.FoundLocation();
+        }
+    }
+    public class WestGatePathUnlock : RegisteredFSMEvent
+    {
+
+        public new string Name = "West Gate Path Unlock";
+
+        public override void OnRegister()
+        {
+        }
+
+        public override void OnTrigger()
+        {
+            PermanentUnlocks.Unlocks.WestGatePath.FoundLocation();
+        }
+    }
+    public class BlackBridgeGrotto : RegisteredFSMEvent
+    {
+
+        public new string Name = "Blackbridge Grotto Unlock";
+
+        public override void OnRegister()
+        {
+        }
+
+        public override void OnTrigger()
+        {
+            PermanentUnlocks.Unlocks.WestGatePath.FoundLocation();
         }
     }
 }

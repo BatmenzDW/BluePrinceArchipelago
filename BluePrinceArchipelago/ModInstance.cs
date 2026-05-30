@@ -1,11 +1,8 @@
-﻿using BepInEx;
-using BepInEx.Unity.IL2CPP.Utils.Collections;
-using BluePrince;
+﻿using BepInEx.Unity.IL2CPP.Utils.Collections;
 using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Items;
-using BluePrinceArchipelago.Models;
 using BluePrinceArchipelago.Patches;
 using BluePrinceArchipelago.RoomHandlers;
 using BluePrinceArchipelago.Utils;
@@ -36,6 +33,7 @@ namespace BluePrinceArchipelago
         public static GameObject RoomsInHouse = new();
         public static GameObject StatsLogger = new();
         public static GameObject PickupSpawnPool = new();
+        public static GameObject Prefabs = new();
 
         // FSMs
         public static PlayMakerFSM GemManager = new();
@@ -75,7 +73,9 @@ namespace BluePrinceArchipelago
 
         public static HashSet<string> SanctumsSolved = [];
 
-        
+        public static string PreviousSceneName { get; private set; } = "";
+        public static bool AppliedHarmony { get; private set; } = false;
+
         public ModInstance(IntPtr ptr) : base(ptr)
         {
             Instance = this; //Set the modInstance for easy access.
@@ -84,6 +84,13 @@ namespace BluePrinceArchipelago
         {
             SceneManager.sceneLoaded += (Action<Scene, LoadSceneMode>)OnSceneLoaded;
             APEventFSM = Plugin.ModObject.GetComponent<PlayMakerFSM>();
+            Harmony.CreateAndPatchAll(typeof(RoomPatches), "RoomPatches");
+            Harmony.CreateAndPatchAll(typeof(ItemPatches), "ItemPatches");
+            Harmony.CreateAndPatchAll(typeof(FsmRoomPatches), "FsmRoomPatch");
+            
+            Prefabs = GameObject.Instantiate(new GameObject("Prefabs"), Plugin.ModObject.transform);
+            Prefabs.name = "prefabs";
+            Instance.StartCoroutine(Instance.LoadAllAssets().WrapToIl2Cpp());
         }
         IEnumerator LoadAllAssets()
         {
@@ -96,7 +103,11 @@ namespace BluePrinceArchipelago
                     var loadAsset = bundle.LoadAssetAsync<GameObject>(asset);
                     yield return loadAsset.asset;
 
-                    ArchipelagoPrefabs.Prefabs.Add(loadAsset.asset.TryCast<GameObject>()); //Store the prefab for later.
+                    // Make the prefab a child of the modobject so it is preloaded and not deloaded on scene transitions.
+                    GameObject assetGameObject = loadAsset.asset.TryCast<GameObject>();
+                    GameObject obj = GameObject.Instantiate(loadAsset.asset.TryCast<GameObject>(), Prefabs.transform);
+                    obj.name = assetGameObject.name;
+                    obj.SetActive(false);
                 }
             }
             ArchipelagoPrefabsLoaded = true;
@@ -108,14 +119,17 @@ namespace BluePrinceArchipelago
             Logging.Log($"Scene: {scene.name} loaded in {mode}");
             if (scene.name.Equals("Main Menu"))
             {
-                Harmony.CreateAndPatchAll(typeof(EventPatches), "EventPatches"); //Apply event patches on the main menu to get some data that is not accessible later.  
-
+                if (!AppliedHarmony) {
+                    Harmony.CreateAndPatchAll(typeof(EventPatches), "EventPatches"); //Apply event patches on the main menu to get some data that is not accessible later. 
+                    AppliedHarmony = true;
+                }
+               
                 FSMPatches.IntroSkip();
             }
             if (scene.name.Equals("Mount Holly Estate"))
             {
                 SceneLoaded = true;
-                StartCoroutine(LoadAllAssets().WrapToIl2Cpp());
+                
                 //Initialize all of the GameObjects
                 PlanPicker = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER").gameObject;
                 Inventory = GameObject.Find("__SYSTEM/Inventory").gameObject;
@@ -129,7 +143,7 @@ namespace BluePrinceArchipelago
                 StarManager = GameObject.Find("__SYSTEM/HUD/Stars")?.GetFsm("FSM");
                 YouFoundText = GameObject.Find("/UI OVERLAY CAM/You Found Text").transform;
                 LuckManager = GameObject.Find("__SYSTEM/Luck Calculator")?.GetFsm("Luck Calculator");
-                GlobalPersistentManager = GameObject.Find("Global Persitent Manager")?.GetComponent<PlayMakerFSM>();
+                GlobalPersistentManager = GameObjectExtensions.FindGameObject("Global Persitent Manager")?.GetComponent<PlayMakerFSM>();
                 GlobalManager = GameObject.Find("Global Manager")?.GetComponent<PlayMakerFSM>();
                 TheGrid = GameObject.Find("__SYSTEM/THE GRID")?.GetComponent<PlayMakerFSM>();
                 MasterPicker = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE")?.GetComponent<PlayMakerFSM>();
@@ -143,26 +157,30 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.Reset(); // Clear stale room state from any previous scene load
                 InitializeRooms();
                 Plugin.ModRoomManager.SetAllVanilla();
-                TrunkManager.Initialize();
-                HasInitializedRooms = true;
-                ModEventHandler.LocationFound += OnLocalLocationSent;
-                Harmony.CreateAndPatchAll(typeof(RoomPatches), "RoomPatches");
-                Harmony.CreateAndPatchAll(typeof(ItemPatches), "ItemPatches");
-                Harmony.CreateAndPatchAll(typeof(FsmRoomPatches), "FsmRoomPatch");
+                RegisterItems.Register();
+
                 // If already connected to Archipelago when loading in, sync after a delay
                 // to ensure the game has finished initializing all draft pools
-                if (ArchipelagoClient.Authenticated)
+                if (scene.name != PreviousSceneName)
                 {
-                    RegisterItems.Register(); // Register the initial state of the items.
-                    Logging.Log("Scheduling delayed sync after scene load...");
+                    ModEventHandler.LocationFound += OnLocalLocationSent;
+                    TrunkManager.Initialize();
+                    if (ArchipelagoClient.Authenticated)
+                    {
+                        ; // Register the initial state of the items.
+                        Logging.Log("Scheduling delayed sync after scene load...");
+                    }
                 }
                 // Use Invoke to delay the sync - increased to 1 second for safety
                 Instance.Invoke(nameof(PerformDelayedSync), 1.0f);
+                HasInitializedRooms = true;
             }
             else {
                 // hackish, but based on my knowledge only one scene is loaded at a time.
                 SceneLoaded = false;
             }
+
+            PreviousSceneName = scene.name;
         }
         // Handles the mod object being destroyed somehow.
         private void OnDestroy()
@@ -193,7 +211,18 @@ namespace BluePrinceArchipelago
                     }
                 }
             }
-            if (targetName == "Trunk Counter" && eventName == "Update Subtract")
+            // Triggers whenever a custom Archipelago Event is sent to Archipelago FSM.
+            if (targetName == "Archipelago") {
+                // If the Event is registered, trigger the event.
+                if (FSMEventHandler.RegisteredEvents.ContainsKey(eventName))
+                {
+                    FSMEventHandler.RegisteredEvents[eventName].OnTrigger();
+                }
+                else {
+                    Logging.LogWarning($"The custom Archipelago event {eventName} doesn't appear to be registered. It is likely mispelled or not fully implemented.", "Events");
+                }
+            }
+            else if (targetName == "Trunk Counter" && eventName == "Update Subtract")
             {
                 TrunkManager.OnTrunkOpen();
             }
@@ -212,7 +241,9 @@ namespace BluePrinceArchipelago
                             state.EnableActionsOfType<ArrayListAdd>();
                         }
                     }
+                    
                     item.HasBeenFound = true;
+                    ModEventHandler.OnFirstFound(item);
                 }
                 else if (eventName.Contains("Upgrade"))
                 {
@@ -224,11 +255,6 @@ namespace BluePrinceArchipelago
             {
 
             }
-            else if (targetName == "Plan Picker" && eventName == "Go") {
-                //GameObject Menu = owner.transform.parent.parent.gameObject;
-                //if (owner )
-            }
-
             string SenderName = owner != null ? owner.name ?? owner.gameObject.name : "Unknown";
             Logging.Log($"{SenderName} Sending {eventName} to {targetType}: {targetName}", "Events");
         }
@@ -435,6 +461,7 @@ namespace BluePrinceArchipelago
             IsInRun = false;
             Logging.Log("Day End", "DeathLink");
             var fsm = GameObject.Find("UI OVERLAY CAM")?.transform?.Find("END OF DAYS CHECKS")?.gameObject?.GetFsm("FSM");
+
             Plugin.ArchipelagoClient?.DeathLinkHandler?.SendEndOfDayDeathLink(fsm);
             Plugin.UniqueItemManager.EndOfDay();
         }
@@ -503,56 +530,7 @@ namespace BluePrinceArchipelago
 
         private void OnGUI()
         {
-            // show the mod is currently loaded in the corner
-            GUI.Label(new Rect(16, 116, 300, 20), Plugin.ModDisplayInfo);
             ArchipelagoConsole.OnGUI();
-
-            // Prevents tabbing from affecting the GUI fields (Was getting really annoying with alt-tabbing)
-            if (Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Tab || Event.current.character == '\t'))
-            {
-                Event.current.Use(); // Marks the event as used, stopping propagation
-            }
-
-            string statusMessage;
-            // show the Archipelago Version and whether we're connected or not
-            if (ArchipelagoClient.Authenticated)
-            {
-                // if your game doesn't usually show the cursor this line may be necessary
-                Cursor.visible = false;
-
-                statusMessage = " Status: Connected";
-                GUI.Label(new Rect(16, 150, 300, 20), Plugin.APDisplayInfo + statusMessage);
-            }
-            else
-            {
-                // if your game doesn't usually show the cursor this line may be necessary
-                Cursor.visible = true;
-
-                statusMessage = " Status: Disconnected";
-                GUI.Label(new Rect(16, 150, 300, 20), Plugin.APDisplayInfo + statusMessage);
-                GUI.Label(new Rect(16, 170, 150, 20), "Host: ");
-                GUI.Label(new Rect(16, 190, 150, 20), "Player Name: ");
-                GUI.Label(new Rect(16, 210, 150, 20), "Password: ");
-
-                ArchipelagoClient.ServerData.Uri = GUI.TextField(new Rect(150, 170, 150, 20),
-                    ArchipelagoClient.ServerData.Uri);
-                ArchipelagoClient.ServerData.SlotName = GUI.TextField(new Rect(150, 190, 150, 20),
-                    ArchipelagoClient.ServerData.SlotName);
-                ArchipelagoClient.ServerData.Password = GUI.TextField(new Rect(150, 210, 150, 20),
-                    ArchipelagoClient.ServerData.Password);
-
-                // requires that the player at least puts *something* in the slot name
-                if (GUI.Button(new Rect(16, 230, 100, 20), "Connect") &&
-                    !ArchipelagoClient.ServerData.SlotName.IsNullOrWhiteSpace())
-                {
-                    ConnectionData connData = new ConnectionData();
-                    connData.Uri = ArchipelagoClient.ServerData.Uri;
-                    connData.SlotName = ArchipelagoClient.ServerData.SlotName;
-                    connData.Password = ArchipelagoClient.ServerData.Password;
-                    State.UpdateServerDetails(connData);
-                    Plugin.ArchipelagoClient.Connect();
-                }
-            }
         }
         public static void OnLocalLocationSent(System.Object sender, LocationEventArgs e)
         {
@@ -768,9 +746,6 @@ namespace BluePrinceArchipelago
                 SyncRoomPoolsWithArchipelago();
                 Plugin.ModItemManager.ReplaceItemsWithAP();
             }
-            if (IsInRun) {
-                RegisterItems.Register();
-            }
         }
         
         private static void InitializeRooms()
@@ -844,7 +819,7 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.AddRoom("BILLIARD ROOM", ["FRONT - Tier 1", "FRONTBACK - RARE", "NORTH PIERCE", "CORNER - Tier 1", "CENTER - Tier 2", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("BOILER ROOM", ["CENTER - Tier 2 G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G"], true)
                     .AddDependency(poolCheck);
-                Plugin.ModRoomManager.AddRoom("BOOKSHOP", [""], true, false);
+                Plugin.ModRoomManager.AddRoom("BOOKSHOP", [""], true, true);
                 Plugin.ModRoomManager.AddRoom("BOUDOIR", ["SOUTH PIERCE", "CORNER - Tier 1", "CENTER - Tier 2", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("BUNK ROOM", ["FRONT - Tier 1", "FRONTBACK - RARE", "SOUTH PIERCE", "CORNER - RARE", "CENTER - Tier 2", "EDGECREEP - RARE", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("CASINO", ["FRONTBACK G - RARE", "EDGEPIERCE G", "EDGE ADVANCE EASTWING - G", "EDGE ADVANCE WESTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "NORTH PIERCE G", "CENTER - Tier 1 G", "CORNER - Tier 1 G"], false);

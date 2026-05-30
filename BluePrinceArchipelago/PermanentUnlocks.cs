@@ -1,4 +1,5 @@
-﻿using BluePrinceArchipelago.Utils;
+﻿using BluePrinceArchipelago.Events;
+using BluePrinceArchipelago.Utils;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
@@ -24,7 +25,9 @@ namespace BluePrinceArchipelago.PermanentUnlocks
     {
         public string Name;
 
-        public abstract void Unlock();
+        public abstract void UnlockItem();
+
+        public abstract void FoundLocation();
 
         public abstract void PreventDefault();
     }
@@ -35,7 +38,7 @@ namespace BluePrinceArchipelago.PermanentUnlocks
         public new string Name = "Apple Orchard";
 
         // Run the unlock code.
-        public override void Unlock() {
+        public override void UnlockItem() {
             // Log the Unlock of the Apple Orchard to Stats.
             ModInstance.StatsLogger.GetComponent<StatsLogger>().Record_Event(EventID.Orchard_Unlocked);
 
@@ -73,10 +76,10 @@ namespace BluePrinceArchipelago.PermanentUnlocks
 
 
         }
-
-        public void SetUnlocked() { 
-
+        public override void FoundLocation()
+        {
         }
+
     }
     public class GemstoneCavern : PermanentUnlock
     {
@@ -84,7 +87,7 @@ namespace BluePrinceArchipelago.PermanentUnlocks
         public new string Name = "Gemstone Cavern";
 
         // Run the unlock code.
-        public override void Unlock()
+        public override void UnlockItem()
         {
             // Activate Permanent Additions
             GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /PERMANENT ADDITIONS").SetActive(true);
@@ -108,13 +111,15 @@ namespace BluePrinceArchipelago.PermanentUnlocks
             GameObject.Find("Giant Switch Lever").GetComponent<PlayMakerFSM>().GetState("State 2").DisableFirstActionOfType<ActivateGameObject>();
         }
 
-
+        public override void FoundLocation()
+        {
+        }
     }
     public class WestGatePath : PermanentUnlock
     {
         public new string Name = "West Gate Path";
 
-        public override void Unlock()
+        public override void UnlockItem()
         {
             ModInstance.StatsLogger.GetComponent<StatsLogger>().Record_Event(EventID.West_Path_Gate_Unlocked);
 
@@ -128,6 +133,9 @@ namespace BluePrinceArchipelago.PermanentUnlocks
         {
             
         }
+        public override void FoundLocation()
+        {
+        }
     }
 
     public class BlackBridgeGrotto : PermanentUnlock
@@ -135,7 +143,7 @@ namespace BluePrinceArchipelago.PermanentUnlocks
         public new string Name = "Blackbridge Grotto";
         private bool _Solved = false;
 
-        public override void Unlock()
+        public override void UnlockItem()
         {
             // Only 90% sure this is the correct event.
             ModInstance.StatsLogger.GetComponent<StatsLogger>().Record_Event(EventID.Blackbridge_Powered);
@@ -153,13 +161,16 @@ namespace BluePrinceArchipelago.PermanentUnlocks
             // Replace the 
             LabMachine.GetState("Chek if Grotto Is Open").DisableActionsOfType<GetFsmBool>();
         }
+        public override void FoundLocation()
+        {
+        }
     }
 
     public class SatelliteDish : PermanentUnlock
     {
         public new string Name = "Satellite Dish";
 
-        public override void Unlock()
+        public override void UnlockItem()
         {
             //TODO
         }
@@ -167,6 +178,9 @@ namespace BluePrinceArchipelago.PermanentUnlocks
         public override void PreventDefault()
         {
             //TODO
+        }
+        public override void FoundLocation()
+        {
         }
     }
 
@@ -174,7 +188,7 @@ namespace BluePrinceArchipelago.PermanentUnlocks
     {
         public new string Name = "Blue Tents";
 
-        public override void Unlock()
+        public override void UnlockItem()
         {
             //TODO
         }
@@ -182,6 +196,9 @@ namespace BluePrinceArchipelago.PermanentUnlocks
         public override void PreventDefault()
         {
             //TODO
+        }
+        public override void FoundLocation()
+        {
         }
     }
 }

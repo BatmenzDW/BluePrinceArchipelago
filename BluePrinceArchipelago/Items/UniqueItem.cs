@@ -1,13 +1,10 @@
-﻿using Archipelago.MultiClient.Net.Models;
-using BluePrinceArchipelago.Archipelago;
+﻿using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using LibCpp2IL;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TMPro;
 using UnityEngine;
 
 
@@ -176,18 +173,15 @@ namespace BluePrinceArchipelago.Items
             {
                 if (item != null)
                 {
+                    FsmState state = GetPickupState(obj.name);
                     // If the item has not been found before.
                     if (!item.HasBeenFound)
                     {
-
-                    }
-                    else if (item.ModelReplaced) {
-
+                        ReplacePickup(item);
                     }
                 }
                 else if (obj.name.ToUpper().Contains("UPGRADE"))
                 {
-                    //Replace with AP item code to be added here.
                 }
             }
             else
@@ -234,7 +228,6 @@ namespace BluePrinceArchipelago.Items
                     //Disable the actions that add the item to inventory.
                     state.DisableActionsOfType<ArrayListAdd>();
                 }
-                SpawnedItems.Add(Plugin.ModItemManager.GetUniqueItem(item.Name));
                 return state;
             }
             // If the item pickup state was not found output an error.

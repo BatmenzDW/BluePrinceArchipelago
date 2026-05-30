@@ -92,8 +92,8 @@ public class Commissary : RoomHandler
     private void ReplaceWithAPModel(string itemName, GameObject gameObject) {
         GameObject prefab = null;
 
-            prefab = ArchipelagoPrefabs.GetPrefab(itemName);
-            if (prefab != null)
+            prefab = ModInstance.Prefabs.GetChild(itemName);
+        if (prefab != null)
             {
                 //Instantiate a copy of the game object at the location of the spawn pool game object.
                 GameObject APGO = GameObject.Instantiate(prefab, gameObject.transform.position, gameObject.transform.rotation);

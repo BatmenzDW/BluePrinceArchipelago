@@ -82,6 +82,10 @@
         <HintPath>$(BluePrinceDir)\BepInEx\interop\PlayMaker.dll</HintPath>
         <Private>False</Private>
       </Reference>
+      <Reference Include="Rewired_Core">
+        <HintPath>$(BluePrinceDir)\BepInEx\interop\Rewired_Core.dll</HintPath>
+		<Private>False</Private>
+      </Reference>
       <Reference Include="Unity.TextMeshPro">
         <HintPath>$(BluePrinceDir)\BepInEx\interop\Unity.TextMeshPro.dll</HintPath>
 		<Private>False</Private>

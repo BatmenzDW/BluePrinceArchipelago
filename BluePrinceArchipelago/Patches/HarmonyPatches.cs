@@ -1,12 +1,9 @@
 ﻿using BluePrince;
-using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Utils;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using HutongGames.PlayMaker.Ecosystem.Utils;
 using System;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Patches
@@ -150,23 +147,6 @@ namespace BluePrinceArchipelago.Patches
                     }
                 }
             }
-        }
-    }
-
-    public class ManagerPatches() 
-    {
-        [HarmonyPatch(typeof(ActionPromptData), "TriggerCallback")]
-        [HarmonyPrefix]
-        static void Prefix(ActionPromptData __instance) {
-            string callbackName = __instance.Callback_TargetFSM?.GameObject?.name;
-            if (callbackName == null) {
-                callbackName = __instance.Callback_TargetEvent?.Name;
-            }
-            if (callbackName == null)
-            {
-                callbackName = __instance.Callback_Method.Method.Name ?? "Not Found";
-            }
-            Logging.Log($"BP Action {__instance.Type.ToString()} was triggered with the callback: {callbackName}.");
         }
     }
 }

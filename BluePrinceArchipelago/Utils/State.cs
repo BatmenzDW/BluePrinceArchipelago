@@ -1,14 +1,10 @@
-﻿using AsmResolver.PE.DotNet.ReadyToRun;
-using BepInEx;
+﻿using BepInEx;
 using BluePrinceArchipelago.Archipelago;
-using BluePrinceArchipelago.Core;
-using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using static Il2CppSystem.Globalization.CultureInfo;
 
 namespace BluePrinceArchipelago.Utils
 {
@@ -37,7 +33,7 @@ namespace BluePrinceArchipelago.Utils
             InitializeSentLocations();
             InitializeSessionData();
             InitializeServerDetails();
-            InitializeServerOptions();
+            //InitializeServerOptions();
         }
 
         public static void UpdateAll() {
