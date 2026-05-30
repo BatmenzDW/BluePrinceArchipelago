@@ -19,4 +19,5 @@ public class ArchipelagoData (string uri = "localhost:38281", string slotName = 
     public Dictionary<long, string> ItemDict = new(); //Stores all items that are in this game, and their name.
     public Dictionary<long, ScoutedItemInfo> LocationItemMap = new(); //Maps the location id to it's associated item reward.
     public Dictionary<string, Object> OptionsDict = new(); //Stores all options and their values. Key is the option name, value is the option value.
+    public Dictionary<int, List<ItemInfo>> ItemsByDay = new(); //Stores the Items recieved by the day they were received (In case of crash so it can be resent on current day).
 }

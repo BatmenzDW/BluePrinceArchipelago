@@ -592,6 +592,7 @@ namespace BluePrinceArchipelago.Items
         }
         public string GetItemType(string itemName)
         {
+            itemName = GetInternalName(itemName);
             ModItem item = GetPermanentItem(itemName);
             itemName = itemName.Trim();
             if (item != null)
@@ -609,6 +610,13 @@ namespace BluePrinceArchipelago.Items
                 return "Unique";
             }
             return null;
+        }
+        private string GetInternalName(string itemName) {
+            //Fixes internal names for items that have different internal names than the check.
+            if (itemName.ToLower().Contains("electromagnet")) {
+                return "POWERED ELECTROMAGNET";
+            }
+            return itemName;
         }
 
         // Handle the code for recieving an item check that results in receiving an item.
@@ -1086,7 +1094,6 @@ namespace BluePrinceArchipelago.Items
             if (!RecievedLocations.Contains(location.ToUpper()))
             {
                 RecievedLocations.Add(location.ToUpper());
-
             }
             int locationIndex = Locations.IndexOf(location) + 1; //Blue Prince tends to use 1-indexing for some things.
             if (locationIndex != -1) {
@@ -1178,14 +1185,17 @@ namespace BluePrinceArchipelago.Items
             Plugin.ModItemManager.AddItem(new UniqueItem("PAPER CROWN", Plugin.ModItemManager.GetPreSpawnItem("PAPER CROWN"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("GEAR WRENCH", Plugin.ModItemManager.GetPreSpawnItem("GEAR WRENCH"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("COMPASS", Plugin.ModItemManager.GetPreSpawnItem("COMPASS"), false, ItemSanityType.Standard));
+            Plugin.ModItemManager.AddItem(new UniqueItem("HALL PASS", GameObjectExtensions.FindGameObject("HALL PASS"), false, ItemSanityType.Standard));
+
             Plugin.ModItemManager.AddItem(new UniqueItem("POWERED ELECTROMAGNET", GameObjectExtensions.FindGameObject("ELECTROMAGNET"), false, ItemSanityType.Workshop));
             Plugin.ModItemManager.AddItem(new UniqueItem("LUCKY PURSE", GameObjectExtensions.FindGameObject("LUCKY PURSE"), false, ItemSanityType.Workshop));
             Plugin.ModItemManager.AddItem(new UniqueItem("PICK SOUND AMPLIFIER", GameObjectExtensions.FindGameObject("PICK SOUND AMPLIFIER"), false, ItemSanityType.Workshop));
-            Plugin.ModItemManager.AddItem(new UniqueItem("BURNING GLASS", GameObjectExtensions.FindGameObject("BURNING GLASS"), false, ItemSanityType.Workshop));
+            Plugin.ModItemManager.AddItem(new UniqueItem("TEMP DELETE AFTER TEST IS COMPLETE/Cheat Spawns/BURNING GLASS", GameObjectExtensions.FindGameObject("BURNING GLASS"), false, ItemSanityType.Workshop));
             Plugin.ModItemManager.AddItem(new UniqueItem("DETECTOR SHOVEL", GameObjectExtensions.FindGameObject("DETECTOR SHOVEL"), false, ItemSanityType.Workshop));
             Plugin.ModItemManager.AddItem(new UniqueItem("DOWSING ROD", GameObjectExtensions.FindGameObject("DOWSING ROD"), false, ItemSanityType.Workshop));
-            Plugin.ModItemManager.AddItem(new UniqueItem("JACK HAMMER", GameObjectExtensions.FindGameObject("JACK HAMMER"), false, ItemSanityType.Workshop));
-            Plugin.ModItemManager.AddItem(new UniqueItem("POWER HAMMER", GameObjectExtensions.FindGameObject("POWER HAMMER"), false, ItemSanityType.Workshop));
+            Plugin.ModItemManager.AddItem(new UniqueItem("JACK HAMMER", GameObject.Find("TEMP DELETE AFTER TEST IS COMPLETE/Cheat Spawns/JACK HAMMER"), false, ItemSanityType.Workshop));
+            Plugin.ModItemManager.AddItem(new UniqueItem("POWER HAMMER", GameObject.Find("TEMP DELETE AFTER TEST IS COMPLETE/Cheat Spawns/POWER HAMMER"), false, ItemSanityType.Workshop));
+            
 
             //Permanent Items
             Plugin.ModItemManager.AddItem(new PermanentItem("Extra Allowance 1", null, false, "Allowance", 1));

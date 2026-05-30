@@ -28,6 +28,11 @@ namespace BluePrinceArchipelago.Events
         public void OnFirstDrafted(ModRoom room) => OnFirstDrafted(room.Name);
         public void OnFirstDrafted(string roomName) {
             LocationFound.Invoke(this, new LocationEventArgs($"{roomName.ToTitleCase()} First Entering", "First Draft Room"));
+            // Send second Bunk Room location.
+            if (roomName == "BUNK ROOM")
+            {
+                LocationFound.Invoke(this, new LocationEventArgs($"{roomName.ToTitleCase()} First Entering", "First Draft Room 2"));
+            }
         }
         public void OnClassroomFirstDrafted(string classroomNumber) {
             LocationFound.Invoke(this, new LocationEventArgs($"Classroom {classroomNumber} First Entering", "First Draft Room"));

@@ -1,4 +1,6 @@
-﻿using BluePrinceArchipelago.Archipelago;
+﻿using Archipelago.MultiClient.Net.Models;
+using BluePrinceArchipelago.Archipelago;
+using BluePrinceArchipelago.RoomHandlers;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
@@ -6,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static ES3;
 
 
 namespace BluePrinceArchipelago.Items
@@ -94,7 +97,7 @@ namespace BluePrinceArchipelago.Items
             }
 
             // If the item is spawned or is not in the prespawn list.
-            if (Plugin.ModItemManager.IsItemSpawnable(GameObj, !isSpawned && IsPrespawn))
+            if (Plugin.ModItemManager.IsItemSpawnable(GameObj, IsPrespawn) && !isSpawned)
             {
                 string iconName = Name.ToTitleCase() + " Icon(Clone)001";
                 GameObject icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
@@ -122,10 +125,11 @@ namespace BluePrinceArchipelago.Items
                     if (state != null)
                     {
                         state.EnableActionsOfType<ArrayListAdd>();
-                        if (UniqueItemManager.ComissaryStates.ContainsKey(Name))
+                        if (RoomHandlers.Commissary.CommissaryStates.ContainsKey(Name))
                         {
+                            Logging.LogWarning(Name, "Events");
                             //Re-enable commissary purchases of the item.
-                            Plugin.UniqueItemManager.EnableCommissaryPurchase(this, UniqueItemManager.ComissaryStates[Name]);
+                            RoomHandlers.Commissary.CanStock.Add(Name);
                         }
                         ModItemManager.PickedUp.Add(GameObj, "GameObject");
                         InventoryIcons.Add(icon, "GameObject");
@@ -152,18 +156,6 @@ namespace BluePrinceArchipelago.Items
     public class UniqueItemManager
     {
         public List<UniqueItem> SpawnedItems = new List<UniqueItem>();
-
-        // A Map of item names to the states in the Comissary.
-        public static readonly Dictionary<string, string> ComissaryStates = new Dictionary<string, string>{
-            {"MAGNIFYING GLASS", "Mag Glass" },
-            {"SHOVEL", "Shovel Purchase"},
-            {"SALT SHAKER", "Salt Shaker Purchase"},
-            {"COMPASS", "Compass Purchase"},
-            {"SLEDGE HAMMER", "Sledge Hammer Purchase"},
-            {"SLEEPING MASK", "Sleep Mask Purchase"},
-            {"RUNNING SHOES", "Running Shoes Purchase"},
-            {"METAL DETECTOR", "MEtal Detector Purchase"}
-         };
 
         public void OnItemSpawn(GameObject obj, string poolName, GameObject transformObj, GameObject spawnedObj)
         {
@@ -200,22 +192,6 @@ namespace BluePrinceArchipelago.Items
                 }
             }
         }
-        public void ReplaceCommissaryItemsWithAP()
-        {
-            foreach (var item in ComissaryStates)
-            {
-                UniqueItem uniqueItem = Plugin.ModItemManager.GetUniqueItem(item.Key);
-                if (!uniqueItem.HasBeenFound)
-                {
-                    ReplaceCommissaryPurchase(uniqueItem, item.Value);
-                }
-                else if (uniqueItem.IsUnlocked)
-                {
-                    EnableCommissaryPurchase(uniqueItem, item.Value);
-                }
-            }
-        }
-
         //Finds the associated Pickup State and replaces the item.
         private FsmState ReplacePickup(UniqueItem item)
         {
@@ -227,48 +203,28 @@ namespace BluePrinceArchipelago.Items
                 {
                     //Disable the actions that add the item to inventory.
                     state.DisableActionsOfType<ArrayListAdd>();
+                    long locationid = Plugin.ArchipelagoClient.GetLocationFromName(item.Name.ToTitleCase() + " First Pickup");
+                    ScoutedItemInfo scout = null;
+                    if (locationid != -1)
+                    {
+                        if (ArchipelagoClient.ServerData.LocationItemMap.ContainsKey(locationid))
+                        {
+                            scout = ArchipelagoClient.ServerData.LocationItemMap[locationid];
+                        }
+                    }
+                    // Skip spawning items if the item mapped to itself.
+                    if (scout != null) {
+                        if (scout.ItemName.ToUpper().Trim() == item.Name) {
+                            return state;
+                        }
+                    }
+                    SpawnedItems.Add(Plugin.ModItemManager.GetUniqueItem(item.Name));
                 }
                 return state;
             }
             // If the item pickup state was not found output an error.
             Logging.LogError($"No FSM state {item.Name.Trim().ToTitleCase() + " Pickup"} found for: {item.Name}");
             return null;
-        }
-
-        private FsmState ReplaceCommissaryPurchase(UniqueItem item, string stateName)
-        {
-            FsmState state = ModInstance.CommissaryMenu.GetState(stateName);
-            if (state != null)
-            {
-                //If the item is not unlocked, prevent it from being added to inventory.
-                if (!item.IsUnlocked && item.ApplySanity())
-                {
-                    //Disable the actions that add the item to inventory.
-                    state.DisableActionsOfType<ArrayListAdd>();
-                }
-                SpawnedItems.Add(Plugin.ModItemManager.GetUniqueItem(item.Name));
-                return state;
-            }
-            // If the item pickup state was not found output an error.
-            Logging.LogError($"No FSM state {stateName} found for: {item.Name}");
-            return null;
-        }
-        public void EnableCommissaryPurchase(UniqueItem item, string stateName)
-        {
-            FsmState state = ModInstance.CommissaryMenu.GetState(stateName);
-            if (state != null)
-            {
-                //If the item is not unlocked, prevent it from being added to inventory.
-                if (!item.IsUnlocked && item.ApplySanity())
-                {
-                    //Disable the actions that add the item to inventory.
-                    state.DisableActionsOfType<ArrayListAdd>();
-                    //Disables the You found Text (for now).
-                    state.DisableFirstActionOfType<ActivateGameObject>();
-                }
-                SpawnedItems.Add(Plugin.ModItemManager.GetUniqueItem(item.Name));
-                return;
-            }
         }
 
         public void EndOfDay()
@@ -315,8 +271,10 @@ namespace BluePrinceArchipelago.Items
                 string[] nameparts = item.Name.Split(" ");
                 foreach (string part in nameparts)
                 {
+                    
                     if (name.ToLower().Contains(part.ToLower()) && part.ToLower() != "pickup")
                     {
+                        Logging.Log(item.Name, "Events");
                         return item;
                     }
                 }

@@ -207,11 +207,30 @@ namespace BluePrinceArchipelago.Core
             return AddRoom(new ModRoom(name, gameObjectName, roomObj, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted));
         }
 
-        public void UpdateRoomPools() {
+        public void UpdateRoomPools()
+        {
             UpdateRoomsInHouse();
             Logging.Log("Updating Room Pools");
-            foreach (ModRoom room in _Rooms) {
+            foreach (ModRoom room in _Rooms)
+            {
                 room.UpdatePools();
+            }
+            UpdateCurrentPickerArrays();
+            ModRoom Closet = GetRoomByName("CLOSET");
+            // Fill all the active picker array's empty spots with closets.
+            foreach (string arrayName in CurrentPickerArrays)
+            {
+                if (arrayName != "")
+                {
+                    if (ModInstance.PickerDict.ContainsKey(arrayName))
+                    {
+                        PlayMakerArrayListProxy array = ModInstance.PickerDict[arrayName];
+
+                        while (array.arrayList.Count < 3) {
+                            array.Add(Closet.GameObj, "GameObject");
+                        }
+                    }
+                }
             }
         }
         public void EmptyDraftPool()

@@ -41,6 +41,7 @@ namespace BluePrinceArchipelago {
             Logging.SetLogLevel("Basement", LogLevel.Info);
             Logging.SetLogLevel("The Well", LogLevel.Info);
             Logging.SetLogLevel("RoomHandler", LogLevel.Info);
+            Logging.SetLogLevel("Utility Closet", LogLevel.Info);
             Logging.SetLogLevel("ArchipelagoOptions", LogLevel.Info);
             Logging.SetLogLevel("DeathLink", LogLevel.Info);
             Logging.SetLogLevel("ModRoomManager", LogLevel.Info);
@@ -48,6 +49,7 @@ namespace BluePrinceArchipelago {
             Logging.SetLogLevel("Events", LogLevel.Info);
             Logging.SetLogLevel("StatEvents", LogLevel.Info);
             Logging.SetLogLevel("APData", LogLevel.Info);
+            Logging.SetLogLevel("ItemQueue", LogLevel.Info);
 
             // Plugin startup logic
             ArchipelagoClient = new ArchipelagoClient();

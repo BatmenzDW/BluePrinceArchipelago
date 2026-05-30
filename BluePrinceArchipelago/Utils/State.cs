@@ -1,10 +1,12 @@
-﻿using BepInEx;
+﻿using Archipelago.MultiClient.Net.Models;
+using BepInEx;
 using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using static BluePrinceArchipelago.Archipelago.ItemQueue;
 
 namespace BluePrinceArchipelago.Utils
 {
@@ -13,32 +15,49 @@ namespace BluePrinceArchipelago.Utils
         public static string PluginPath => Paths.PluginPath;
         public static string ModFolder => Path.Combine(PluginPath, Plugin.PluginName);
 
+        public const string SessionFolder = "SessionData";
+
         public const string RecievedItemsFile = "RecievedItems.json";
         public const string SentLocationsFile = "SentLocations.json";
         public const string SessionDataFile = "SessionData.json";
         public const string ServerDetailsFile = "ServerDetails.json";
         public const string ServerOptionsFile = "ServerOptions.json";
         public const string TrunkCountsFile = "TrunkCounts.json";
+        public const string ItemQueueFile = "ItemQueue.json";
+        public const string LocationQueueFile = "LocationQueue.json";
+        public const string ItemsByDayFile = "ItemsByDay.json";
 
-        public static string RecievedItemsPath => Path.Combine(ModFolder, RecievedItemsFile);
-        public static string SentLocationsPath => Path.Combine(ModFolder, SentLocationsFile);
-        public static string SessionDataPath => Path.Combine(ModFolder, SessionDataFile);
-        public static string ServerDetailsPath => Path.Combine(ModFolder, ServerDetailsFile);
-        public static string ServerOptionsPath => Path.Combine(ModFolder, ServerOptionsFile);
-        public static string TrunkCountsPath => Path.Combine(ModFolder, TrunkCountsFile);
+        public static string RecievedItemsPath => Path.Combine(ModFolder, SessionFolder, RecievedItemsFile);
+        public static string SentLocationsPath => Path.Combine(ModFolder, SessionFolder, SentLocationsFile);
+        public static string SessionDataPath => Path.Combine(ModFolder, SessionFolder, SessionDataFile);
+        public static string ServerDetailsPath => Path.Combine(ModFolder, SessionFolder, ServerDetailsFile);
+        public static string ServerOptionsPath => Path.Combine(ModFolder, SessionFolder, ServerOptionsFile);
+        public static string TrunkCountsPath => Path.Combine(ModFolder, SessionFolder, TrunkCountsFile);
+        public static string ItemQueuePath => Path.Combine(ModFolder, SessionFolder, ItemQueueFile);
+        public static string LocationQueuePath => Path.Combine(ModFolder, SessionFolder, LocationQueueFile);
+        public static string ItemsByDayPath => Path.Combine(ModFolder, SessionFolder, ItemsByDayFile);
+
+        public static List<ItemInfo> TodaysItems = new();
+
+        public static int CurrentDayNum = 1;
 
         public static void Initialize()
         {
+            if (!Directory.Exists(Path.Combine(ModFolder, SessionFolder))) {
+                Directory.CreateDirectory(Path.Combine(ModFolder, SessionFolder));
+            }
             InitializeReceivedItems();
             InitializeSentLocations();
             InitializeSessionData();
             InitializeServerDetails();
-            //InitializeServerOptions();
+            //InitializeItemQueue();
+            //InitializeLocationQueue();
         }
 
         public static void UpdateAll() {
             UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
             UpdateLocations(ArchipelagoClient.ServerData.CheckedLocations);
+            UpdateItemsByDay(ArchipelagoClient.ServerData.ItemsByDay);
             SessionData session = new SessionData();
             session.SaveSlot = ModInstance.SaveSlot;
             session.Seed = ArchipelagoClient.ServerData.Seed;
@@ -46,7 +65,7 @@ namespace BluePrinceArchipelago.Utils
         }
 
         public static void UpdateLocations(List<long> data) { 
-            using (var writer = new StreamWriter(SentLocationsPath))
+            using (var writer = new StreamWriter(SentLocationsPath, false))
             {
                 writer.Write(JsonConvert.SerializeObject(data));
                 writer.Flush();
@@ -54,7 +73,7 @@ namespace BluePrinceArchipelago.Utils
         }
         public static void UpdateItems(List<string> data)
         {
-            using (var writer = new StreamWriter(RecievedItemsPath))
+            using (var writer = new StreamWriter(RecievedItemsPath, false))
             {
                 writer.Write(JsonConvert.SerializeObject(data));
                 writer.Flush();
@@ -70,7 +89,7 @@ namespace BluePrinceArchipelago.Utils
         }
         public static void UpdateServerDetails(ConnectionData data)
         {
-            using (var writer = new StreamWriter(ServerDetailsPath))
+            using (var writer = new StreamWriter(ServerDetailsPath, false))
             {
                 writer.Write(JsonConvert.SerializeObject(data));
                 writer.Flush();
@@ -78,19 +97,70 @@ namespace BluePrinceArchipelago.Utils
         }
         public static void UpdateSession(SessionData data)
         {
-            using (var writer = new StreamWriter(SessionDataPath))
+            using (var writer = new StreamWriter(SessionDataPath, false))
             {
                 writer.Write(JsonConvert.SerializeObject(data));
                 writer.Flush();
             }
         }
-        internal static void UpdateTrunkCounts()
+        public static void UpdateTrunkCounts()
         {
             using (var writer = new StreamWriter(TrunkCountsPath))
             {
                 writer.Write(JsonConvert.SerializeObject(ModInstance.TrunkManager.TrunkCounts));
                 writer.Flush();
             }
+        }
+        public static void UpdateItemQueue(List<ItemInfo> itemQueue) {
+            using (var writer = new StreamWriter(ItemQueuePath, false))
+            {
+                writer.Write(JsonConvert.SerializeObject(itemQueue));
+                writer.Flush();
+            }
+        }
+        public static void UpdateLocationQueue(List<string> locationQueue)
+        {
+            using (var writer = new StreamWriter(LocationQueuePath, false))
+            {
+                writer.Write(JsonConvert.SerializeObject(locationQueue));
+                writer.Flush();
+            }
+        }
+
+        public static void UpdateItemsByDay(ItemInfo item) {
+            State.UpdateItemsByDay(item);
+            UpdateItemsByDay(ArchipelagoClient.ServerData.ItemsByDay);
+        }
+        private static void UpdateItemsByDay(Dictionary<int, List<ItemInfo>> itemsByDay) {
+            using (var writer = new StreamWriter(ItemsByDayPath, false))
+            {
+                writer.Write(JsonConvert.SerializeObject(itemsByDay));
+                writer.Flush();
+            }
+        }
+        public static void FirstLoad() {
+            // If it is a reconnect from a crash
+            if (CurrentDayNum > 0 && ArchipelagoClient.Reconnected) {
+                InitializeItemsByDay();
+                int LatestDay = ArchipelagoClient.ServerData.ItemsByDay.HighestKey<int, List<ItemInfo>>();
+                if (LatestDay > 0) {
+
+                    // If the current day is the Latest day in data, there was likely a crash mid day and any recieved items need to be re-given (Except for rooms);
+                    if (CurrentDayNum == LatestDay) {
+                        // Re-recieve all items for the current day
+                        foreach (ItemInfo item in ArchipelagoClient.ServerData.ItemsByDay[LatestDay]) {
+                            if (!ModInstance.QueueManager.ReceiveItem(item, false))
+                            {
+                                ModInstance.QueueManager.AddItemToQueue(item);
+                            }
+                        }
+                    }
+                    else if (LatestDay > CurrentDayNum) {
+                        Logging.LogWarning($"Current Day {CurrentDayNum} does not match latest day in data {LatestDay}. It's very likely an incorrect file was loaded.");
+                    }
+                }
+            }
+            // If it's not a reconnect, nothing needs to be done.
         }
 
         private static void InitializeServerDetails()
@@ -113,13 +183,13 @@ namespace BluePrinceArchipelago.Utils
                     }
                     catch (Exception ex)
                     {
-                        Logging.Log($"Error loading ServerData: \n{ex.Message}");
+                        Logging.LogWarning($"Error loading ServerData: \n{ex.Message}");
                     }
                 }
             }
             else
             {
-                using (var writer = new StreamWriter(ServerDetailsPath))
+                using (var writer = new StreamWriter(ServerDetailsPath, false))
                 {
                     ConnectionData data = new ConnectionData();
                     data.Uri = ArchipelagoClient.ServerData.Uri;
@@ -150,13 +220,13 @@ namespace BluePrinceArchipelago.Utils
                     }
                     catch (Exception ex)
                     {
-                        Logging.Log($"Error loading Received items: \n{ex.Message}");
+                        Logging.LogWarning($"Error loading Session Data: \n{ex.Message}");
                     }
                 }
             }
             else
             {
-                using (var writer = new StreamWriter(SessionDataPath))
+                using (var writer = new StreamWriter(SessionDataPath, false))
                 {
                     SessionData defaultData = new SessionData();
                     defaultData.Seed = "";
@@ -184,13 +254,13 @@ namespace BluePrinceArchipelago.Utils
                     }
                     catch (Exception ex)
                     {
-                        Logging.Log($"Error loading Received items: \n{ex.Message}");
+                        Logging.LogWarning($"Error loading Sent Locations: \n{ex.Message}");
                     }
                 }
             }
             else
             {
-                using (var writer = new StreamWriter(SentLocationsPath))
+                using (var writer = new StreamWriter(SentLocationsPath, false))
                 {
                     writer.Write(JsonConvert.SerializeObject(new List<long>()));
                     writer.Flush();
@@ -214,19 +284,110 @@ namespace BluePrinceArchipelago.Utils
                     }
                     catch (Exception ex)
                     {
-                        Logging.Log($"Error loading Received items: \n{ex.Message}");
+                        Logging.LogWarning($"Error loading Received Items: \n{ex.Message}");
                     }
                 }
             }
             else
             {
-                using (var writer = new StreamWriter(RecievedItemsPath))
+                using (var writer = new StreamWriter(RecievedItemsPath, false))
                 {
                     writer.Write(JsonConvert.SerializeObject(new List<string>()));
                     writer.Flush();
                 }
             }
         }
+        private static void InitializeItemQueue() 
+        {
+            if (File.Exists(ItemQueuePath))
+            {
+                string jsonData = "";
+                using (var reader = new StreamReader(ItemQueuePath))
+                {
+                    jsonData = reader.ReadToEnd();
+                }
+                if (jsonData.Trim().Length > 0)
+                {
+                    try
+                    {
+                        ModInstance.QueueManager.SetItemQueue(JsonConvert.DeserializeObject<List<ItemInfo>>(jsonData));
+                    }
+                    catch (Exception ex)
+                    {
+                        Logging.LogWarning($"Error loading Item Queue: \n{ex.Message}");
+                    }
+                }
+            }
+            else {
+                using (var writer = new StreamWriter(ItemQueuePath, false))
+                {
+                    writer.Write(JsonConvert.SerializeObject(new List<ItemInfo>()));
+                    writer.Flush();
+                }
+            }
+        }
+        private static void InitializeLocationQueue() {
+            if (File.Exists(LocationQueuePath))
+            {
+                string jsonData = "";
+                using (var reader = new StreamReader(LocationQueuePath))
+                {
+                    jsonData = reader.ReadToEnd();
+                }
+                if (jsonData.Trim().Length > 0)
+                {
+                    try
+                    {
+                        ModInstance.QueueManager.SetLocationQueue(JsonConvert.DeserializeObject<List<string>>(jsonData));
+                    }
+                    catch (Exception ex)
+                    {
+                        Logging.LogWarning($"Error loading Location Queue: \n{ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                using (var writer = new StreamWriter(LocationQueuePath, false))
+                {
+                    writer.Write(JsonConvert.SerializeObject(new List<String>()));
+                    writer.Flush();
+                }
+            }
+        }
+
+        private static void InitializeItemsByDay() {
+            if (File.Exists(ItemsByDayPath))
+            {
+                string jsonData = "";
+                using (var reader = new StreamReader(ItemsByDayPath))
+                {
+                    jsonData = reader.ReadToEnd();
+                }
+                if (jsonData.Trim().Length > 0)
+                {
+                    try
+                    {
+                        ArchipelagoClient.ServerData.ItemsByDay = JsonConvert.DeserializeObject<Dictionary<int,List<ItemInfo>>>(jsonData);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logging.Log($"Error loading Items By Day data: \n{ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                using (var writer = new StreamWriter(ItemsByDayPath, false))
+                {
+                    Dictionary<int, List<ItemInfo>> tempDict = new();
+                    tempDict[1] = new List<ItemInfo>(); // Blank Day 1
+                    writer.Write(JsonConvert.SerializeObject(tempDict));
+                    writer.Flush();
+                }
+            }
+        }
+
         private static void InitializeServerOptions()
         {
             if (File.Exists(ServerOptionsPath))
@@ -250,7 +411,7 @@ namespace BluePrinceArchipelago.Utils
             }
             else
             {
-                using (var writer = new StreamWriter(ServerOptionsPath))
+                using (var writer = new StreamWriter(ServerOptionsPath, false))
                 {
                     writer.Write(JsonConvert.SerializeObject(new SlotData()));
                     writer.Flush();
@@ -281,7 +442,7 @@ namespace BluePrinceArchipelago.Utils
             }
             else
             {
-                using (var writer = new StreamWriter(TrunkCountsPath))
+                using (var writer = new StreamWriter(TrunkCountsPath, false))
                 {
                     writer.Write(JsonConvert.SerializeObject(new Dictionary<string, int>()));
                     writer.Flush();
@@ -289,17 +450,20 @@ namespace BluePrinceArchipelago.Utils
             }
         }
         public static void Reset() {
-            using (var writer = new StreamWriter(RecievedItemsPath))
+            // Received Items
+            using (var writer = new StreamWriter(RecievedItemsPath, false))
             {
                 writer.Write(JsonConvert.SerializeObject(new List<string>()));
                 writer.Flush();
             }
-            using (var writer = new StreamWriter(SentLocationsPath))
+            // Sent Locations
+            using (var writer = new StreamWriter(SentLocationsPath, false))
             {
                 writer.Write(JsonConvert.SerializeObject(new List<long>()));
                 writer.Flush();
             }
-            using (var writer = new StreamWriter(SessionDataPath))
+            // Session Data
+            using (var writer = new StreamWriter(SessionDataPath, false))
             {
                 SessionData defaultData = new SessionData();
                 defaultData.Seed = "";
@@ -307,14 +471,36 @@ namespace BluePrinceArchipelago.Utils
                 writer.Write(JsonConvert.SerializeObject(defaultData));
                 writer.Flush();
             }
-            using (var writer = new StreamWriter(ServerOptionsPath))
+            // Server Options
+            using (var writer = new StreamWriter(ServerOptionsPath, false))
             {
                 writer.Write(JsonConvert.SerializeObject(new SlotData()));
                 writer.Flush();
             }
-            using (var writer = new StreamWriter(TrunkCountsPath))
+            // Trunk Counts
+            using (var writer = new StreamWriter(TrunkCountsPath, false))
             {
                 writer.Write(JsonConvert.SerializeObject(new Dictionary<string, int>()));
+                writer.Flush();
+            }
+            // Item Queue
+            using (var writer = new StreamWriter(ItemQueuePath, false))
+            {
+                writer.Write(JsonConvert.SerializeObject(new List<ItemInfo>()));
+                writer.Flush();
+            }
+            // Location Queue
+            using (var writer = new StreamWriter(LocationQueuePath, false))
+            {
+                writer.Write(JsonConvert.SerializeObject(new List<String>()));
+                writer.Flush();
+            }
+            // 
+            using (var writer = new StreamWriter(ItemsByDayPath, false))
+            {
+                Dictionary<int, List<ItemInfo>> tempDict = new();
+                tempDict[1] = new List<ItemInfo>(); // Blank Day 1
+                writer.Write(JsonConvert.SerializeObject(tempDict));
                 writer.Flush();
             }
             //Don't reset the connection details since they might be useful.

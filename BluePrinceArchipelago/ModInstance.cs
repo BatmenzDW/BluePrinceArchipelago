@@ -1,4 +1,5 @@
-﻿using BepInEx.Unity.IL2CPP.Utils.Collections;
+﻿using Archipelago.MultiClient.Net.Models;
+using BepInEx.Unity.IL2CPP.Utils.Collections;
 using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Events;
@@ -76,6 +77,10 @@ namespace BluePrinceArchipelago
         public static string PreviousSceneName { get; private set; } = "";
         public static bool AppliedHarmony { get; private set; } = false;
 
+        public static bool FirstLoad { get; set; } = true;
+
+        public static int LoadCount = 0;
+
         public ModInstance(IntPtr ptr) : base(ptr)
         {
             Instance = this; //Set the modInstance for easy access.
@@ -86,7 +91,7 @@ namespace BluePrinceArchipelago
             APEventFSM = Plugin.ModObject.GetComponent<PlayMakerFSM>();
             Harmony.CreateAndPatchAll(typeof(RoomPatches), "RoomPatches");
             Harmony.CreateAndPatchAll(typeof(ItemPatches), "ItemPatches");
-            Harmony.CreateAndPatchAll(typeof(FsmRoomPatches), "FsmRoomPatch");
+            FSMEventHandler.RegisterEvents();
             
             Prefabs = GameObject.Instantiate(new GameObject("Prefabs"), Plugin.ModObject.transform);
             Prefabs.name = "prefabs";
@@ -120,6 +125,7 @@ namespace BluePrinceArchipelago
             if (scene.name.Equals("Main Menu"))
             {
                 if (!AppliedHarmony) {
+                    Harmony.CreateAndPatchAll(typeof(FsmRoomPatches), "FsmRoomPatch");
                     Harmony.CreateAndPatchAll(typeof(EventPatches), "EventPatches"); //Apply event patches on the main menu to get some data that is not accessible later. 
                     AppliedHarmony = true;
                 }
@@ -129,7 +135,12 @@ namespace BluePrinceArchipelago
             if (scene.name.Equals("Mount Holly Estate"))
             {
                 SceneLoaded = true;
-                
+                LoadCount++;
+                if (LoadCount > 1)
+                {
+                    FirstLoad = false;
+                }
+
                 //Initialize all of the GameObjects
                 PlanPicker = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER").gameObject;
                 Inventory = GameObject.Find("__SYSTEM/Inventory").gameObject;
@@ -158,7 +169,6 @@ namespace BluePrinceArchipelago
                 InitializeRooms();
                 Plugin.ModRoomManager.SetAllVanilla();
                 RegisterItems.Register();
-
                 // If already connected to Archipelago when loading in, sync after a delay
                 // to ensure the game has finished initializing all draft pools
                 if (scene.name != PreviousSceneName)
@@ -171,6 +181,7 @@ namespace BluePrinceArchipelago
                         Logging.Log("Scheduling delayed sync after scene load...");
                     }
                 }
+                
                 // Use Invoke to delay the sync - increased to 1 second for safety
                 Instance.Invoke(nameof(PerformDelayedSync), 1.0f);
                 HasInitializedRooms = true;
@@ -228,6 +239,7 @@ namespace BluePrinceArchipelago
             }
             else if (targetName == "Global Manager" && eventName.Contains("Pickup"))
             {
+                Logging.Log(eventName, "Events");
                 UniqueItem item = Plugin.UniqueItemManager.GetIfSpawned(eventName);
                 if (item != null)
                 {
@@ -306,7 +318,8 @@ namespace BluePrinceArchipelago
             // Reload the inventories on day start (in case a scene transition happened).
             ModItemManager.LoadInventories();
 
-            //PermanentUnlocks.Unlocks.AppleOrchard.PreventDefault();
+            PermanentUnlocks.Unlocks.AppleOrchard.PreventDefault();
+            PermanentUnlocks.Unlocks.WestGatePath.PreventDefault();
 
             // Reset room in-house counts and reload arrays — game resets pools at the start of each day
             Plugin.ModRoomManager.ResetRoomInHouseCounts();
@@ -321,8 +334,18 @@ namespace BluePrinceArchipelago
 
             int totalStars = StarManager.GetIntVariable("TotalStars").Value;
 
+            State.CurrentDayNum = dayNum;
+            if (!FirstLoad)
+            {
+                // Reset the today's itemList unless this is the first load of today.
+                State.TodaysItems = new List<ItemInfo>();
+            }
             if (ArchipelagoClient.Authenticated)
             {
+                if (FirstLoad)
+                {
+                    State.FirstLoad();
+                }
                 // Release items that were queued while offline/before the run started
                 QueueManager.ReleaseAllQueuedItems();
                 QueueManager.ReleaseAllQueuedLocations();
@@ -589,15 +612,7 @@ namespace BluePrinceArchipelago
                         Plugin.ArchipelagoClient.GoalCompleted();
                     }
                     break;
-                case EventID.West_Path_Gate_Unlocked:
-                    ModEventHandler.OnGateOpened("West Gate");
-                    break;
-                case EventID.Gemstone_Cavern_Unlocked:
-                    ModEventHandler.OnVACControlsSolved();
-                    break;
-                case EventID.Orchard_Unlocked:
-                    ModEventHandler.OnGateOpened("Orchard Gate");
-                    break;
+               
                 case EventID.Boudoir_Safe_Opened:
                     ModEventHandler.OnSafeOpened("Boudoir Safe");
                     break;
@@ -745,6 +760,10 @@ namespace BluePrinceArchipelago
             {
                 SyncRoomPoolsWithArchipelago();
                 Plugin.ModItemManager.ReplaceItemsWithAP();
+            }
+            if (FirstLoad)
+            {
+                State.FirstLoad();
             }
         }
         

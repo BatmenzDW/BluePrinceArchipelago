@@ -36,7 +36,7 @@ public abstract class RoomHandler
             return handler;
         }
 
-        handler = roomName switch 
+        handler = roomName switch
         {
             "COMMISSARY" => new Commissary(),
             "SHOWROOM" => new Showroom(),
@@ -49,6 +49,8 @@ public abstract class RoomHandler
             "CLOISTER" => new Cloister(),
             "ENTRANCE HALL" => new EntranceHall(),
             "CLOSED EXHIBIT" => new ClosedExhibit(),
+            "UTILITY CLOSET" => new UtilityCloset(),
+            "LABORATORY" => new Laboratory(),
             _ => null
         };
 

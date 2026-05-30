@@ -170,7 +170,11 @@ namespace BluePrinceArchipelago.Utils
                 {
                     if (go?.name?.ToUpper()?.Trim() == name.ToUpper().Trim())
                     {
-                        return go;
+                        // Make sure the object is not our prefab.
+                        if (go.transform?.parent?.name?.ToLower() != "archipelago")
+                        {
+                            return go;
+                        }
                     }
                 }
 
@@ -226,6 +230,22 @@ namespace BluePrinceArchipelago.Utils
                 description.Add("Trap");
 
             return string.Join(" ", description);
+        }
+    }
+    public static class DictionaryExtensions {
+
+        // Gets the highest key number, returns int.Minvalue if none found.
+        public static int HighestKey<Tkey, TValue>(this Dictionary<int, TValue> dictionary) where TValue : notnull
+        {
+            int highest = int.MinValue;
+            if (dictionary.Count > 0) {
+                foreach (int key in dictionary.Keys) {
+                    if (key > highest) {
+                        highest = key;
+                    }
+                }
+            }
+            return highest;
         }
     }
 }
