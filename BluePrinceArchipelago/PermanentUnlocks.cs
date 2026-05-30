@@ -55,7 +55,26 @@ namespace BluePrinceArchipelago.PermanentUnlocks
         public override void PreventDefault()
         {
             PlayMakerFSM appleOrchard = GameObject.Find("TERRAIN/EAST SECTOR/_CAMPSITE/CAMPSITE SOUTH CULL/Orchard Gameplay/Orchard Gate/Letters Click Code (1)").GetComponent<PlayMakerFSM>();
-            appleOrchard.GetState("State 4").ReplaceAction(FSMEventHandler.RegisteredEvents["AppleOrchardUnlock"].Event, 0);
+            SendEvent sendAction = appleOrchard.GetState("State 4").GetFirstActionOfType<SendEvent>();
+            sendAction.eventTarget = new FsmEventTarget()
+            {
+                target = FsmEventTarget.EventTarget.GameObject,
+                gameObject = new FsmOwnerDefault()
+                {
+                    gameObject = Plugin.ModObject,
+                    ownerOption = OwnerDefaultOption.SpecifyGameObject
+                },
+                fsmName = "FSM",
+                sendToChildren = false,
+                excludeSelf = false
+            };
+            FsmEvent unlockEvent = Plugin.ModObject.GetComponent<PlayMakerFSM>()?.GetGlobalTransition("OrchardUnlock")?.FsmEvent;
+            if (unlockEvent != null)
+            {
+                sendAction.sendEvent = unlockEvent;
+            }
+
+
         }
         public override void FoundLocation()
         {
