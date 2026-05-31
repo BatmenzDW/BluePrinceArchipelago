@@ -5,6 +5,7 @@ using UnityEngine;
 using HutongGames.PlayMaker.Actions;
 using HutongGames.PlayMaker;
 using BluePrinceArchipelago.RoomHandlers;
+using Il2CppSystem.Collections;
 
 namespace BluePrinceArchipelago.Core
 {
@@ -225,10 +226,6 @@ namespace BluePrinceArchipelago.Core
                     if (ModInstance.PickerDict.ContainsKey(arrayName))
                     {
                         PlayMakerArrayListProxy array = ModInstance.PickerDict[arrayName];
-
-                        while (array.arrayList.Count < 3) {
-                            array.Add(Closet.GameObj, "GameObject");
-                        }
                     }
                 }
             }

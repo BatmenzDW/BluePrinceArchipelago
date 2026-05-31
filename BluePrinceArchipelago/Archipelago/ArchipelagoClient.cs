@@ -330,7 +330,6 @@ public class ArchipelagoClient
                 ServerData.CheckedLocations.Add(location);
             }
             if (found && i < localLocations.Count) {
-                Logging.LogWarning($"{i}");
                 // Remove the location from the local list.
                 localLocations.RemoveAt(i); 
             }
