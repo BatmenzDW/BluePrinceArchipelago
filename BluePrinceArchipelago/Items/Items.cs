@@ -809,6 +809,10 @@ namespace BluePrinceArchipelago.Items
             {
                 AdjustStars(_Count);
             }
+            else if (_ItemType == "Allowance")
+            {
+                AdjustAllowance(_Count);
+            }
             else
             {
                 Logging.LogWarning($"{_ItemType} is an invalid type, or is not currently supported.");
@@ -867,6 +871,18 @@ namespace BluePrinceArchipelago.Items
             }
             ModInstance.StarManager.SendEvent("Update");
         }
+        private void AdjustAllowance(int count = 1)
+        {
+            int totalAllowance = ModInstance.GlobalPersistentManager.GetIntVariable("allowance").Value;
+            if (totalAllowance + count > 0)
+            {
+                ModInstance.GlobalPersistentManager.GetIntVariable("allowance").Value += count;
+            }
+            else
+            {
+                ModInstance.GlobalPersistentManager.GetIntVariable("allowance").Value = 0;
+            }
+        }
     }
 
     public class PermanentItem(string name, GameObject gameObject, bool isUnlocked, string itemType, int count = 1) : ModItem(name, gameObject, isUnlocked)
@@ -904,10 +920,6 @@ namespace BluePrinceArchipelago.Items
             {
                 AdjustGold(unlockedCount * _Count);
             }
-            else if (_ItemType == "Allowance")
-            {
-                AdjustAllowance(unlockedCount * _Count);
-            }
             else if (_ItemType == "Dice")
             {
                 AdjustDice(unlockedCount * _Count);
@@ -944,20 +956,6 @@ namespace BluePrinceArchipelago.Items
             ModInstance.GoldManager.FindIntVariable("Adjustment Amount").Value = count;
             ModInstance.GoldManager.SendEvent("Update"); // Might need to be "Add Coins" instead.
         }
-
-        private void AdjustAllowance(int count = 1)
-        {
-            int totalAllowance = ModInstance.GlobalPersistentManager.GetIntVariable("allowance").Value;
-            if (totalAllowance + count > 0)
-            {
-                ModInstance.GlobalPersistentManager.GetIntVariable("allowance").Value += count;
-            }
-            else
-            {
-                ModInstance.GlobalPersistentManager.GetIntVariable("allowance").Value = 0;
-            }
-        }
-
         //Todo replace with allowance.
         private void AdjustDice(int count = 1)
         {
@@ -1188,8 +1186,6 @@ namespace BluePrinceArchipelago.Items
             
 
             //Permanent Items
-            Plugin.ModItemManager.AddItem(new PermanentItem("Extra Allowance 1", null, false, "Allowance", 1));
-            Plugin.ModItemManager.AddItem(new PermanentItem("Extra Allowance 2", null, false, "Allowance", 2));
             Plugin.ModItemManager.AddItem(new PermanentItem("Extra Starting Dice 1", null, false, "Dice", 1));
             Plugin.ModItemManager.AddItem(new PermanentItem("Extra Starting Dice 2", null, false, "Dice", 2));
             Plugin.ModItemManager.AddItem(new PermanentItem("Extra Starting Keys 1", null, false, "Keys", 1));
@@ -1204,6 +1200,8 @@ namespace BluePrinceArchipelago.Items
 
 
             //Junk Items
+            Plugin.ModItemManager.AddItem(new JunkItem("Extra Allowance 1", null, false, "Allowance", 1));
+            Plugin.ModItemManager.AddItem(new JunkItem("Extra Allowance 2", null, false, "Allowance", 2));
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Stars 1", null, false, "Stars", 1));
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Stars 2", null, false, "Stars", 2));
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Stars 5", null, false, "Stars", 5));

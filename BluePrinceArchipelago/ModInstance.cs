@@ -815,7 +815,7 @@ namespace BluePrinceArchipelago
                 // Checks if the current chess power is the rook for the armory unlock.
                 Func<ModRoom, bool> chessPowerRook = (room) =>
                 {
-                    if (GlobalPersistentManager.GetIntVariable("Chess Power").Value == 2)
+                    if (GlobalPersistentManager?.GetIntVariable("Chess Power")?.Value == 2)
                     {
                         return true;
                     }

@@ -51,19 +51,20 @@ namespace BluePrinceArchipelago.PermanentUnlocks
         // Override the Name
         public new string Name = "Apple Orchard";
 
+        private bool _Found = false;
         // Run the unlock code.
         public override void UnlockItem() {
-            // Log the Unlock of the Apple Orchard to Stats.
-            ModInstance.StatsLogger.GetComponent<StatsLogger>().Record_Event(EventID.Orchard_Unlocked);
-
-            // Activate Permanent Additions
-            GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /PERMANENT ADDITIONS")?.SetActive(true);
-            // Activate Apple Orchard Icon
-            GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /PERMANENT ADDITIONS/4/Apple Orchard Icon")?.SetActive(true);
-            // Set the Bool in the global persistent Manager to true.
-            ModInstance.GlobalPersistentManager.GetBoolVariable("Apple Orchard Open").Value = true;
-            // Unlocks the Gate (this one seems to do it without sounds).
-            GameObject.Find("TERRAIN/EAST SECTOR/_CAMPSITE/CAMPSITE SOUTH CULL/Orchard Gameplay/Orchard Gate/Letters Click Code (1)")?.GetComponent<PlayMakerFSM>()?.GetState("State 4")?.EnableActionsOfType<SendEvent>();
+            PlayMakerFSM appleOrchard = GameObject.Find("TERRAIN/EAST SECTOR/_CAMPSITE/CAMPSITE SOUTH CULL/Orchard Gameplay/Orchard Gate/Letters Click Code (1)")?.GetComponent<PlayMakerFSM>()
+            appleOrchard.GetState("State 4")?.EnableActionsOfType<SendEvent>();
+            if (_Found)
+            {
+                // Log the Unlock of the Apple Orchard to Stats.
+                ModInstance.StatsLogger.GetComponent<StatsLogger>().Record_Event(EventID.Orchard_Unlocked);
+                // Set the Bool in the global persistent Manager to true.
+                ModInstance.GlobalPersistentManager.GetBoolVariable("Apple Orchard Open").Value = true;
+                // Unlocks the Gate (this one seems to do it without sounds).
+                GameObject.Find("TERRAIN/EAST SECTOR/_CAMPSITE/CAMPSITE SOUTH CULL/Orchard Gameplay/Orchard Gate/Letters Click Code (1)")?.GetComponent<PlayMakerFSM>()?.GetState("State 4")?.EnableActionsOfType<SendEvent>();
+            }      
         }
         // Prevents the default Unlock.
         public override void PreventDefault()
@@ -75,6 +76,7 @@ namespace BluePrinceArchipelago.PermanentUnlocks
         public override void FoundLocation()
         {
             ModInstance.ModEventHandler.OnGateOpened("Orchard Gate");
+            _Found = true;
         }
 
     }

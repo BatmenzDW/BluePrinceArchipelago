@@ -1293,7 +1293,7 @@ namespace BluePrinceArchipelago.Utils
             {
                 if (actionName == typeof(TAction).FullName)
                 {
-                    state.DisableAction(i);
+                    state.EnableAction(i);
                 }
                 i++;
             }
