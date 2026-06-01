@@ -122,11 +122,12 @@ namespace BluePrinceArchipelago.Items
                 for (int t = 0; t < You___Text.transform.childCount; t++)
                 {
                     Transform child = You___Text.transform.GetChild(t);
-                    if (child.gameObject.name.Contains(GetYou___Name(itemName)))
+
+                    // Tries to find all related You___Messages"
+                    if (child.gameObject.name.Contains(GetYou___Name(itemName)) && !CheckSimilar(itemName, child))
                     {
-                        //TODO handle special case names (EG Crown of blueprints)
                         
-                        Transform itemModel = child.FindRecursive(itemName, true);
+                        Transform itemModel = child.FindRecursive(GetItemModelName(itemName), true);
                         if (itemModel != null)
                         {
 
@@ -331,9 +332,36 @@ namespace BluePrinceArchipelago.Items
             {
                 case "KEY 8":
                     return "SILVER KEY";
+                case "WATERING CAN":
+                    return "Watering Can pickup";
+                case "LUNCH BOX":
+                    return "Joya Lunch Box";
+                case "CURSED EFFIGY":
+                    return "cursed effigy- dagger";
+                case "CROWN":
+                    return "crow";
+                case "HALL PASS":
+                    return "hallpass";
                 default:
                     return name;
             }
+        }
+        private bool CheckSimilar(string itemName, Transform child) {
+
+            if (itemName.ToLower() == "compass")
+            {
+                if (child.gameObject.name.Contains("Ornate Compass"))
+                {
+                    return true;
+                }
+            }
+            else if (itemName.ToLower() == "crown") {
+                if (child.gameObject.name.Contains("Paper Crown"))
+                {
+                    return true;
+                }
+            }
+                return false;
         }
 
         // Removes the AP Swirlies from Unique Items. Not needed for regular items.
@@ -1015,8 +1043,8 @@ namespace BluePrinceArchipelago.Items
         public List<string> Locations = new List<string>();
         // The locations at which it has been found.
         public List<string> FoundLocations = new List<string>();
-        // The locations to which the upgrade disk received has been found at.
-        public List<string> RecievedLocations = new List<string>();
+        // The locations to which the upgrade disk has been received for;
+        public List<string> RecievedItems = new List<string>();
         // The locations to which the upgrade disk received has been used.
         public List<string> UsedLocations = new List<string>();
 
@@ -1056,7 +1084,7 @@ namespace BluePrinceArchipelago.Items
                 {
                     if (ArchipelagoClient.Authenticated)
                     {
-                        if (RecievedLocations.Contains(location))
+                        if (FoundLocations.Contains(location))
                         {
                             unlocked.Value = true;
                         }
@@ -1074,7 +1102,7 @@ namespace BluePrinceArchipelago.Items
         // Handles adding unlocked upgrade disks to the the players inventory until they are used.
         public void StartOfDay() {
             int i = 0;
-            foreach (string location in RecievedLocations) {
+            foreach (string location in RecievedItems) {
                 if (!ModInstance.GlobalManager.GetBoolVariable(usedVariables[i]).Value) { 
                     AddItemToInventory(location);
                 }
@@ -1096,7 +1124,7 @@ namespace BluePrinceArchipelago.Items
             {
                 FoundLocations.Add(location.ToUpper());
 
-                if (RecievedLocations.Contains(location.ToUpper()))
+                if (RecievedItems.Contains(location.ToUpper()))
                 {
                     AddItemToInventory(location);
                 }
@@ -1109,40 +1137,13 @@ namespace BluePrinceArchipelago.Items
         public void AddItemToInventory(string location)
         {
             Logging.LogWarning("Attempting To Add Upgrade Disk to Inventory.");
-            if (!RecievedLocations.Contains(location.ToUpper()))
+            if (!RecievedItems.Contains(location.ToUpper()))
             {
-                RecievedLocations.Add(location.ToUpper());
+                RecievedItems.Add(location.ToUpper());
             }
-            int locationIndex = Locations.IndexOf(location) + 1; //Blue Prince tends to use 1-indexing for some things.
-            if (locationIndex != -1) {
-                PlayMakerArrayListProxy pickedUp = GameObj?.GetArrayListProxy("upgrade disk pickup");
-                if (pickedUp != null)
-                {
-                    if (!pickedUp.Contains(locationIndex)) {
-                        PlayMakerArrayListProxy InventoryIcons = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/")?.GetArrayListProxy("Inventory");
-                        if (InventoryIcons != null) {
-                            string iconName = Name.ToTitleCase() + " Icon(Clone)001"; //Unsure if multiple clones will be needed when multiple disks are present.
-                            GameObject icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
-                            if (icon != null)
-                            {
-                                // Set the pickup of the upgrade disk to true to prevent future spawns
-                                ModInstance.GlobalManager.GetBoolVariable("DISK - Garage").Value = true;
-                                ModInstance.GlobalPersistentManager.GetBoolVariable("?Upgrade").Value = true;
-                                // Unsure why this is set, but probably important
-                                ModInstance.GlobalManager.GetIntVariable("NewCursor").Value = 0;
-                                // Add item to inventory icons
-                                InventoryIcons.Add(icon, "GameObject");
-                                // Add the index to the list of picked up upgrade disks.
-                                pickedUp.Add(locationIndex, "Int");
-                                // Add item to prespawn icons.
-                                ModItemManager.PickedUp.Add(Plugin.ModItemManager.GetPreSpawnItem("UPGRADE DISK"), "GameObject");
-                                // Record the Upgrade disk being picked up.
-                                return;
-                            }
-                        }
-                    }
-                    Logging.Log($"Upgrade disk for {location} has already been picked up. Unable to add to inventory");
-                }
+            if (!UsedLocations.Contains(location.ToUpper())) {
+
+                ModInstance.GlobalManager.SendEvent(location.ToTitleCase() + " Upgrade Disk Pickup");
             }
         }
     }

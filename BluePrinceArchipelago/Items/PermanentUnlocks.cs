@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using static HutongGames.PlayMaker.FsmEventTarget;
 
-namespace BluePrinceArchipelago.PermanentUnlocks
+namespace BluePrinceArchipelago.Items
 {
     public static class Unlocks
     {

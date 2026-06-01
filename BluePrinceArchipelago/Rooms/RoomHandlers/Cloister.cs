@@ -3,7 +3,7 @@ using System.Linq;
 using HutongGames.PlayMaker;
 using UnityEngine;
 
-namespace BluePrinceArchipelago.RoomHandlers;
+namespace BluePrinceArchipelago.Rooms.RoomHandlers;
 
 class Cloister : RoomHandler
 {

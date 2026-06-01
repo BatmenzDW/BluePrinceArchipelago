@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace BluePrinceArchipelago.RoomHandlers
+namespace BluePrinceArchipelago.Rooms.RoomHandlers
 {
     public class UtilityCloset : RoomHandler
     {

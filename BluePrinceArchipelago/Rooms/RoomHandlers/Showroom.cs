@@ -6,7 +6,7 @@ using Il2CppSystem.Linq;
 using TMPro;
 using UnityEngine;
 
-namespace BluePrinceArchipelago.RoomHandlers;
+namespace BluePrinceArchipelago.Rooms.RoomHandlers;
 
 public class Showroom : RoomHandler
 {

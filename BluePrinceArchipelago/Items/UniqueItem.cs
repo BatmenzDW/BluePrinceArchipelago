@@ -1,6 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Models;
 using BluePrinceArchipelago.Archipelago;
-using BluePrinceArchipelago.RoomHandlers;
+using BluePrinceArchipelago.Rooms.RoomHandlers;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
@@ -110,9 +110,27 @@ namespace BluePrinceArchipelago.Items
                     }
                     // This may not cause it to re-trigger.
                     ModItemManager.PreSpawn.Add(GameObj, "GameObject");
-                    ModInstance.GlobalManager.SendEvent(state.Name);
+                    // Disable this game action so it doesn't try and display 2 UIs.
+                    state.DisableActionsOfType<ActivateGameObject>();
+                    ModInstance.GlobalManager.SendEvent(GetPickUpEventName(Name));
                 }
             }
+        }
+
+        private string GetPickUpEventName(string name)
+        {
+            // Fixes a name difference for the vault keys and rabbit's foot and puts name into lower case.
+            name = name.ToLower().Replace("vault", "safety deposit").Replace("rabbit's", "rabbbit's").Replace(" kit", "");
+            // Check each Global Transition in the Global Manager.
+            foreach (FsmTransition transition in ModInstance.GlobalManager.FsmGlobalTransitions)
+            {
+                // If the transition's event name contains the item name it's the transition we want.
+                if (transition.EventName.ToLower().Contains(name))
+                {
+                    return transition.EventName;
+                }
+            }
+            return "";
         }
 
         public bool ApplySanity()
@@ -271,12 +289,17 @@ namespace BluePrinceArchipelago.Items
                 // If the transition's event name contains the item name it's the transition we want.
                 if (transition.EventName.ToLower().Contains(name))
                 {
+                    // Treasure Map requires going 1 state deeper
+                    if (name == "treasure map") {
+                        return transition?.toFsmState?.GetTransition("FINISHED")?.ToFsmState;
+                    }
                     //Return the state the transition found goes to.
                     return transition.ToFsmState;
                 }
             }
             return null;
         }
+
     }
 
     public enum ItemSanityType

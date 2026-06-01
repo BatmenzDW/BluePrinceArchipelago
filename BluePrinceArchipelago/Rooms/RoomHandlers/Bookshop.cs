@@ -1,9 +1,8 @@
-
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-namespace BluePrinceArchipelago.RoomHandlers
+namespace BluePrinceArchipelago.Rooms.RoomHandlers
 {
     public class Bookshop : RoomHandler
     {

@@ -57,27 +57,14 @@ namespace BluePrinceArchipelago.Patches
     public class RoomPatches {
         [HarmonyPatch(typeof(RoomDraftHelper), nameof(RoomDraftHelper.StartDraft))]
         [HarmonyPostfix]
-        static void PostFix(RoomDraftHelper __instance)
+        static void PostFix()
         {
-            ModInstance.OnDraftInitialize(__instance);
+            ModInstance.OnDraftInitialize();
         }
         [HarmonyPatch(typeof(RoomDraftHelper), nameof(RoomDraftHelper.StartDraft))]
         [HarmonyPrefix]
-        static void Prefix(RoomDraftHelper __instance) {
-            ModInstance.OnDraftBeforeInitialize(__instance);
-        }
-        [HarmonyPatch(typeof(OuterDraftManager), nameof(OuterDraftManager.StartDraft))]
-        [HarmonyPostfix]
-        static void PostFix(OuterDraftManager __instance)
-        {
-            ModInstance.OnOuterDraftStart(__instance);
-        }
-        [HarmonyPatch(typeof(PlayMakerCollisionEnter), "OnCollisionEnter", [typeof(Collision)])]
-        [HarmonyPostfix]
-        static void CollisionPrefix(Collision collisionInfo) {
-            if (ModInstance.IsInRun) {
-                Logging.Log($"GameObject: {collisionInfo.gameObject.name} entered Collider: {collisionInfo.collider.name}");
-            }
+        static void Prefix() {
+            ModInstance.OnDraftBeforeInitialize();
         }
 
     }

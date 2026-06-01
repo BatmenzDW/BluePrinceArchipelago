@@ -1,13 +1,13 @@
-﻿using BluePrinceArchipelago.Utils;
+﻿using BluePrinceArchipelago.Rooms.RoomHandlers;
+using BluePrinceArchipelago.Utils;
+using CirrusPlay.PortalLibrary;
+using HutongGames.PlayMaker;
+using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using HutongGames.PlayMaker.Actions;
-using HutongGames.PlayMaker;
-using BluePrinceArchipelago.RoomHandlers;
-using Il2CppSystem.Collections;
 
-namespace BluePrinceArchipelago.Core
+namespace BluePrinceArchipelago.Rooms
 {
     public class ModRoomManager {
         private List<ModRoom> _Rooms = [];
@@ -88,6 +88,7 @@ namespace BluePrinceArchipelago.Core
             }
         }
 
+        //Forced Room doesn't account for pickers that combine multiple lists. Need to add a way of handling that.
         public bool CheckForceRoomDraft() {
             // Check if any rooms have been queued for forcing.
             //Pre-reset this.
@@ -185,8 +186,8 @@ namespace BluePrinceArchipelago.Core
         /// <summary>
         /// Adds a room with the same name for both the room and its game object path.
         /// </summary>
-        public ModRoom AddRoom(string name, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false) {
-            return AddRoom(name, name, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted);
+        public ModRoom AddRoom(string name, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false, string poolAddVar = "") {
+            return AddRoom(name, name, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted, poolAddVar);
         }
 
         /// <summary>
@@ -194,7 +195,7 @@ namespace BluePrinceArchipelago.Core
         /// </summary>
         /// <param name="name">The name used internally by the mod (e.g., "CLASSROOM (1)")</param>
         /// <param name="gameObjectName">The actual name of the game object in Room Engines (e.g., "CLASSROOM")</param>
-        public ModRoom AddRoom(string name, string gameObjectName, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false) {
+        public ModRoom AddRoom(string name, string gameObjectName, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false, string poolAddVar = "") {
             string roomPath = "__SYSTEM/The Room Engines/" + gameObjectName;
             GameObject roomObj = GameObject.Find(roomPath);
             if (roomObj == null)
@@ -205,7 +206,7 @@ namespace BluePrinceArchipelago.Core
             {
                 return AddRoom(new ClassRoom(name, gameObjectName, roomObj, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted));
             }
-            return AddRoom(new ModRoom(name, gameObjectName, roomObj, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted));
+            return AddRoom(new ModRoom(name, gameObjectName, roomObj, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted, poolAddVar));
         }
 
         public void UpdateRoomPools()
@@ -384,7 +385,7 @@ namespace BluePrinceArchipelago.Core
     /// <param name="isUnlocked">Whether the room is initially unlocked</param>
     /// <param name="useVanilla">Whether to use vanilla handling for this room</param>
     /// <param name="hasBeenDrafted">Whether this room has been drafted this run</param>
-    public class ModRoom(string name, string gameObjectName, GameObject gameObject, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false)
+    public class ModRoom(string name, string gameObjectName, GameObject gameObject, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false, string poolAddVar = "")
     {
         private string _Name = name;
         public string Name { get { return _Name; } set { _Name = value; } }
@@ -405,6 +406,8 @@ namespace BluePrinceArchipelago.Core
         private bool _IsUnlocked = isUnlocked;
 
         public List<Func<ModRoom,bool>> Dependencies = new List<Func<ModRoom, bool>>();
+
+        public string PoolAddVar = poolAddVar;
 
         public bool IsUnlocked {
             get { return _IsUnlocked; }
@@ -440,7 +443,12 @@ namespace BluePrinceArchipelago.Core
                     // This is expected if scene isn't loaded yet
                     Logging.LogDebug($"Room '{_Name}': Room engine not found at '{roomPath}' (scene may not be loaded)");
                 }
+                // If the value is true and the PoolAddVar is not default
+                if (value && PoolAddVar != "") {
+                    ModInstance.GlobalPersistentManager.GetBoolVariable(PoolAddVar).Value = true;
+                }
                 _IsUnlocked = value;
+                Handler?.OnRoomUnlocked(this);
             }
         }
 
@@ -517,6 +525,7 @@ namespace BluePrinceArchipelago.Core
             }
             //Checks dependencies of the room before adding it to the draft pool.
             foreach (Func<ModRoom, bool> dependency in Dependencies) {
+                Logging.LogWarning($"Checking Dependency of {_Name}");
                 if (!dependency(this)) {
                     Logging.LogWarning($"Cannot add {_Name} to pool: Dependency not met");
                     return;
@@ -590,6 +599,11 @@ namespace BluePrinceArchipelago.Core
                     {
                         if (count > 0) {
                             RemoveFromPool(array, count);
+                            FsmBool poolRemoval = GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL");
+                            if (poolRemoval != null)
+                            {
+                                poolRemoval.Value = false;
+                            } //Set the FSMBool to true so that it removes the room from the pool.
                         }
                         return;
                     }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace BluePrinceArchipelago.RoomHandlers
+namespace BluePrinceArchipelago.Rooms.RoomHandlers
 {
     public class Laboratory : RoomHandler
     {

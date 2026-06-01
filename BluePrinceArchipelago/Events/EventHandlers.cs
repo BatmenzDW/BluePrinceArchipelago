@@ -1,6 +1,6 @@
 using BluePrinceArchipelago.Archipelago;
-using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Items;
+using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
 using System;
 

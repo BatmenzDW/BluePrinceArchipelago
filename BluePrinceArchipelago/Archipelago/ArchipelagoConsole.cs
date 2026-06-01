@@ -1,8 +1,8 @@
 ﻿using BepInEx;
 using BepInEx.Unity.IL2CPP.UnityEngine;
-using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Models;
+using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
 using StableNameDotNet;
 using System;
@@ -782,7 +782,6 @@ public class ItemCommand(string name) : Command(name)
                 //Handle items that don't start in the prespawn pool.
                 if (item == null)
                 {
-                    Logging.Log(itemName);
                     item = GameObjectExtensions.FindGameObject(itemName);
                     GameObject icon = GameObjectExtensions.FindGameObject(itemName.ToTitleCase().Trim() + " Icon");
                     PlayMakerArrayListProxy InventoryIcons = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/")?.GetArrayListProxy("Inventory");
@@ -791,7 +790,6 @@ public class ItemCommand(string name) : Command(name)
                         ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {itemName} Has already been spawned or is not in the spawn pool");
                         return;
                     }
-                    Logging.Log(icon == null);
                     if (icon != null && InventoryIcons != null)
                     {
                        ModItemManager.PickedUp.Add(item, "GameObject");
@@ -1590,5 +1588,18 @@ public class CollectCommand(string name) : Command(name)
         }
 
         ModInstance.ModEventHandler.OnOtherLocation(locationName);
+    }
+}
+
+public class ResetData(string name) : Command(name)
+{
+    public override string Description => "Resets the stored data so a new run can be properly started.";
+
+    public override string Syntax => "Usage:\n\t/ResetData";
+
+    public override void Run(List<string> Args)
+    {
+        State.Reset();
+        State.Initialize();
     }
 }

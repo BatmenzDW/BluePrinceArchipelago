@@ -1,7 +1,9 @@
-﻿using BluePrinceArchipelago.Items;
+﻿using BluePrinceArchipelago.Events;
+using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using System.Xml.Linq;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Patches
@@ -27,6 +29,9 @@ namespace BluePrinceArchipelago.Patches
             DraftCodeStart.ChangeTransition("FINISHED", "Draft Forced Check");
             FsmState PickAnother = fsm.GetState("Pick Another ");
             PickAnother.ChangeTransition("FINISHED", "Draft Forced Check");
+            FsmState OuterDraftState = fsm.GetState("Outer slot pick");
+            // Add Outer Draft Trigger.
+            OuterDraftState.InsertAction(3, FSMEventHandler.RegisteredEvents["Outer Draft Start"].Event);
         }
 
         public static void UpgradeDiskOverride(PlayMakerFSM GlobalFSM) {
@@ -37,36 +42,51 @@ namespace BluePrinceArchipelago.Patches
                 if (GlobalFSM.GetState("State 35").Actions.Length < 3)
                 {
                     // Create a boolean for tracking the current state of the 
-                    FsmBool ArchivesDisk = GlobalFSM.AddFsmBool("Archives Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("ARCHIVES"));
+                    FsmBool ArchivesDisk = GlobalFSM.AddFsmBool("Archives Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("ARCHIVES"));
                     FsmState ArchiveState = GlobalFSM.GetState("State 35");
-                    FsmBool TradingPostDisk = GlobalFSM.AddFsmBool("Trading Post Dynamite Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("TRADING POST DYNAMITE"));
+                    GlobalFSM.AddGlobalTransition("Archives Upgrade Disk Pickup", "State 35");
+                    FsmBool TradingPostDisk = GlobalFSM.AddFsmBool("Trading Post Dynamite Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("TRADING POST DYNAMITE"));
                     FsmState TradingPostState = GlobalFSM.GetState("State 27");
-                    FsmBool TombDisk = GlobalFSM.AddFsmBool("Tomb Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("TOMB"));
+                    GlobalFSM.AddGlobalTransition("Trading Post Dynamite Upgrade Disk Pickup", "State 27");
+                    FsmBool TombDisk = GlobalFSM.AddFsmBool("Tomb Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("TOMB"));
                     FsmState TombState = GlobalFSM.GetState("State 23");
-                    FsmBool CommissaryDisk = GlobalFSM.AddFsmBool("Commissary Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("COMMISSARY"));
+                    GlobalFSM.AddGlobalTransition("Tomb Upgrade Disk Pickup", "State 22");
+                    FsmBool CommissaryDisk = GlobalFSM.AddFsmBool("Commissary Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("COMMISSARY"));
                     FsmState CommissaryState = GlobalFSM.GetState("State 33");
-                    FsmBool FoundationDisk = GlobalFSM.AddFsmBool("Foundation Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("FOUNDATION"));
+                    GlobalFSM.AddGlobalTransition("Commissary Upgrade Disk Pickup", "State 33");
+                    FsmBool FoundationDisk = GlobalFSM.AddFsmBool("Foundation Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("FOUNDATION"));
                     FsmState FoundationState = GlobalFSM.GetState("State 22");
-                    FsmBool FreezerDisk = GlobalFSM.AddFsmBool("Freezer Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("FREEZER"));
+                    GlobalFSM.AddGlobalTransition("Foundation Disk Pickup", "State 22");
+                    FsmBool FreezerDisk = GlobalFSM.AddFsmBool("Freezer Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("FREEZER"));
                     FsmState FreezerState = GlobalFSM.GetState("State 25");
-                    FsmBool GarageDisk = GlobalFSM.AddFsmBool("Garage Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("GARAGE"));
+                    GlobalFSM.AddGlobalTransition("Freezer Upgrade Disk Pickup", "State 22");
+                    FsmBool GarageDisk = GlobalFSM.AddFsmBool("Garage Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("GARAGE"));
                     FsmState GarageState = GlobalFSM.GetState("State 30");
-                    FsmBool GreatHallDisk = GlobalFSM.AddFsmBool("Great Hall Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("GREAT HALL"));
+                    GlobalFSM.AddGlobalTransition("Garage Upgrade Disk Pickup", "State 30");
+                    FsmBool GreatHallDisk = GlobalFSM.AddFsmBool("Great Hall Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("GREAT HALL"));
                     FsmState GreatHallState = GlobalFSM.GetState("State 29");
-                    FsmBool LostAndFoundDisk = GlobalFSM.AddFsmBool("Lost and Found Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("LOST AND FOUND"));
+                    GlobalFSM.AddGlobalTransition("Great Hall Upgrade Disk Pickup", "State 29");
+                    FsmBool LostAndFoundDisk = GlobalFSM.AddFsmBool("Lost and Found Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("LOST AND FOUND"));
                     FsmState LostAndFoundState = GlobalFSM.GetState("State 28");
-                    FsmBool HLCDisk = GlobalFSM.AddFsmBool("Her Ladyships Chamber Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("HER LADYSHIPS CHAMBER"));
+                    GlobalFSM.AddGlobalTransition("Lost and Found Upgrade Disk Pickup", "State 28");
+                    FsmBool HLCDisk = GlobalFSM.AddFsmBool("Her Ladyships Chamber Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("HER LADYSHIPS CHAMBER"));
                     FsmState HLCState = GlobalFSM.GetState("State 20");
-                    FsmBool MechanariumDisk = GlobalFSM.AddFsmBool("Mechanarium Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("MECHANARIUM"));
+                    GlobalFSM.AddGlobalTransition("Her Ladyships Chamber Upgrade Disk Pickup", "State 20");
+                    FsmBool MechanariumDisk = GlobalFSM.AddFsmBool("Mechanarium Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("MECHANARIUM"));
                     FsmState MechanariumState = GlobalFSM.GetState("State 24");
-                    FsmBool MorningRoomDisk = GlobalFSM.AddFsmBool("Morning Room Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("MORNING ROOM"));
+                    GlobalFSM.AddGlobalTransition("Mechanarium Upgrade Disk Pickup", "State 24");
+                    FsmBool MorningRoomDisk = GlobalFSM.AddFsmBool("Morning Room Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("MORNING ROOM"));
                     FsmState MorningRoomState = GlobalFSM.GetState("State 21");
-                    FsmBool OfficeDisk = GlobalFSM.AddFsmBool("Office Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("OFFICE"));
+                    GlobalFSM.AddGlobalTransition("Morning Room Upgrade Disk Pickup", "State 21");
+                    FsmBool OfficeDisk = GlobalFSM.AddFsmBool("Office Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("OFFICE"));
                     FsmState OfficeState = GlobalFSM.GetState("State 34");
-                    FsmBool VaultDisk = GlobalFSM.AddFsmBool("Vault Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("VAULT"));
+                    GlobalFSM.AddGlobalTransition("Office Upgrade Disk Pickup", "State 34");
+                    FsmBool VaultDisk = GlobalFSM.AddFsmBool("Vault Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("VAULT"));
                     FsmState VaultState = GlobalFSM.GetState("State 26");
-                    FsmBool AbandonedMineDisk = GlobalFSM.AddFsmBool("Abandoned Mine Disk", ModItemManager.UpgradeDisks.RecievedLocations.Contains("ABANDONNED MINE"));
+                    GlobalFSM.AddGlobalTransition("Vault Disk Pickup", "State 26");
+                    FsmBool AbandonedMineDisk = GlobalFSM.AddFsmBool("Abandoned Mine Disk", ModItemManager.UpgradeDisks.RecievedItems.Contains("ABANDONNED MINE"));
                     FsmState AbandonedMineState = GlobalFSM.GetState("State 31");
+                    GlobalFSM.AddGlobalTransition("Abandoned Mine Pickup", "State 31");
 
                     FsmState roomCheck = GlobalFSM.GetState("State 19");
                     StringContains[] checks = roomCheck.GetActionsOfType<StringContains>();
@@ -95,7 +115,7 @@ namespace BluePrinceArchipelago.Patches
                     TombState.InsertAction(4, addActions[1]);
 
                     // Add the Commissary Buy Check
-                    CommissaryState.InsertAction(1, new BoolTest() { boolVariable = TombDisk, isFalse = FsmEvent.GetFsmEvent("Event 0"), everyFrame = false });
+                    CommissaryState.InsertAction(1, new BoolTest() { boolVariable = CommissaryDisk, isFalse = FsmEvent.GetFsmEvent("Event 0"), everyFrame = false });
                     CommissaryState.InsertAction(2, activateAction);
                     CommissaryState.InsertAction(3, addActions[0]);
                     CommissaryState.InsertAction(4, addActions[1]);
@@ -220,6 +240,129 @@ namespace BluePrinceArchipelago.Patches
             // Remove the 3 second delay
             var wait = fsm.Fsm.GetState("State 8").actions[2].Cast<Wait>();
             wait.time = new FsmFloat(0f);
+        }
+
+        public static void AddedFloorPlanOverrides()
+        {
+            //Planetarium
+            PlayMakerFSM PlanetariumYesButton = GameObject.Find("UI OVERLAY CAM/UI Documents/MINI MENUS/Planetarium Find - menu/2 Button Spread (2)/YES BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState PlanetariumAddState = PlanetariumYesButton.GetState("State 8");
+            PlanetariumAddState.DisableActionsOfType<SetFsmBool>();
+            // Get Both SendEvents. One to copy, one to disable (manually).
+            SendEvent[] SendEvents = PlanetariumAddState.GetActionsOfType<SendEvent>();
+            SendEvents[0].Enabled = false;
+            SendEvents[0].enabled = false;
+            SendEvent Unfreeze = SendEvents[1];
+
+            //Conservatory
+            PlayMakerFSM ConservatoryYesButton = GameObject.Find("UI OVERLAY CAM/UI Documents/MINI MENUS/Conservatory Find - menu/2 Button Spread (2)/YES BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState ConservatoryAddState = ConservatoryYesButton.GetState("State 8");
+            ConservatoryAddState.DisableActionsOfType<SetFsmBool>();
+            ConservatoryAddState.DisableFirstActionOfType<SendEvent>();
+
+            //Tunnel
+            PlayMakerFSM TunnelYesButton = GameObject.Find("UI OVERLAY CAM/UI Documents/MINI MENUS/Tunnel Find - menu/2 Button Spread (2)/YES BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState TunnelAddState = TunnelYesButton.GetState("State 8");
+            TunnelAddState.DisableActionsOfType<SetFsmBool>();
+
+            //Throne Room
+            PlayMakerFSM ThroneRoomYesButton = GameObject.Find("UI OVERLAY CAM/UI Documents/MINI MENUS/Throne Room Find - menu/2 Button Spread (2)/YES BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState ThroneRoomAddState = ThroneRoomYesButton.GetState("Tomorrow");
+            ThroneRoomAddState.DisableActionsOfType<SetFsmBool>();
+            ThroneRoomAddState.DisableFirstActionOfType<ActivateGameObject>();
+            // Throne Room normally calls a popup that unfreezes the player movement, however we don't want that to display so we deactivate it
+            ThroneRoomAddState.AddAction(Unfreeze);
+
+            //Treasure Trove
+            PlayMakerFSM TreasureTroveYesButton = GameObject.Find("UI OVERLAY CAM/UI Documents/MINI MENUS/Treasure Trove Find - menu/2 Button Spread (2)/YES BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState TreasureTroveAddState = TreasureTroveYesButton.GetState("State 8");
+            TreasureTroveAddState.DisableActionsOfType<SetFsmBool>();
+            TreasureTroveAddState.DisableFirstActionOfType<SendEvent>();
+
+            //Mechanarium
+            PlayMakerFSM MechanariumYesButton = GameObject.Find("UI OVERLAY CAM/UI Documents/MINI MENUS/MECHANARIUM Find - menu/2 Button Spread (2)/YES BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState MechanariumAddState = MechanariumYesButton.GetState("State 8");
+            MechanariumAddState.DisableActionsOfType<SetFsmBool>();
+            MechanariumAddState.DisableFirstActionOfType<SendEvent>();
+
+            //Lost & Found
+            PlayMakerFSM LostandFoundYesButton = GameObject.Find("UI OVERLAY CAM/UI Documents/MINI MENUS/Lost&Found Find - menu/2 Button Spread (2)/YES BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState LostandFoundAddState = LostandFoundYesButton.GetState("State 8");
+            LostandFoundAddState.DisableActionsOfType<SetFsmBool>();
+            LostandFoundAddState.DisableFirstActionOfType<SendEvent>();
+
+
+            //Closed Exhibit
+            PlayMakerFSM ClosedExhibitYesButton = GameObject.Find("UI OVERLAY CAM/UI Documents/DOCUMENTS/RED LETTER STUDY - doc/Page 3/Closed Exhibit Find - menu/2 Button Spread (2)/YES BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState ClosedExhibitAddState = ClosedExhibitYesButton.GetState("State 8");
+            ClosedExhibitAddState.DisableActionsOfType<SetFsmBool>();
+            ClosedExhibitAddState.DisableFirstActionOfType<SendEvent>();
+
+            //Drafting Studio Adds
+
+            //Clock Tower
+            ModInstance.GlobalManager.AddFsmBool("Clock Tower Unlocked", Plugin.ModRoomManager.GetRoomByName("CLOCK TOWER").IsUnlocked);
+            PlayMakerFSM ClockTowerDraftButton = GameObject.Find("UI OVERLAY CAM/Drafting Studio UI/CLOCK TOWER/DRAFT BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState ClockTowerAddState = ClockTowerDraftButton.GetState("Add this Floorplan to your DRAFT POOL");
+            ClockTowerAddState.DisableFirstActionOfType<SetFsmBool>();
+            ClockTowerAddState.DisableFirstActionOfType<SendEvent>();
+
+            //The Kennel
+            ModInstance.GlobalManager.AddFsmBool("The Kennel Unlocked", Plugin.ModRoomManager.GetRoomByName("THE KENNEL").IsUnlocked);
+            PlayMakerFSM TheKennelDraftButton = GameObject.Find("UI OVERLAY CAM/Drafting Studio UI/THE KENNEL/DRAFT BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState TheKennelAddState = TheKennelDraftButton.GetState("Add this Floorplan to your DRAFT POOL");
+            TheKennelAddState.DisableFirstActionOfType<SetFsmBool>();
+            TheKennelAddState.DisableFirstActionOfType<SendEvent>();
+
+            //Vestibule
+            ModInstance.GlobalManager.AddFsmBool("Vestibule Unlocked", Plugin.ModRoomManager.GetRoomByName("VESTIBULE").IsUnlocked);
+            PlayMakerFSM VestibuleDraftButton = GameObject.Find("UI OVERLAY CAM/Drafting Studio UI/VESTIBULE/DRAFT BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState VestibuleAddState = VestibuleDraftButton.GetState("Add this Floorplan to your DRAFT POOL");
+            VestibuleAddState.DisableFirstActionOfType<SetFsmBool>();
+            VestibuleAddState.DisableFirstActionOfType<SendEvent>();
+
+            //Dovecote
+            ModInstance.GlobalManager.AddFsmBool("Dovecote Unlocked", Plugin.ModRoomManager.GetRoomByName("DOVECOTE").IsUnlocked);
+            PlayMakerFSM DovecoteDraftButton = GameObject.Find("UI OVERLAY CAM/Drafting Studio UI/DOVECOTE/DRAFT BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState DovecoteAddState = DovecoteDraftButton.GetState("Add this Floorplan to your DRAFT POOL");
+            DovecoteAddState.DisableFirstActionOfType<SetFsmBool>();
+            DovecoteAddState.DisableFirstActionOfType<SendEvent>();
+
+            //Solarium
+            ModInstance.GlobalManager.AddFsmBool("Solarium Unlocked", Plugin.ModRoomManager.GetRoomByName("SOLARIUM").IsUnlocked);
+            PlayMakerFSM SolariumDraftButton = GameObject.Find("UI OVERLAY CAM/Drafting Studio UI/SOLARIUM/DRAFT BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState SolariumAddState = SolariumDraftButton.GetState("Add this Floorplan to your DRAFT POOL");
+            SolariumAddState.DisableFirstActionOfType<SetFsmBool>();
+            SolariumAddState.DisableFirstActionOfType<SendEvent>();
+
+            //Dormitory
+            ModInstance.GlobalManager.AddFsmBool("Dormitory Unlocked", Plugin.ModRoomManager.GetRoomByName("DORMITORY").IsUnlocked);
+            PlayMakerFSM DormitoryDraftButton = GameObject.Find("UI OVERLAY CAM/Drafting Studio UI/DORMITORY/DRAFT BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState DormitoryAddState = DormitoryDraftButton.GetState("Add this Floorplan to your DRAFT POOL");
+            DormitoryAddState.DisableFirstActionOfType<SetFsmBool>();
+            DormitoryAddState.DisableFirstActionOfType<SendEvent>();
+
+            //Casino
+            ModInstance.GlobalManager.AddFsmBool("Casino Unlocked", Plugin.ModRoomManager.GetRoomByName("CASINO").IsUnlocked);
+            PlayMakerFSM CasinoDraftButton = GameObject.Find("UI OVERLAY CAM/Drafting Studio UI/CASINO/DRAFT BUTTON").GetComponent<PlayMakerFSM>();
+            FsmState CasinoAddState = CasinoDraftButton.GetState("Add this Floorplan to your DRAFT POOL");
+            CasinoAddState.DisableFirstActionOfType<SetFsmBool>();
+            CasinoAddState.DisableFirstActionOfType<SendEvent>();
+
+            //Draft UI
+            PlayMakerFSM DraftingStudioUI = GameObject.Find("UI OVERLAY CAM/Drafting Studio UI").GetComponent<PlayMakerFSM>();
+            FsmState CheckUnlocks = DraftingStudioUI.GetState("Fix List");
+            int i = 0;
+            string[] RoomUnlockBools = ["Casino Unlocked", "Dormitory Unlocked", "Clock Tower Unlocked", "Vestibule Unlocked", "The Kennel Unlocked", "Dovecote Unlocked", "Solarium Unlocked", "Classroom Added"];
+            foreach (string actionName in CheckUnlocks.ActionData.ActionNames)
+            {
+                if (actionName == typeof(GetFsmBool).FullName)
+                {
+                    GetFsmBool action = CheckUnlocks.Actions[i].TryCast<GetFsmBool>();
+                    action.variableName = RoomUnlockBools[i - 1];
+                }
+                i++;
+            }
         }
 
     }

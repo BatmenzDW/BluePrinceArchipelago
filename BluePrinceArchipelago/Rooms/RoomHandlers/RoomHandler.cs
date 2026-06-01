@@ -1,14 +1,10 @@
 using System;
 using System.Collections.Generic;
-using BluePrinceArchipelago.Archipelago;
 using HarmonyLib;
 using HutongGames.PlayMaker;
-using HutongGames.PlayMaker.Actions;
-using Il2CppInterop.Runtime.Injection;
-using TMPro;
 using UnityEngine;
 
-namespace BluePrinceArchipelago.RoomHandlers;
+namespace BluePrinceArchipelago.Rooms.RoomHandlers;
 
 public abstract class RoomHandler
 {
@@ -22,6 +18,8 @@ public abstract class RoomHandler
     public virtual void OnAfterRoomDrafted() { }
     public virtual void OnFSMStateChanged(Fsm fsm, string gameObjectName, string newState) { }
     public virtual void OnMorajaiPuzzleSolved(string puzzleName) { }
+    public virtual void OnRoomUnlocked(ModRoom room) { 
+    }
     
     public static readonly Dictionary<string, RoomHandler> RoomHandlers = new Dictionary<string, RoomHandler>()
     {
@@ -49,8 +47,8 @@ public abstract class RoomHandler
             "CLOISTER" => new Cloister(),
             "ENTRANCE HALL" => new EntranceHall(),
             "CLOSED EXHIBIT" => new ClosedExhibit(),
-            "UTILITY CLOSET" => new UtilityCloset(),
-            "LABORATORY" => new Laboratory(),
+            //"UTILITY CLOSET" => new UtilityCloset(),
+            //"LABORATORY" => new Laboratory(),
             _ => null
         };
 

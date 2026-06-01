@@ -1,5 +1,4 @@
-
-namespace BluePrinceArchipelago.RoomHandlers;
+namespace BluePrinceArchipelago.Rooms.RoomHandlers;
 
 public class ClosedExhibit : RoomHandler
 {

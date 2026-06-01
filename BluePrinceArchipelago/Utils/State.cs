@@ -23,6 +23,7 @@ namespace BluePrinceArchipelago.Utils
         public const string ServerDetailsFile = "ServerDetails.json";
         public const string ServerOptionsFile = "ServerOptions.json";
         public const string TrunkCountsFile = "TrunkCounts.json";
+        public const string LocationDictFile = "LocationDict.json";
         public const string ItemQueueFile = "ItemQueue.json";
         public const string LocationQueueFile = "LocationQueue.json";
         public const string ItemsByDayFile = "ItemsByDay.json";
@@ -33,6 +34,8 @@ namespace BluePrinceArchipelago.Utils
         public static string ServerDetailsPath => Path.Combine(ModFolder, SessionFolder, ServerDetailsFile);
         public static string ServerOptionsPath => Path.Combine(ModFolder, SessionFolder, ServerOptionsFile);
         public static string TrunkCountsPath => Path.Combine(ModFolder, SessionFolder, TrunkCountsFile);
+
+        public static string LocationDictPath => Path.Combine(ModFolder, SessionFolder, LocationDictFile);
         public static string ItemQueuePath => Path.Combine(ModFolder, SessionFolder, ItemQueueFile);
         public static string LocationQueuePath => Path.Combine(ModFolder, SessionFolder, LocationQueueFile);
         public static string ItemsByDayPath => Path.Combine(ModFolder, SessionFolder, ItemsByDayFile);
@@ -54,6 +57,7 @@ namespace BluePrinceArchipelago.Utils
             InitializeSentLocations();
             InitializeSessionData();
             InitializeServerDetails();
+            InitializeLocationDict();
             //InitializeItemQueue();
             //InitializeLocationQueue();
         }
@@ -112,6 +116,13 @@ namespace BluePrinceArchipelago.Utils
             using (var writer = new StreamWriter(TrunkCountsPath))
             {
                 writer.Write(JsonConvert.SerializeObject(ModInstance.TrunkManager.TrunkCounts));
+                writer.Flush();
+            }
+        }
+        public static void UpdateLocationDict() {
+            using (var writer = new StreamWriter(LocationDictPath))
+            {
+                writer.Write(JsonConvert.SerializeObject(ArchipelagoClient.ServerData.LocationDict));
                 writer.Flush();
             }
         }
@@ -454,6 +465,38 @@ namespace BluePrinceArchipelago.Utils
                 }
             }
         }
+        public static void InitializeLocationDict()
+        {
+            if (File.Exists(LocationDictPath))
+            {
+                string jsonData = "";
+                using (var reader = new StreamReader(LocationDictPath))
+                {
+                    jsonData = reader.ReadToEnd();
+                }
+                if (jsonData.Trim().Length > 0)
+                {
+                    try
+                    {
+                        ArchipelagoClient.ServerData.LocationDict = JsonConvert.DeserializeObject<Dictionary<long, string>>(jsonData);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logging.Log($"Error loading Received items: \n{ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                using (var writer = new StreamWriter(LocationDictPath, false))
+                {
+                    writer.Write(JsonConvert.SerializeObject(new Dictionary<long, string>()));
+                    writer.Flush();
+                }
+            }
+        }
+
+
         public static void Reset() {
             // Received Items
             using (var writer = new StreamWriter(RecievedItemsPath, false))
@@ -486,6 +529,13 @@ namespace BluePrinceArchipelago.Utils
             using (var writer = new StreamWriter(TrunkCountsPath, false))
             {
                 writer.Write(JsonConvert.SerializeObject(new Dictionary<string, int>()));
+                writer.Flush();
+            }
+
+            //Location Dict
+            using (var writer = new StreamWriter(LocationDictPath, false))
+            {
+                writer.Write(JsonConvert.SerializeObject(new Dictionary<long, string>()));
                 writer.Flush();
             }
             //// Item Queue

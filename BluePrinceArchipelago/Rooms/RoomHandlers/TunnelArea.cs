@@ -1,7 +1,6 @@
-
 using HutongGames.PlayMaker;
 
-namespace BluePrinceArchipelago.RoomHandlers;
+namespace BluePrinceArchipelago.Rooms.RoomHandlers;
 
 public class TunnelArea : RoomHandler
 {

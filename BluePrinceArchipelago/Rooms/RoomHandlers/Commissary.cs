@@ -1,4 +1,3 @@
-
 using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
@@ -9,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace BluePrinceArchipelago.RoomHandlers;
+namespace BluePrinceArchipelago.Rooms.RoomHandlers;
 
 public class Commissary : RoomHandler
 {

@@ -4,21 +4,16 @@ using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
-using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Models;
-using BluePrinceArchipelago.PermanentUnlocks;
+using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
-using CirrusPlay.PortalLibrary;
-using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Net.Security;
 using System.Threading.Tasks;
 using static BluePrinceArchipelago.Archipelago.ItemQueue;
-using static HutongGames.PlayMaker.Actions.GetTimeInfo;
 
 namespace BluePrinceArchipelago.Archipelago;
 
@@ -149,11 +144,9 @@ public class ArchipelagoClient
             // Player Connected to wrong slot (Probably)
             else
             {
-                //TODO once proper Archipelago login has been setup correct to actually disconnect instead. For now this can't be validated and so this will be handled this way for testing purposes.
-                ArchipelagoConsole.LogMessage($"SlotData doesn't match expected slot, assuming a new game was started without previous goal finishing. If you have Connected to the wrong slot, please disconnect now.");
-                State.Reset();
-                State.Initialize();
-                HandleConnectResult(loginResult);
+                ArchipelagoConsole.LogMessage($"SlotData doesn't match expected slot. If you didn't finish the last run please run /ResetData and reconnect or connect to the correct server.");
+
+                HandleConnectResult(new LoginFailure($"Unexpected LoginResult type when connecting to Archipelago: {loginResult}"));
                 _AttemptingConnection = false;
             }
         }
@@ -296,7 +289,6 @@ public class ArchipelagoClient
             RebuildState();
         }
         ArchipelagoConsole.LogMessage("Gathering Seed Data...");
-        CreateLocationDicts(session.Locations.AllLocations.ToArray());
     }
     public void RebuildState() {
         long[] locationids = session.Locations.AllLocationsChecked.ToArray();
@@ -376,6 +368,7 @@ public class ArchipelagoClient
                         room.RoomPoolCount++;
                     }
                 }
+                room.IsUnlocked = true;
             }
             else if (item.ToUpper().Contains("UPGRADE DISK"))
             {
@@ -467,6 +460,10 @@ public class ArchipelagoClient
             string itemName = scout.Value.ItemName ?? $"?Item {itemId}";
             ServerData.ItemDict[itemId] = itemName;
             ServerData.LocationItemMap[locationId] = scout.Value;
+        }
+        if (!hint)
+        {
+            State.UpdateLocationDict();
         }
     }
 
@@ -664,7 +661,7 @@ public class ArchipelagoQueueManager {
         {
             if (ModInstance.IsInRun)
             {
-                PermanentUnlock unlock = PermanentUnlocks.Unlocks.GetPermanentUnlock(item.ItemName);
+                PermanentUnlock unlock = Unlocks.GetPermanentUnlock(item.ItemName);
                 if (unlock != null)
                 {
                     State.UpdateItemsByDay(item);
@@ -727,7 +724,7 @@ public class ArchipelagoQueueManager {
     public bool ReceiveServerItem(ItemInfo item, bool ignoreState = false) {
         if (ModInstance.IsInRun)
         {
-            PermanentUnlock unlock = PermanentUnlocks.Unlocks.GetPermanentUnlock(item.ItemName);
+            PermanentUnlock unlock = Unlocks.GetPermanentUnlock(item.ItemName);
             if (unlock != null)
             {
                 State.UpdateItemsByDay(item);
@@ -851,7 +848,7 @@ public class ArchipelagoQueueManager {
             }
         }
         // Update the pools immediately if we're in a run
-
+        room.Handler?.OnRoomUnlocked(room);
         ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
         State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
         State.UpdateItemsByDay(item);

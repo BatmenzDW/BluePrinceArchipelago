@@ -6,7 +6,7 @@ using HutongGames.PlayMaker;
 using Il2CppSystem.Linq;
 using UnityEngine;
 
-namespace BluePrinceArchipelago.RoomHandlers
+namespace BluePrinceArchipelago.Rooms.RoomHandlers
 {
     public class TradingPost : RoomHandler
     {

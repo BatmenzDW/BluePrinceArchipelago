@@ -5,7 +5,8 @@ using BluePrinceArchipelago.Core;
 using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Patches;
-using BluePrinceArchipelago.RoomHandlers;
+using BluePrinceArchipelago.Rooms;
+using BluePrinceArchipelago.Rooms.RoomHandlers;
 using BluePrinceArchipelago.Utils;
 using HarmonyLib;
 using HutongGames.PlayMaker;
@@ -135,7 +136,7 @@ namespace BluePrinceArchipelago
             if (scene.name.Equals("Mount Holly Estate"))
             {
                 SceneLoaded = true;
-                PermanentUnlocks.Unlocks.HasPrepatched = false;
+                Unlocks.HasPrepatched = false;
                 LoadCount++;
                 if (LoadCount > 1)
                 {
@@ -318,7 +319,7 @@ namespace BluePrinceArchipelago
 
             // Sync room pools with Archipelago at the start of each day, regardless of when auth happened
             SyncRoomPoolsWithArchipelago();
-            FSMPatches.UpgradeDiskOverride(GlobalManager);
+           
 
             // Initialize the Star HUD so it can be properly updated when needed.
             GameObject.Find("__SYSTEM/HUD/Stars").SetActiveRecursively(true);
@@ -328,6 +329,8 @@ namespace BluePrinceArchipelago
             State.CurrentDayNum = dayNum;
             if (ArchipelagoClient.Authenticated)
             {
+                FSMPatches.UpgradeDiskOverride(GlobalManager);
+                FSMPatches.AddedFloorPlanOverrides();
                 if (FirstLoad)
                 {
                     // Rebuild the state if it couldn't be done on the Reconnect from crash.
@@ -338,7 +341,6 @@ namespace BluePrinceArchipelago
                     }
                 }
                
-               
                 // Release items that were queued while offline/before the run started
                 QueueManager.ReleaseAllQueuedItems();
                 QueueManager.ReleaseAllQueuedLocations();
@@ -347,9 +349,9 @@ namespace BluePrinceArchipelago
                 Plugin.ModItemManager.StartOfDay(dayNum);
                 Plugin.UniqueItemManager.StartOfDay();
                 Plugin.ModItemManager.ReplaceItemsWithAP();
-                PermanentUnlocks.Unlocks.AttemptPrePatch(); //Apply patches to the FSMs
-                PermanentUnlocks.Unlocks.AppleOrchard.PreventDefault();
-                PermanentUnlocks.Unlocks.WestGatePath.PreventDefault();
+                Unlocks.AttemptPrePatch(); //Apply patches to the FSMs
+                Unlocks.AppleOrchard.PreventDefault();
+                Unlocks.WestGatePath.PreventDefault();
 
                 Plugin.ArchipelagoClient.DeathLinkHandler.KillPlayer(); // If we have any queued death links, kill the player at the start of the day.
             }
@@ -487,12 +489,12 @@ namespace BluePrinceArchipelago
             State.CurrentDayNum += 1;
             State.TodaysItems = new List<ItemInfo>();
         }
-        public static void OnDraftBeforeInitialize(RoomDraftHelper instance)
+        public static void OnDraftBeforeInitialize()
         {
         }
 
         // Handles initializing rooms. Called when a draft is about to start (e.g., player opens a door).
-        public static void OnDraftInitialize(RoomDraftHelper helper) 
+        public static void OnDraftInitialize() 
         {
             if (HasInitializedRooms)
             {
@@ -760,7 +762,12 @@ namespace BluePrinceArchipelago
                 SyncRoomPoolsWithArchipelago();
                 Plugin.ModItemManager.ReplaceItemsWithAP();
             }
-            if (FirstLoad)
+            if (IsInRun)
+            {
+                FSMPatches.UpgradeDiskOverride(GlobalManager);
+                FSMPatches.AddedFloorPlanOverrides();
+            }
+                if (FirstLoad)
             {
                 State.FirstLoad();
             }
@@ -829,7 +836,7 @@ namespace BluePrinceArchipelago
                     return GlobalPersistentManager?.GetBoolVariable("Room 46 Reached")?.Value ?? false;
                 };
 
-                    Plugin.ModRoomManager.AddRoom("AQUARIUM", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CENTER - Tier 2 G", "EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G"], true);
+                Plugin.ModRoomManager.AddRoom("AQUARIUM", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CENTER - Tier 2 G", "EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G"], true);
                 Plugin.ModRoomManager.AddRoom("ARCHIVES", ["CENTER - Tier 2"], true);
                 Plugin.ModRoomManager.AddRoom("ATTIC", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CORNER - RARE G", "CENTER - Tier 3 G", "EDGECREEP - RARE G", "EDGEPIERCE - RARE G"], true);
                 Plugin.ModRoomManager.AddRoom("BALLROOM", ["FRONTBACK G - RARE", "CENTER - Tier 2 G", "EDGECREEP - RARE G"], true);
@@ -840,13 +847,13 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.AddRoom("BOOKSHOP", [""], true, true);
                 Plugin.ModRoomManager.AddRoom("BOUDOIR", ["SOUTH PIERCE", "CORNER - Tier 1", "CENTER - Tier 2", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("BUNK ROOM", ["FRONT - Tier 1", "FRONTBACK - RARE", "SOUTH PIERCE", "CORNER - RARE", "CENTER - Tier 2", "EDGECREEP - RARE", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
-                Plugin.ModRoomManager.AddRoom("CASINO", ["FRONTBACK G - RARE", "EDGEPIERCE G", "EDGE ADVANCE EASTWING - G", "EDGE ADVANCE WESTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "NORTH PIERCE G", "CENTER - Tier 1 G", "CORNER - Tier 1 G"], false);
+                Plugin.ModRoomManager.AddRoom("CASINO", ["FRONTBACK G - RARE", "EDGEPIERCE G", "EDGE ADVANCE EASTWING - G", "EDGE ADVANCE WESTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "NORTH PIERCE G", "CENTER - Tier 1 G", "CORNER - Tier 1 G"], false, false, false, "Casino Added");
                 Plugin.ModRoomManager.AddRoom("CHAMBER OF MIRRORS", ["CENTER - Tier 2"], true);
                 Plugin.ModRoomManager.AddRoom("CHAPEL", ["FRONTBACK - RARE", "NORTH PIERCE", "CENTER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 // CLASSROOM is a single room that can appear as different "grades" (1-9) when drafted
                 // All "Classroom X" items from Archipelago map to this single CLASSROOM entry
                 Plugin.ModRoomManager.AddRoom("CLASSROOM", ["CENTER - Tier 1 G", "FRONT - Tier 1 G", "CORNER - Tier 1 G", "EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G"], true, false);
-                Plugin.ModRoomManager.AddRoom("CLOCK TOWER", ["CENTER - Tier 2 G", "FRONTBACK G - RARE", "NORTH PIERCE G", "CORNER - Tier 1 G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G"], false);
+                Plugin.ModRoomManager.AddRoom("CLOCK TOWER", ["CENTER - Tier 2 G", "FRONTBACK G - RARE", "NORTH PIERCE G", "CORNER - Tier 1 G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G"], false, false, false, "Clock Tower Added");
                 Plugin.ModRoomManager.AddRoom("CLOISTER", ["CENTER - Tier 2 G"], true);
                 Plugin.ModRoomManager.AddRoom("CLOSED EXHIBIT", ["FRONTBACK - RARE", "NORTH PIERCE", "EDGEPIERCE - RARE", "EDGECREEP - RARE", "CENTER - Tier 2"], false);
                 Plugin.ModRoomManager.AddRoom("CLOSET", ["FRONT - Tier 1", "FRONTBACK - RARE", "SOUTH PIERCE", "CORNER - Tier 1", "CENTER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
@@ -859,8 +866,8 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.AddRoom("DARKROOM", ["FRONT - Tier 1", "FRONTBACK - RARE", "NORTH PIERCE", "CENTER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("DEN", ["FRONT - Tier 1", "FRONTBACK - RARE", "SOUTH PIERCE", "CENTER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("DINING ROOM", ["FRONT - Tier 1", "FRONTBACK - RARE", "SOUTH PIERCE", "CENTER - Tier 1", "EDGECREEP - RARE", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
-                Plugin.ModRoomManager.AddRoom("DORMITORY", ["CORNER - Tier 1", "FRONTBACK - RARE", "CENTER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], false);
-                Plugin.ModRoomManager.AddRoom("DOVECOTE", ["EDGEPIERCE EAST", "EDGEPIERCE WEST", "NORTH PIERCE", "CENTER - Tier 2"], false);
+                Plugin.ModRoomManager.AddRoom("DORMITORY", ["CORNER - Tier 1", "FRONTBACK - RARE", "CENTER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], false, false, false, "Dormitory Added");
+                Plugin.ModRoomManager.AddRoom("DOVECOTE", ["EDGEPIERCE EAST", "EDGEPIERCE WEST", "NORTH PIERCE", "CENTER - Tier 2"], false, false, false, "Dovecote Added");
                 Plugin.ModRoomManager.AddRoom("DRAFTING STUDIO", ["FRONTBACK G - RARE", "CENTER - Tier 2 G", "EDGECREEP - RARE G"], true);
                 Plugin.ModRoomManager.AddRoom("DRAWING ROOM", ["FRONT - Tier 1 G", "FRONTBACK - RARE", "SOUTH PIERCE", "CENTER - Tier 1 G", "EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("EAST WING HALL", ["EDGECREEP EAST", "EDGEPIERCE EAST"], true);
@@ -903,7 +910,7 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.AddRoom("PARLOR", ["FRONT - Tier 1", "FRONTBACK - RARE", "SOUTH PIERCE", "CORNER - Tier 1", "CENTER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("PASSAGEWAY", ["CENTER - Tier 1 G"], true);
                 Plugin.ModRoomManager.AddRoom("PATIO", ["EDGE ADVANCE WESTWING - G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G"], true);
-                Plugin.ModRoomManager.AddRoom("PLANETARIUM", ["CENTER - Tier 2", "FRONT - Tier 1", "CORNER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST", "NORTH PIERCE"], false);
+                Plugin.ModRoomManager.AddRoom("PLANETARIUM", ["CENTER - Tier 2", "FRONT - Tier 1", "CORNER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST", "NORTH PIERCE"], false, false, false, "Planetarium Added");
                 Plugin.ModRoomManager.AddRoom("PUMP ROOM", ["FRONTBACK - RARE", "CORNER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST", "NORTH PIERCE", "CENTER - Tier 2"], true, false)
                     .AddDependency(poolCheck);
                 Plugin.ModRoomManager.AddRoom("ROOM 8", [], false, false);
@@ -921,7 +928,7 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.AddRoom("BOMB SHELTER", ["STANDALONE ARRAY", "STANDALONE ARRAY FULL"], true);
                 Plugin.ModRoomManager.AddRoom("SHOWROOM", ["FRONTBACK G - RARE", "CENTER - Tier 3 G", "EDGECREEP - RARE G", "Center Rare G"], true);
                 Plugin.ModRoomManager.AddRoom("SHRINE", ["STANDALONE ARRAY", "STANDALONE ARRAY FULL"], true);
-                Plugin.ModRoomManager.AddRoom("SOLARIUM", ["CORNER - RARE G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G", "NORTH PIERCE G", "CENTER - Tier 2 G"], false);
+                Plugin.ModRoomManager.AddRoom("SOLARIUM", ["CORNER - RARE G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G", "NORTH PIERCE G", "CENTER - Tier 2 G"], false, false, false, "Solarium Added");
                 Plugin.ModRoomManager.AddRoom("SPARE ROOM", ["FRONT - Tier 1", "FRONTBACK - RARE", "CENTER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST"], true);
                 Plugin.ModRoomManager.AddRoom("STOREROOM", ["FRONT - Tier 1", "FRONTBACK - RARE", "SOUTH PIERCE", "CORNER - Tier 1", "CENTER - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("STUDY", ["FRONT - Tier 1", "FRONTBACK - RARE", "NORTH PIERCE", "CORNER - RARE", "CENTER - Tier 2", "EDGECREEP - RARE", "EDGEPIERCE - RARE", "Center Rare"], true);
@@ -930,7 +937,7 @@ namespace BluePrinceArchipelago
                     .AddDependency(chessPowerRook);
                 Plugin.ModRoomManager.AddRoom("THE FOUNDATION", ["CENTER - Tier 1", "CENTER - Tier 2", "CENTER - Tier 3"], true)
                     .AddDependency(foundationCheck);
-                Plugin.ModRoomManager.AddRoom("THE KENNEL", ["FRONT - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "CENTER - Tier 1"], false);
+                Plugin.ModRoomManager.AddRoom("THE KENNEL", ["FRONT - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "CENTER - Tier 1"], false, false, false, "Solarium Added");
                 Plugin.ModRoomManager.AddRoom("THE POOL", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CENTER - Tier 2 G", "EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G", "Center Rare G"], true);
                 Plugin.ModRoomManager.AddRoom("THRONE ROOM", ["EDGEPIERCE - RARE G", "CENTER - Tier 2 G"], false);
                 Plugin.ModRoomManager.AddRoom("TOMB", ["STANDALONE ARRAY", "STANDALONE ARRAY FULL"], true);
@@ -943,7 +950,7 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.AddRoom("UTILITY CLOSET", ["FRONT - Tier 1", "FRONTBACK - RARE", "CORNER - Tier 1", "CENTER - Tier 2", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("VAULT", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CORNER - RARE G", "CENTER - Tier 2 G", "EDGECREEP - RARE G", "EDGEPIERCE - RARE G", "Center Rare G"], true);
                 Plugin.ModRoomManager.AddRoom("VERANDA", ["EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G"], true);
-                Plugin.ModRoomManager.AddRoom("VESTIBULE", ["CENTER - Tier 1 G"], false);
+                Plugin.ModRoomManager.AddRoom("VESTIBULE", ["CENTER - Tier 1 G"], false, false, false, "Vestibule Added");
                 Plugin.ModRoomManager.AddRoom("WALK-IN CLOSET", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CORNER - Tier 1 G", "CENTER - Tier 2 G", "EDGECREEP - RARE G", "EDGEPIERCE G", "Center Rare G"], true);
                 Plugin.ModRoomManager.AddRoom("WEIGHT ROOM", ["CENTER - Tier 3", "Center Rare"], true);
                 Plugin.ModRoomManager.AddRoom("WEST WING HALL", ["EDGECREEP WEST", "EDGEPIERCE WEST"], true);

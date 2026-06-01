@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using HutongGames.PlayMaker;
 using UnityEngine;
 
-namespace BluePrinceArchipelago.RoomHandlers;
+namespace BluePrinceArchipelago.Rooms.RoomHandlers;
 
 public class EntranceHall : RoomHandler
 {
