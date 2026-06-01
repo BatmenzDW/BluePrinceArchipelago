@@ -128,7 +128,6 @@ public class ArchipelagoClient
         // If failed to login display why.
         if (loginResult is LoginFailure failure) {
             string errors = string.Join(", ", failure.Errors);
-            Logging.LogError($"Unable to connect to Archipelago because: {errors}");
             HandleConnectResult(new LoginFailure(errors));
             _AttemptingConnection = false;
         }
@@ -223,8 +222,6 @@ public class ArchipelagoClient
         // Output an Error Message and Disconnect.
         else
         {
-            string outText;
-
             ArchipelagoConsole.LogMessage($"Failed to connect to {ServerData.Uri} as {ServerData.SlotName}.");
 
             Authenticated = false;

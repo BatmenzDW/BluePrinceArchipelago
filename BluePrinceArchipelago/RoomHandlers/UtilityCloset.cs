@@ -11,7 +11,6 @@ namespace BluePrinceArchipelago.RoomHandlers
     {
         public UtilityCloset()
         {
-            Logging.Log("Initializing Utility Closet.", "Utility Closet");
         }
 
         public override void OnRoomDrafted(GameObject roomGameObject)
@@ -21,7 +20,6 @@ namespace BluePrinceArchipelago.RoomHandlers
 
         public override void OnAfterRoomDrafted()
         {
-            Logging.Log("Attempting to override Gemstone Caverns", "Utility Closet");
             // Runs the code to prevent Gemstone Cavern from being unlocked normally.
             //PermanentUnlocks.Unlocks.GemstoneCaverns.PreventDefault();
         }

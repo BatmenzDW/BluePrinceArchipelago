@@ -69,14 +69,11 @@ namespace BluePrinceArchipelago.Items
                 {
                     ModItemManager.EstateItems.Remove(GameObj, "GameObject");
                 }
-                ModItemManager.PickedUp.Add(GameObj, "GameObject");
             }
         }
 
         public override void AddItemToInventory()
         {
-            Logging.LogWarning(Name);
-            Logging.LogWarning(ApplySanity());
             if (!ApplySanity())
             {
                 return;
@@ -101,39 +98,19 @@ namespace BluePrinceArchipelago.Items
             // If the item is spawned or is not in the prespawn list.
             if (Plugin.ModItemManager.IsItemSpawnable(GameObj, IsPrespawn) && !isSpawned)
             {
-                string iconName = Name.ToTitleCase() + " Icon(Clone)001";
-                GameObject icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
-                // Some icons are spelled with icon as lower case
-                if (icon == null)
+                // Re-enable the logic that adds the item to inventory. (will not cause issues if already enabled).
+                FsmState state = Plugin.UniqueItemManager.GetPickupState(Name);
+                if (state != null)
                 {
-                    iconName = iconName.ToTitleCase() + " icon(Clone)001";
-                    icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
-                }
-                // Some icons are spelled without the word icon.
-                if (icon == null)
-                {
-                    iconName = iconName.ToTitleCase() + " (Clone)001";
-                    icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
-                }
-                PlayMakerArrayListProxy InventoryIcons = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/")?.GetArrayListProxy("Inventory");
-                if (icon != null && InventoryIcons != null)
-                {
-                    // Re-enable the logic that adds the item to inventory. (will not cause issues if already enabled).
-                    FsmState state = Plugin.UniqueItemManager.GetPickupState(Name);
-                    if (state != null)
+                    state.EnableActionsOfType<ArrayListAdd>();
+                    if (Commissary.CommissaryStates.ContainsKey(Name))
                     {
-                        state.EnableActionsOfType<ArrayListAdd>();
-                        if (Commissary.CommissaryStates.ContainsKey(Name))
-                        {
-                            //Re-enable commissary purchases of the item.
-                            Commissary.CanStock.Add(Name);
-                        }
-                        Logging.LogWarning("Attempting to add item to pickup list");
-                        ModItemManager.PickedUp.Add(GameObj, "GameObject");
-                        Logging.LogWarning("Attempting to add item to inventory icons");
-                        InventoryIcons.Add(icon, "GameObject");
-                        ArchipelagoConsole.LogMessage($"Added {Name} to inventory.");
+                        //Re-enable commissary purchases of the item.
+                        Commissary.CanStock.Add(Name);
                     }
+                    // This may not cause it to re-trigger.
+                    ModItemManager.PreSpawn.Add(GameObj, "GameObject");
+                    ModInstance.GlobalManager.SendEvent(state.Name);
                 }
             }
         }

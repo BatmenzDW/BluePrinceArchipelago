@@ -1108,6 +1108,7 @@ namespace BluePrinceArchipelago.Items
 
         public void AddItemToInventory(string location)
         {
+            Logging.LogWarning("Attempting To Add Upgrade Disk to Inventory.");
             if (!RecievedLocations.Contains(location.ToUpper()))
             {
                 RecievedLocations.Add(location.ToUpper());
