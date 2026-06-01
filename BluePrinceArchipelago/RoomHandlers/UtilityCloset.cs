@@ -23,7 +23,7 @@ namespace BluePrinceArchipelago.RoomHandlers
         {
             Logging.Log("Attempting to override Gemstone Caverns", "Utility Closet");
             // Runs the code to prevent Gemstone Cavern from being unlocked normally.
-            PermanentUnlocks.Unlocks.GemstoneCaverns.PreventDefault();
+            //PermanentUnlocks.Unlocks.GemstoneCaverns.PreventDefault();
         }
     }
 }

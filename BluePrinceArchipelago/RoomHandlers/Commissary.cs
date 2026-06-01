@@ -56,6 +56,9 @@ public class Commissary : RoomHandler
         _ColliderGameObject = RoomGameObject.transform.Find("_GAMEPLAY/Click Commissary Collider")?.gameObject;
 
         SetupItemsForSale();
+    }
+    public override void OnAfterRoomDrafted()
+    {
         ReplaceModelsWithAP();
         ReplacePurchases();
     }

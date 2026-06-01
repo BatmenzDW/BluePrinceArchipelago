@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static ES3Spreadsheet;
 
 namespace BluePrinceArchipelago.Utils
 {
@@ -72,6 +73,9 @@ namespace BluePrinceArchipelago.Utils
             {
                 arrayListProxy.Remove(arrayList[index], arrayList[index].GetType().ToString()); //Use the in built remove function to make sure nothing in the PlayMakerArrayListProxy Breaks.
             }
+        }
+        public static void AddToArray<T>(this PlayMakerArrayListProxy arrayListProxy, T item)
+        {
         }
 
         /// <summary>
@@ -1286,6 +1290,20 @@ namespace BluePrinceArchipelago.Utils
                 i++;
             }
         }
+        public static void EnableFirstActionOfType<TAction>(this FsmState state)
+        {
+            int i = 0;
+            foreach (string actionName in state.ActionData.ActionNames)
+            {
+                if (actionName == typeof(TAction).FullName)
+                {
+                    state.EnableAction(i);
+                    return;
+                }
+                i++;
+            }
+        }
+
         public static void EnableActionsOfType<TAction>(this FsmState state)
         {
             int i = 0;

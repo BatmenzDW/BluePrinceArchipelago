@@ -172,7 +172,7 @@ namespace BluePrinceArchipelago.Utils
                         string goName = go?.transform?.parent?.name?.ToLower();
                         if (goName != null)
                         {
-                            if (goName != "archipelago")
+                            if (goName != "prefabs")
                             {
                                 return go;
                             }

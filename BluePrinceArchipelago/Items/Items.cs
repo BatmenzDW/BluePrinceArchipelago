@@ -47,12 +47,16 @@ namespace BluePrinceArchipelago.Items
         }
         public void ReplaceItemsWithAP()
         {
-            ReplaceUniqueItemsWithAP();
-            if (ArchipelagoOptions.UpgradeDiskSanity)
+            if (!Plugin.UniqueItemManager.ModelsReplaced)
             {
-                ReplaceUpgradeDisksWithAP();
+                ReplaceUniqueItemsWithAP();
+                if (ArchipelagoOptions.UpgradeDiskSanity)
+                {
+                    ReplaceUpgradeDisksWithAP();
+                }
+                Plugin.UniqueItemManager.ModelsReplaced = true;
             }
-           
+
         }
 
         public void ReplaceUniqueItemsWithAP()
@@ -60,7 +64,7 @@ namespace BluePrinceArchipelago.Items
             foreach (UniqueItem item in UniqueItemList)
             {
                 // If the item has not been found yet.
-                if (!item.HasBeenFound)
+                if (!item.HasBeenFound && item.ApplySanity())
                 {
                     GameObject prefab = ModInstance.Prefabs.GetChild(item.Name);
                     if (prefab != null)
@@ -90,7 +94,7 @@ namespace BluePrinceArchipelago.Items
                                 GameObject.Destroy(APGO);
                             }
                             else {
-                                Logging.LogWarning($"{item.Name}has already Been Replaced with an AP Item:");
+                                Logging.LogWarning($"{item.Name} has already Been Replaced with an AP Item:");
                             }
                         }
                         else
@@ -121,16 +125,17 @@ namespace BluePrinceArchipelago.Items
                     if (child.gameObject.name.Contains(GetYou___Name(itemName)))
                     {
                         //TODO handle special case names (EG Crown of blueprints)
+                        
                         Transform itemModel = child.FindRecursive(itemName, true);
                         if (itemModel != null)
                         {
-                            
+
                             // Make a clone of the original gameObject parented under the ModObject for easy editing/retreival later.
                             GameObject clone = GameObject.Instantiate(child.gameObject, Plugin.ModObject.transform);
                             clone.SetActive(false); //Make sure the clone is not visible.
                             clone.name = child.name;//Make the Name match the original so it can be replaced later.
 
-                            
+
                             //Instantiate a the AP Object at the original's position
                             GameObject APGO = GameObject.Instantiate(item, itemModel.position, itemModel.rotation, itemModel.parent);
                             APGO.transform.localScale = itemModel.localScale;
@@ -138,7 +143,7 @@ namespace BluePrinceArchipelago.Items
                             itemModel.gameObject.DestroyAllChildren();
                             APGO.MoveChildrenTo(itemModel.gameObject);
                             GameObject.Destroy(APGO);
-                            
+
                             //Import the template Text Prefab.  
                             GameObject textPrefab = ModInstance.Prefabs.GetChild("You Found Text Template");
 
@@ -167,7 +172,8 @@ namespace BluePrinceArchipelago.Items
                                 {
                                     scoutItemName = itemWords.Join("\n");
                                 }
-                                else {
+                                else
+                                {
                                     scoutItemName = scoutItemName.Minragged();
                                 }
                                 int FirstLetterCount = 0;
@@ -176,7 +182,7 @@ namespace BluePrinceArchipelago.Items
                                 // Update all the fonts and words to be correct
 
                                 Transform textObjects = child.Find("Text/GameObject");
-                                
+
                                 GameObject textObject = GameObject.Instantiate(textPrefab, textObjects.position, textObjects.rotation);
                                 Transform FirstFirstLetter = null;
                                 Transform FirstItemName = null;
@@ -188,7 +194,7 @@ namespace BluePrinceArchipelago.Items
                                 List<GameObject> toDestroy = new List<GameObject>();
                                 for (int i = 0; i < textObjects.transform.childCount; i++)
                                 {
-                                    
+
                                     Transform textChild = textObjects.gameObject.transform.GetChild(i);
                                     if (textChild.TryGetComponent<TextMeshPro>(out text))
                                     {
@@ -230,7 +236,7 @@ namespace BluePrinceArchipelago.Items
                                                     text.text = scoutItemName.Substring(0, 1);
                                                     FirstLetterCount++;
                                                 }
-                                                
+
                                             }
                                             // The rest of the word in the item name.
                                             else if (textChild.name.StartsWith("Item Name"))
@@ -252,7 +258,7 @@ namespace BluePrinceArchipelago.Items
                                                     text.horizontalAlignment = HorizontalAlignmentOptions.Left;
                                                     ItemNameCount++;
                                                 }
-                                               
+
                                             }
                                             // Handle the item description.
                                             else if (textChild.name.StartsWith("Description"))
@@ -293,7 +299,8 @@ namespace BluePrinceArchipelago.Items
                                 GameObject.Destroy(textObject);
                             }
                         }
-                        else {
+                        else
+                        {
                             Logging.LogWarning($"Unable to find the item model for {itemName.ToTitleCase()}");
                         }
                     }
@@ -317,6 +324,16 @@ namespace BluePrinceArchipelago.Items
                 name = name.Replace("Vault ", "").Trim();
             }
             return name;
+        }
+
+        private string GetItemModelName(string name) {
+            switch (name.ToUpper())
+            {
+                case "KEY 8":
+                    return "SILVER KEY";
+                default:
+                    return name;
+            }
         }
 
         // Removes the AP Swirlies from Unique Items. Not needed for regular items.
@@ -355,8 +372,8 @@ namespace BluePrinceArchipelago.Items
         }
 
         private GameObject FindSpawnObject(string name) {
+            name.Replace("_0", "");
             string instanceName = name + "(Clone)001";
-            Logging.Log(name);
             GameObject spawnObj = ModInstance.PickupSpawnPool.transform.FindChild(instanceName)?.gameObject;
             if (spawnObj == null) {
                spawnObj =  GameObjectExtensions.FindGameObject(name);
@@ -676,6 +693,7 @@ namespace BluePrinceArchipelago.Items
                     }
                 }
             }
+            Logging.LogWarning($"Unable to get item from prespawn for {itemName.ToTitleCase()}");
             return null;
         }
 
@@ -863,7 +881,7 @@ namespace BluePrinceArchipelago.Items
             int totalStars = ModInstance.GlobalPersistentManager.GetIntVariable("TotalStars").Value;
             if (totalStars + 1 > 0)
             {
-                ModInstance.GlobalPersistentManager.GetIntVariable("TotalStars").Value += 1;
+                ModInstance.GlobalPersistentManager.GetIntVariable("TotalStars").Value += count;
             }
             else
             {
@@ -1018,6 +1036,17 @@ namespace BluePrinceArchipelago.Items
         public List<string> usedVariables = ["Upgrade Disc - Archives", "Upgrade Disc - Bootleg", "Upgrade Disc - Cloister", "Upgrade Disc - Commissary", "Upgrade Disc - Foundation", "Upgrade Disc - Freezer", "Upgrade Disc - Garage", "Upgrade Disc - Great Hall", "Upgrade Disc - LostFound", "Upgrade Disc - Master Bedroom", "Upgrade Disc - Mechanarium", "Upgrade Disc - Morning Room", "Upgrade Disc - Office", "Upgrade Disc - Shop", "Upgrade Disc - Tomb", "Upgrade Disc - Torch Room"];
         public new GameObject GameObj = gameObject;
 
+
+        public bool UnlockLocationIfExists(string locationName) {
+            foreach (string location in Locations) {
+                string lowlocation = location.ToLower().Replace("ladyships", "ladyship\'s");
+                if (locationName.ToLower().Contains(lowlocation)) {
+                    FoundLocations.Add(location);
+                    return true;
+                }
+            }
+            return false;
+        }
         // Updates the unlocked status of the upgrade disks.
         public void UpdateUnlocked() {
             // Updates the unlocked state of the upgrade disk. (A fallback for some edgecases.)
@@ -1139,7 +1168,7 @@ namespace BluePrinceArchipelago.Items
             Plugin.ModItemManager.AddItem(new UniqueItem("VAULT KEY 304", Plugin.ModItemManager.GetPreSpawnItem("VAULT KEY 304"), false, ItemSanityType.Key));
             Plugin.ModItemManager.AddItem(new UniqueItem("VAULT KEY 370", Plugin.ModItemManager.GetPreSpawnItem("VAULT KEY 370"), false, ItemSanityType.Key));
             Plugin.ModItemManager.AddItem(new UniqueItem("DIARY KEY", Plugin.ModItemManager.GetPreSpawnItem("DIARY KEY"), false, ItemSanityType.Key));
-            Plugin.ModItemManager.AddItem(new UniqueItem("PRISM KEY_0", Plugin.ModItemManager.GetPreSpawnItem("PRISM KEY_0"), false, ItemSanityType.Key, false));
+            Plugin.ModItemManager.AddItem(new UniqueItem("PRISM KEY_0", GameObjectExtensions.FindGameObject("PRISM KEY_0"), false, ItemSanityType.Key, false));
             Plugin.ModItemManager.AddItem(new UniqueItem("KEY of Aries", null, false, ItemSanityType.Key, false));
             Plugin.ModItemManager.AddItem(new UniqueItem("SECRET GARDEN KEY", Plugin.ModItemManager.GetPreSpawnItem("SECRET GARDEN KEY"), false, ItemSanityType.Key));
             Plugin.ModItemManager.AddItem(new UniqueItem("MICROCHIP 1", Plugin.ModItemManager.GetPreSpawnItem("MICROCHIP 1"), false, ItemSanityType.Key));
@@ -1147,15 +1176,15 @@ namespace BluePrinceArchipelago.Items
             Plugin.ModItemManager.AddItem(new UniqueItem("MICROCHIP 3", Plugin.ModItemManager.GetPreSpawnItem("MICROCHIP 3"), false, ItemSanityType.Key));
             Plugin.ModItemManager.AddItem(new UniqueItem("CABINET KEY 1", Plugin.ModItemManager.GetPreSpawnItem("CABINET KEY 1"), false, ItemSanityType.Key));
             Plugin.ModItemManager.AddItem(new UniqueItem("CABINET KEY 2", Plugin.ModItemManager.GetPreSpawnItem("CABINET KEY 2"), false, ItemSanityType.Key));
-            Plugin.ModItemManager.AddItem(new UniqueItem("CABINET KEY 3", Plugin.ModItemManager.GetPreSpawnItem("CABINET KEY 3"), false, ItemSanityType.Key));
+            Plugin.ModItemManager.AddItem(new UniqueItem("CABINET KEY 3", GameObjectExtensions.FindGameObject("CABINET KEY 5"), false, ItemSanityType.Key));
 
-            Plugin.ModItemManager.AddItem(new UniqueItem("BATTERY PACK", Plugin.ModItemManager.GetPreSpawnItem("BATTERY PACK"), false, ItemSanityType.Standard));
+            Plugin.ModItemManager.AddItem(new UniqueItem("BATTERY PACK", GameObjectExtensions.FindGameObject("BATTERY PACK"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("BROKEN LEVER", Plugin.ModItemManager.GetPreSpawnItem("BROKEN LEVER"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("MAGNIFYING GLASS", Plugin.ModItemManager.GetPreSpawnItem("MAGNIFYING GLASS"), false, ItemSanityType.Standard));
+            Plugin.ModItemManager.AddItem(new UniqueItem("MAGNIFYING GLASS", GameObjectExtensions.FindGameObject("MAGNIFYING GLASS"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("METAL DETECTOR", Plugin.ModItemManager.GetPreSpawnItem("METAL DETECTOR"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("SHOVEL", Plugin.ModItemManager.GetPreSpawnItem("SHOVEL"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("SLEDGE HAMMER", Plugin.ModItemManager.GetPreSpawnItem("SLEDGE HAMMER"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("TELESCOPE", Plugin.ModItemManager.GetPreSpawnItem("TELESCOPE"), false, ItemSanityType.Standard));
+            Plugin.ModItemManager.AddItem(new UniqueItem("TELESCOPE", GameObjectExtensions.FindGameObject("TELESCOPE"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("RUNNING SHOES", Plugin.ModItemManager.GetPreSpawnItem("RUNNING SHOES"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("SALT SHAKER", Plugin.ModItemManager.GetPreSpawnItem("SALT SHAKER"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("SLEEPING MASK", Plugin.ModItemManager.GetPreSpawnItem("SLEEPING MASK"), false, ItemSanityType.Standard));
@@ -1172,13 +1201,13 @@ namespace BluePrinceArchipelago.Items
             Plugin.ModItemManager.AddItem(new UniqueItem("CROWN", Plugin.ModItemManager.GetPreSpawnItem("CROWN"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("PAPER CROWN", Plugin.ModItemManager.GetPreSpawnItem("PAPER CROWN"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("GEAR WRENCH", Plugin.ModItemManager.GetPreSpawnItem("GEAR WRENCH"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("COMPASS", Plugin.ModItemManager.GetPreSpawnItem("COMPASS"), false, ItemSanityType.Standard));
+            Plugin.ModItemManager.AddItem(new UniqueItem("COMPASS", GameObjectExtensions.FindGameObject("COMPASS"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("HALL PASS", GameObjectExtensions.FindGameObject("HALL PASS"), false, ItemSanityType.Standard));
 
             Plugin.ModItemManager.AddItem(new UniqueItem("POWERED ELECTROMAGNET", GameObjectExtensions.FindGameObject("ELECTROMAGNET"), false, ItemSanityType.Workshop));
             Plugin.ModItemManager.AddItem(new UniqueItem("LUCKY PURSE", GameObjectExtensions.FindGameObject("LUCKY PURSE"), false, ItemSanityType.Workshop));
             Plugin.ModItemManager.AddItem(new UniqueItem("PICK SOUND AMPLIFIER", GameObjectExtensions.FindGameObject("PICK SOUND AMPLIFIER"), false, ItemSanityType.Workshop));
-            Plugin.ModItemManager.AddItem(new UniqueItem("TEMP DELETE AFTER TEST IS COMPLETE/Cheat Spawns/BURNING GLASS", GameObjectExtensions.FindGameObject("BURNING GLASS"), false, ItemSanityType.Workshop));
+            Plugin.ModItemManager.AddItem(new UniqueItem("BURNING GLASS", GameObject.Find("TEMP DELETE AFTER TEST IS COMPLETE/Cheat Spawns/BURNING GLASS"), false, ItemSanityType.Workshop));
             Plugin.ModItemManager.AddItem(new UniqueItem("DETECTOR SHOVEL", GameObjectExtensions.FindGameObject("DETECTOR SHOVEL"), false, ItemSanityType.Workshop));
             Plugin.ModItemManager.AddItem(new UniqueItem("DOWSING ROD", GameObjectExtensions.FindGameObject("DOWSING ROD"), false, ItemSanityType.Workshop));
             Plugin.ModItemManager.AddItem(new UniqueItem("JACK HAMMER", GameObject.Find("TEMP DELETE AFTER TEST IS COMPLETE/Cheat Spawns/JACK HAMMER"), false, ItemSanityType.Workshop));

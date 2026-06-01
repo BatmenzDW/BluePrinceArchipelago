@@ -132,6 +132,7 @@ namespace BluePrinceArchipelago.Utils
         }
 
         public static void UpdateItemsByDay(ItemInfo item) {
+            TodaysItems.Add(item);
             ArchipelagoClient.ServerData.ItemsByDay[CurrentDayNum] = TodaysItems;
             UpdateItemsByDay(ArchipelagoClient.ServerData.ItemsByDay);
         }
@@ -301,64 +302,64 @@ namespace BluePrinceArchipelago.Utils
                 }
             }
         }
-        private static void InitializeItemQueue() 
-        {
-            if (File.Exists(ItemQueuePath))
-            {
-                string jsonData = "";
-                using (var reader = new StreamReader(ItemQueuePath))
-                {
-                    jsonData = reader.ReadToEnd();
-                }
-                if (jsonData.Trim().Length > 0)
-                {
-                    try
-                    {
-                        ModInstance.QueueManager.SetItemQueue(JsonConvert.DeserializeObject<List<ItemInfo>>(jsonData));
-                    }
-                    catch (Exception ex)
-                    {
-                        Logging.LogWarning($"Error loading Item Queue: \n{ex.Message}");
-                    }
-                }
-            }
-            else {
-                using (var writer = new StreamWriter(ItemQueuePath, false))
-                {
-                    writer.Write(JsonConvert.SerializeObject(new List<ItemInfo>()));
-                    writer.Flush();
-                }
-            }
-        }
-        private static void InitializeLocationQueue() {
-            if (File.Exists(LocationQueuePath))
-            {
-                string jsonData = "";
-                using (var reader = new StreamReader(LocationQueuePath))
-                {
-                    jsonData = reader.ReadToEnd();
-                }
-                if (jsonData.Trim().Length > 0)
-                {
-                    try
-                    {
-                        ModInstance.QueueManager.SetLocationQueue(JsonConvert.DeserializeObject<List<string>>(jsonData));
-                    }
-                    catch (Exception ex)
-                    {
-                        Logging.LogWarning($"Error loading Location Queue: \n{ex.Message}");
-                    }
-                }
-            }
-            else
-            {
-                using (var writer = new StreamWriter(LocationQueuePath, false))
-                {
-                    writer.Write(JsonConvert.SerializeObject(new List<String>()));
-                    writer.Flush();
-                }
-            }
-        }
+        //private static void InitializeItemQueue() 
+        //{
+        //    if (File.Exists(ItemQueuePath))
+        //    {
+        //        string jsonData = "";
+        //        using (var reader = new StreamReader(ItemQueuePath))
+        //        {
+        //            jsonData = reader.ReadToEnd();
+        //        }
+        //        if (jsonData.Trim().Length > 0)
+        //        {
+        //            try
+        //            {
+        //                ModInstance.QueueManager.SetItemQueue(JsonConvert.DeserializeObject<List<ItemInfo>>(jsonData));
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                Logging.LogWarning($"Error loading Item Queue: \n{ex.Message}");
+        //            }
+        //        }
+        //    }
+        //    else {
+        //        using (var writer = new StreamWriter(ItemQueuePath, false))
+        //        {
+        //            writer.Write(JsonConvert.SerializeObject(new List<ItemInfo>()));
+        //            writer.Flush();
+        //        }
+        //    }
+        //}
+        //private static void InitializeLocationQueue() {
+        //    if (File.Exists(LocationQueuePath))
+        //    {
+        //        string jsonData = "";
+        //        using (var reader = new StreamReader(LocationQueuePath))
+        //        {
+        //            jsonData = reader.ReadToEnd();
+        //        }
+        //        if (jsonData.Trim().Length > 0)
+        //        {
+        //            try
+        //            {
+        //                ModInstance.QueueManager.SetLocationQueue(JsonConvert.DeserializeObject<List<string>>(jsonData));
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                Logging.LogWarning($"Error loading Location Queue: \n{ex.Message}");
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        using (var writer = new StreamWriter(LocationQueuePath, false))
+        //        {
+        //            writer.Write(JsonConvert.SerializeObject(new List<String>()));
+        //            writer.Flush();
+        //        }
+        //    }
+        //}
 
         private static void InitializeItemsByDay() {
             if (File.Exists(ItemsByDayPath))
@@ -392,36 +393,36 @@ namespace BluePrinceArchipelago.Utils
             }
         }
 
-        private static void InitializeServerOptions()
-        {
-            if (File.Exists(ServerOptionsPath))
-            {
-                string jsonData = "";
-                using (var reader = new StreamReader(ServerOptionsPath))
-                {
-                    jsonData = reader.ReadToEnd();
-                }
-                if (jsonData.Trim().Length > 0)
-                {
-                    try
-                    {
-                        ArchipelagoClient.ServerData.Options = JsonConvert.DeserializeObject<SlotData>(jsonData);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logging.Log($"Error loading Received items: \n{ex.Message}");
-                    }
-                }
-            }
-            else
-            {
-                using (var writer = new StreamWriter(ServerOptionsPath, false))
-                {
-                    writer.Write(JsonConvert.SerializeObject(new SlotData()));
-                    writer.Flush();
-                }
-            }
-        }
+        //private static void InitializeServerOptions()
+        //{
+        //    if (File.Exists(ServerOptionsPath))
+        //    {
+        //        string jsonData = "";
+        //        using (var reader = new StreamReader(ServerOptionsPath))
+        //        {
+        //            jsonData = reader.ReadToEnd();
+        //        }
+        //        if (jsonData.Trim().Length > 0)
+        //        {
+        //            try
+        //            {
+        //                ArchipelagoClient.ServerData.Options = JsonConvert.DeserializeObject<SlotData>(jsonData);
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                Logging.Log($"Error loading Received items: \n{ex.Message}");
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        using (var writer = new StreamWriter(ServerOptionsPath, false))
+        //        {
+        //            writer.Write(JsonConvert.SerializeObject(new SlotData()));
+        //            writer.Flush();
+        //        }
+        //    }
+        //}
 
         public static void InitializeTrunkCounts()
         {
@@ -475,31 +476,30 @@ namespace BluePrinceArchipelago.Utils
                 writer.Write(JsonConvert.SerializeObject(defaultData));
                 writer.Flush();
             }
-            // Server Options
-            using (var writer = new StreamWriter(ServerOptionsPath, false))
-            {
-                writer.Write(JsonConvert.SerializeObject(new SlotData()));
-                writer.Flush();
-            }
+            //// Server Options
+            //using (var writer = new StreamWriter(ServerOptionsPath, false))
+            //{
+            //    writer.Write(JsonConvert.SerializeObject(new SlotData()));
+            //    writer.Flush();
+            //}
             // Trunk Counts
             using (var writer = new StreamWriter(TrunkCountsPath, false))
             {
                 writer.Write(JsonConvert.SerializeObject(new Dictionary<string, int>()));
                 writer.Flush();
             }
-            // Item Queue
-            using (var writer = new StreamWriter(ItemQueuePath, false))
-            {
-                writer.Write(JsonConvert.SerializeObject(new List<ItemInfo>()));
-                writer.Flush();
-            }
-            // Location Queue
-            using (var writer = new StreamWriter(LocationQueuePath, false))
-            {
-                writer.Write(JsonConvert.SerializeObject(new List<String>()));
-                writer.Flush();
-            }
-            // 
+            //// Item Queue
+            //using (var writer = new StreamWriter(ItemQueuePath, false))
+            //{
+            //    writer.Write(JsonConvert.SerializeObject(new List<ItemInfo>()));
+            //    writer.Flush();
+            //}
+            //// Location Queue
+            //using (var writer = new StreamWriter(LocationQueuePath, false))
+            //{
+            //    writer.Write(JsonConvert.SerializeObject(new List<String>()));
+            //    writer.Flush();
+            //}
             using (var writer = new StreamWriter(ItemsByDayPath, false))
             {
                 Dictionary<int, List<ItemInfo>> tempDict = new();

@@ -3,6 +3,7 @@ using BluePrinceArchipelago.Utils;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using Il2CppSystem.Runtime.Remoting.Messaging;
 using System;
 using UnityEngine;
 
@@ -81,6 +82,9 @@ namespace BluePrinceArchipelago.Patches
 
     }
     public class EventPatches {
+
+        public static int depth = 0;
+
         [HarmonyPatch(typeof(SendEvent), "OnEnter")]
         [HarmonyPrefix]
         static void PreFix(SendEvent __instance)
@@ -117,14 +121,6 @@ namespace BluePrinceArchipelago.Patches
             ModInstance.OnRecordEvent(id);
         }
 
-
-        // [HarmonyPatch(typeof(StatsLogger), nameof(StatsLogger.EndDayGUI))]
-        // [HarmonyPostfix]
-        // static void EndDayGUIPostfix()
-        // {
-        //     Logging.Log("StatsLogger EndDayGUI Postfix called.", "DeathLink");
-        //     ModInstance.OnDayEnd();
-        // }
         [HarmonyPatch(typeof(StatsLogger), nameof(StatsLogger.EndDay))]
         [HarmonyPostfix]
         static void EndDayPostfix()
@@ -133,20 +129,26 @@ namespace BluePrinceArchipelago.Patches
             ModInstance.OnDayEnd();
         }
 
-        [HarmonyPatch(typeof(GameObject), "SetActive")]
-        [HarmonyPostfix]
-        static void Postfix(GameObject __instance, bool value)
-        {
-            string name = __instance.name;
-            if (name == null) {
-                if (name.Contains("LOADING") && value) { 
-                    GameObject currSave = GameObject.Find(name);
-                    if (currSave != null) {
-                        int saveSlot = currSave.GetComponent<PlayMakerFSM>()?.GetIntVariable("current save")?.Value ?? 5;
-                        ModInstance.SaveSlot = saveSlot; //Set the saveSlot to the correct slot.
-                    }
+        [HarmonyPatch(typeof(RoomDraftHelper), nameof(RoomDraftHelper.PerformValidation))]
+        [HarmonyPrefix]
+        static bool PerformValidationPreFix(RoomDraftHelper __instance) {
+            // Run the PerformValidation function once, but run it in a try catch so it's error doesn't break stuff too much.
+            if (EventPatches.depth == 0) {
+                EventPatches.depth++;
+                try
+                {
+                    __instance.PerformValidation();
+                    EventPatches.depth = 0;
                 }
+                catch
+                {
+                    // Couldn't My Logging Methods so using the Bepinex defualt Logging.
+                    Plugin.Instance.Log.LogWarning($"[DraftCode] DraftHelper Validation ran into an error and could not run to completion.");
+                    EventPatches.depth = 0;
+                }
+                return false;
             }
+            return true;
         }
     }
 }

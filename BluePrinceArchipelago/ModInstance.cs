@@ -10,6 +10,7 @@ using BluePrinceArchipelago.Utils;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using JetBrains.Annotations;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -35,7 +36,6 @@ namespace BluePrinceArchipelago
         public static GameObject StatsLogger = new();
         public static GameObject PickupSpawnPool = new();
         public static GameObject Prefabs = new();
-
         // FSMs
         public static PlayMakerFSM GemManager = new();
         public static PlayMakerFSM StepManager = new();
@@ -92,7 +92,6 @@ namespace BluePrinceArchipelago
             Harmony.CreateAndPatchAll(typeof(RoomPatches), "RoomPatches");
             Harmony.CreateAndPatchAll(typeof(ItemPatches), "ItemPatches");
             FSMEventHandler.RegisterEvents();
-            
             Prefabs = GameObject.Instantiate(new GameObject("Prefabs"), Plugin.ModObject.transform);
             Prefabs.name = "prefabs";
         }
@@ -105,6 +104,7 @@ namespace BluePrinceArchipelago
                 if (asset.Contains("prefab"))
                 {
                     var loadAsset = bundle.LoadAssetAsync<GameObject>(asset);
+
                     yield return loadAsset.asset;
 
                     // Make the prefab a child of the modobject so it is preloaded and not deloaded on scene transitions.
@@ -135,6 +135,7 @@ namespace BluePrinceArchipelago
             if (scene.name.Equals("Mount Holly Estate"))
             {
                 SceneLoaded = true;
+                PermanentUnlocks.Unlocks.HasPrepatched = false;
                 LoadCount++;
                 if (LoadCount > 1)
                 {
@@ -154,8 +155,8 @@ namespace BluePrinceArchipelago
                 StarManager = GameObject.Find("__SYSTEM/HUD/Stars")?.GetFsm("FSM");
                 YouFoundText = GameObject.Find("/UI OVERLAY CAM/You Found Text").transform;
                 LuckManager = GameObject.Find("__SYSTEM/Luck Calculator")?.GetFsm("Luck Calculator");
-                GlobalPersistentManager = GameObjectExtensions.FindGameObject("Global Persitent Manager")?.GetComponent<PlayMakerFSM>();
                 GlobalManager = GameObject.Find("Global Manager")?.GetComponent<PlayMakerFSM>();
+                GlobalPersistentManager = GameObject.Find("Global Persitent Manager")?.GetComponent<PlayMakerFSM>();
                 TheGrid = GameObject.Find("__SYSTEM/THE GRID")?.GetComponent<PlayMakerFSM>();
                 MasterPicker = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE")?.GetComponent<PlayMakerFSM>();
                 CommissaryMenu = GameObject.Find("UI OVERLAY CAM/Commissary Menu/")?.GetComponent<PlayMakerFSM>();
@@ -168,7 +169,6 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.Reset(); // Clear stale room state from any previous scene load
                 InitializeRooms();
                 Plugin.ModRoomManager.SetAllVanilla();
-                RegisterItems.Register();
                 // If already connected to Archipelago when loading in, sync after a delay
                 // to ensure the game has finished initializing all draft pools
                 if (scene.name != PreviousSceneName)
@@ -303,23 +303,14 @@ namespace BluePrinceArchipelago
             room?.Handler?.OnAfterRoomDrafted();
         }
         public static void OnOtherSpawn(GameObject obj, string poolName, GameObject transformObj) {
-            Logging.Log($"Pool Name: {poolName}");
-            if (obj != null)
-            {
-                Logging.Log($"Item: {obj.name}");
-            }
-            if (transformObj != null) {
-                Logging.Log($"Transform: {transformObj.name} - {transformObj.transform.position.ToString()}");
-            }
+            
         }
         // Handles Day start events.
         public static void OnDayStart(int dayNum) {
             IsInRun = true;
             // Reload the inventories on day start (in case a scene transition happened).
             ModItemManager.LoadInventories();
-
-            PermanentUnlocks.Unlocks.AppleOrchard.PreventDefault();
-            PermanentUnlocks.Unlocks.WestGatePath.PreventDefault();
+            RegisterItems.Register();
 
             // Reset room in-house counts and reload arrays — game resets pools at the start of each day
             Plugin.ModRoomManager.ResetRoomInHouseCounts();
@@ -339,8 +330,15 @@ namespace BluePrinceArchipelago
             {
                 if (FirstLoad)
                 {
+                    // Rebuild the state if it couldn't be done on the Reconnect from crash.
                     State.FirstLoad();
+                    if (!ArchipelagoClient.StateRebuilt)
+                    {
+                        Plugin.ArchipelagoClient.RebuildState();
+                    }
                 }
+               
+               
                 // Release items that were queued while offline/before the run started
                 QueueManager.ReleaseAllQueuedItems();
                 QueueManager.ReleaseAllQueuedLocations();
@@ -349,9 +347,13 @@ namespace BluePrinceArchipelago
                 Plugin.ModItemManager.StartOfDay(dayNum);
                 Plugin.UniqueItemManager.StartOfDay();
                 Plugin.ModItemManager.ReplaceItemsWithAP();
+                PermanentUnlocks.Unlocks.AttemptPrePatch(); //Apply patches to the FSMs
+                PermanentUnlocks.Unlocks.AppleOrchard.PreventDefault();
+                PermanentUnlocks.Unlocks.WestGatePath.PreventDefault();
 
                 Plugin.ArchipelagoClient.DeathLinkHandler.KillPlayer(); // If we have any queued death links, kill the player at the start of the day.
             }
+            
         }
 
         /// <summary>
@@ -936,7 +938,8 @@ namespace BluePrinceArchipelago
                 Plugin.ModRoomManager.AddRoom("TRADING POST", ["STANDALONE ARRAY", "STANDALONE ARRAY FULL"], true);
                 Plugin.ModRoomManager.AddRoom("TREASURE TROVE", ["FRONTBACK G - RARE","CORNER - RARE G","EDGECREEP - RARE G","EDGEPIERCE - RARE G","NORTH PIERCE G","CENTER - Tier 3 G"], false);
                 Plugin.ModRoomManager.AddRoom("TROPHY ROOM", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CORNER - RARE G", "CENTER - Tier 3 G", "EDGECREEP - RARE G", "EDGEPIERCE - RARE G", "Center Rare G"], true);
-                Plugin.ModRoomManager.AddRoom("TUNNEL", ["CENTER - Tier 2", "EDGECREEP EAST", "EDGECREEP WEST"], false);
+                Plugin.ModRoomManager.AddRoom("TUNNEL", ["CENTER - Tier 2", "EDGECREEP EAST", "EDGECREEP WEST"], false)
+                    .AddDependency(verticalDraftCheck);
                 Plugin.ModRoomManager.AddRoom("UTILITY CLOSET", ["FRONT - Tier 1", "FRONTBACK - RARE", "CORNER - Tier 1", "CENTER - Tier 2", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], true);
                 Plugin.ModRoomManager.AddRoom("VAULT", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CORNER - RARE G", "CENTER - Tier 2 G", "EDGECREEP - RARE G", "EDGEPIERCE - RARE G", "Center Rare G"], true);
                 Plugin.ModRoomManager.AddRoom("VERANDA", ["EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G"], true);

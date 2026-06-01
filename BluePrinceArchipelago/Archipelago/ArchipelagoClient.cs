@@ -9,12 +9,16 @@ using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Models;
 using BluePrinceArchipelago.PermanentUnlocks;
 using BluePrinceArchipelago.Utils;
+using CirrusPlay.PortalLibrary;
+using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net.Security;
 using System.Threading.Tasks;
 using static BluePrinceArchipelago.Archipelago.ItemQueue;
+using static HutongGames.PlayMaker.Actions.GetTimeInfo;
 
 namespace BluePrinceArchipelago.Archipelago;
 
@@ -27,6 +31,7 @@ public class ArchipelagoClient
     private bool _AttemptingConnection;
     public static bool Reconnected = false;
     public static bool Disconnected = false; // Indicates whether the client was fully disconnected at any point during the session (important for crash handling).
+    public static bool StateRebuilt = false;
 
     public static ArchipelagoData ServerData = new();
     public DeathLinkHandler DeathLinkHandler;
@@ -54,10 +59,10 @@ public class ArchipelagoClient
         {
             Logging.Log($"\t{locationid}");
         }
-        Logging.Log("Location Dict:");
+        Logging.Log("Location Dict:", "APData");
         foreach (var entry in ServerData.LocationDict)
         {
-            Logging.Log($"\t{entry.Key}:{entry.Value}");
+            Logging.Log($"\t{entry.Key}:{entry.Value}", "APData");
         }
         Logging.Log("Item Dict:");
         foreach (var entry in ServerData.ItemDict)
@@ -146,7 +151,7 @@ public class ArchipelagoClient
             else
             {
                 //TODO once proper Archipelago login has been setup correct to actually disconnect instead. For now this can't be validated and so this will be handled this way for testing purposes.
-                Logging.LogWarning($"SlotData doesn't match expected slot, assuming a new game was started without previous goal finishing. If you have Connected to the wrong slot, please disconnect now.");
+                ArchipelagoConsole.LogMessage($"SlotData doesn't match expected slot, assuming a new game was started without previous goal finishing. If you have Connected to the wrong slot, please disconnect now.");
                 State.Reset();
                 State.Initialize();
                 HandleConnectResult(loginResult);
@@ -170,7 +175,6 @@ public class ArchipelagoClient
         if (result.Successful)
         {
             var success = (LoginSuccessful)result;
-            Authenticated = true;
             // Initialize DeathLinkHandler.
             DeathLinkHandler = new(session.CreateDeathLinkService(), ServerData.SlotName);
 
@@ -181,6 +185,7 @@ public class ArchipelagoClient
                 {
                     // Regular Recconnect;
                     Reconnect();
+                    ServerData.Options = session.DataStorage.GetSlotData<SlotData>();
                 }
                 else {
                     //Crash Disconnect;
@@ -205,6 +210,7 @@ public class ArchipelagoClient
                 CreateLocationDicts(session.Locations.AllLocations.ToArray());
                 ArchipelagoConsole.LogMessage($"Successfully connected to {ServerData.Uri} as {ServerData.SlotName}!");
             }
+            Authenticated = true;
             // Receives any Queued Items
             DequeueItems(Reconnected);
             // Debug: Displaying the data from the server.
@@ -218,11 +224,8 @@ public class ArchipelagoClient
         else
         {
             string outText;
-            var failure = (LoginFailure)result;
-            outText = $"Failed to connect to {ServerData.Uri} as {ServerData.SlotName}.";
-            outText += "\n" + failure.Errors.Aggregate(outText, (current, error) => current + $"\n    {error}");
 
-            Logging.LogError(outText);
+            ArchipelagoConsole.LogMessage($"Failed to connect to {ServerData.Uri} as {ServerData.SlotName}.");
 
             Authenticated = false;
             Disconnect();
@@ -232,21 +235,8 @@ public class ArchipelagoClient
 
     // Attempts to release any Queued items.
     private void DequeueItems(bool isReconnect = false) {
-        // Handle Queue as normal if reconnect.
-        if (isReconnect)
-        {
-            foreach (ItemInfo item in session.Items.AllItemsReceived)
-            {
-                Logging.Log($"{item.ItemName}", "ItemQueue");
-                if (!ModInstance.QueueManager.ReceiveItem(item))
-                {
-                    ModInstance.QueueManager.AddItemToQueue(item);
-                }
-                session.Items.DequeueItem();
-            }
-        }
         // Handle intial connect to AP.
-        else
+        if (!Reconnected)
         {
             foreach (ItemInfo item in session.Items.AllItemsReceived)
             {
@@ -296,15 +286,122 @@ public class ArchipelagoClient
 
     // Handles everything that should be handled on reconnect.
     private void Reconnect() {
+        ArchipelagoConsole.LogMessage("Attemping to reconnect...");
         Reconnected = true;
-        CreateLocationDicts(session.Locations.AllLocations.ToArray()); //TODO handle this using state instead so it doesn't need to be rebuilt on every reconnect
+        ArchipelagoConsole.LogMessage("Rebuilding Archipelago State...");
+        RebuildCheckedLocations();
     }
     private void CrashReconnect() {
+        ArchipelagoConsole.LogMessage("Attemping to reconnect after a crash...");
         Reconnected = true;
-        RebuildCheckedLocations();
+        if (ModInstance.IsInRun) {
+            ArchipelagoConsole.LogMessage("Rebuilding Archipelago State...");
+            RebuildState();
+        }
+        ArchipelagoConsole.LogMessage("Gathering Seed Data...");
         CreateLocationDicts(session.Locations.AllLocations.ToArray());
     }
+    public void RebuildState() {
+        long[] locationids = session.Locations.AllLocationsChecked.ToArray();
+        for (int i = 0; i < locationids.Length; i++) {
+            long locationid = locationids[i];
+            try
+            {
+                string location = ServerData.LocationDict[locationid];
+                if (location.EndsWith("First Pickup"))
+                {
+                    UniqueItem item = Plugin.ModItemManager.GetUniqueItem(location.Replace(" First Pickup", ""));
+                    item.HasBeenFound = true;
+                }
+                else if (location.EndsWith("First Entering"))
+                {
+                    ModRoom room = Plugin.ModRoomManager.GetRoomByName(location.Replace(" First Entering", ""));
+                    room.IsUnlocked = true;
+                }
+                // Try Upgrade Disks. If that fails, try Permanent Unlocks.
+                else if (!ModItemManager.UpgradeDisks.UnlockLocationIfExists(location))
+                {
+                    PermanentUnlock permUnlock = Unlocks.GetPermanentUnlockByLocation(location);
+                    if (permUnlock != null)
+                    {
+                        permUnlock.Solved = true;
+                    }
+                }
+            }
+            catch
+            {
+                Logging.LogWarning($"Unable to find location name for location with id {locationids[i]}");
+            }
+           
+            
+        }
+        // Handle all the items that are not preserved by the game.
+        foreach (string item in ServerData.ReceivedItems) {
+            PermanentUnlock unlock = Unlocks.GetPermanentUnlock(item);
+            if (unlock != null)
+            {
+                unlock.Unlocked = true;
+            }
+            // Checks if the item recieved is a Room (includes special mappings like classroom variants)
+            else if (Plugin.ModRoomManager.IsRoomItem(item))
+            {
+                bool isMappedRoom = false;
+                string mappedName = null;
 
+                ModRoom room = Plugin.ModRoomManager.GetRoomByName(item);
+                // If not found with exact name, try the mapped name
+                if (room == null)
+                {
+                    mappedName = Plugin.ModRoomManager.GetMappedRoomName(item);
+                    if (mappedName != null)
+                    {
+                        room = Plugin.ModRoomManager.GetRoomByName(mappedName);
+                        isMappedRoom = true;
+                    }
+                }
+               
+                Plugin.ModRoomManager.GetRoomByName(item).IsUnlocked = true;
+                string roomNameUpper = item.ToUpper().Trim();
+                if (roomNameUpper == "CLASSROOM")
+                {
+                    room.RoomPoolCount++;
+                }
+                // For mapped rooms, always increment pool count
+                else if (isMappedRoom)
+                {
+                    room.RoomPoolCount++;
+                }
+                // For other rooms, only increment if pool is already full
+                else
+                {
+                    if (room.RoomsLeftInPool == 0)
+                    {
+                        room.RoomPoolCount++;
+                    }
+                }
+            }
+            else if (item.ToUpper().Contains("UPGRADE DISK"))
+            {
+                // Trim the name of the item to remove the upgrade disk part.
+                ModItemManager.UpgradeDisks.AddItemToInventory(item.ToUpper().Replace("UPGRADE DISK ", ""));
+            }
+            else
+            {
+                PermanentItem permanentItem = Plugin.ModItemManager.GetPermanentItem(item);
+                if (permanentItem != null)
+                {
+                    permanentItem.IsUnlocked = true;
+                    permanentItem.unlockedCount += 1;
+                }
+                UniqueItem uniqueItem = Plugin.ModItemManager.GetUniqueItem(item);
+                if (uniqueItem != null) { 
+                    uniqueItem.IsUnlocked = true;
+                }
+            }
+        }
+        
+        StateRebuilt = true;
+    }
     // Attempts to rebuild the checked location list based on local and server locations.
     private void RebuildCheckedLocations()
     {
@@ -354,15 +451,16 @@ public class ArchipelagoClient
     // Populates the dictionaries used for looking up location information.
     private void CreateLocationDicts(long[] locationIds, bool hint = false)
     {
-        for (int i = 0; i < locationIds.Length; i++)
+        long[] serverLocations = [.. locationIds];
+        for (int i = 0; i < serverLocations.Length; i++)
         {
-            long location = locationIds[i];
+            long location = serverLocations[i];
             string locationName = session.Locations.GetLocationNameFromId(location);
             ServerData.LocationDict[location] = locationName; 
         }
         //Asynchronously gather the data for all items stored in all the active locations, then wait for a response.
         Task<Dictionary<long, ScoutedItemInfo>> scoutTask = session.Locations
-                .ScoutLocationsAsync(hint, locationIds);
+                .ScoutLocationsAsync(hint, serverLocations);
         scoutTask.Wait();
         Dictionary<long, ScoutedItemInfo> scoutResult = scoutTask.Result;
         foreach (KeyValuePair<long, ScoutedItemInfo> scout in scoutResult)
@@ -370,7 +468,7 @@ public class ArchipelagoClient
             long locationId = scout.Key;
             long itemId = scout.Value.ItemId;
             string itemName = scout.Value.ItemName ?? $"?Item {itemId}";
-            ServerData.ItemDict[itemId] = itemName; //Might need to change this since ids
+            ServerData.ItemDict[itemId] = itemName;
             ServerData.LocationItemMap[locationId] = scout.Value;
         }
     }
@@ -406,7 +504,7 @@ public class ArchipelagoClient
         if (helper.Index <= ServerData.Index) return;
 
         ServerData.Index++;
-
+        Logging.LogWarning($"Attempting to recieve item: {receivedItem.ItemName}");
         //Attempt to receive item, if it fails, add to queue to be added later.
         if (!ModInstance.QueueManager.ReceiveItem(receivedItem))
         {
@@ -565,13 +663,15 @@ public class ArchipelagoQueueManager {
     public bool ReceiveItem(ItemInfo item, bool ignoreState = true)
     {
         Logging.Log($"Attempting to receive Item: {item.ItemName}");
-        if (ModInstance.SceneLoaded && ModInstance.HasInitializedRooms)
+        if (ModInstance.SceneLoaded && ModInstance.HasInitializedRooms && ArchipelagoClient.Authenticated)
         {
             if (ModInstance.IsInRun)
             {
                 PermanentUnlock unlock = PermanentUnlocks.Unlocks.GetPermanentUnlock(item.ItemName);
                 if (unlock != null)
                 {
+                    State.UpdateItemsByDay(item);
+                    State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
                     unlock.UnlockItem();
                 }
             }
@@ -598,6 +698,8 @@ public class ArchipelagoQueueManager {
                 {
                     // Trim the name of the item to remove the upgrade disk part.
                     ModItemManager.UpgradeDisks.AddItemToInventory(item.ItemName.ToUpper().Replace("UPGRADE DISK ", ""));
+                    State.UpdateItemsByDay(item);
+                    State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
                     return true;
                 }
                 return false;
@@ -626,6 +728,17 @@ public class ArchipelagoQueueManager {
         return false;
     }
     public bool ReceiveServerItem(ItemInfo item, bool ignoreState = false) {
+        if (ModInstance.IsInRun)
+        {
+            PermanentUnlock unlock = PermanentUnlocks.Unlocks.GetPermanentUnlock(item.ItemName);
+            if (unlock != null)
+            {
+                State.UpdateItemsByDay(item);
+                State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
+                unlock.UnlockItem();
+            }
+        }
+
         if (ModInstance.SceneLoaded && ModInstance.HasInitializedRooms)
         {
             // Checks if the item recieved is a Room (includes special mappings like classroom variants)
@@ -653,7 +766,7 @@ public class ArchipelagoQueueManager {
                     if (!ignoreState)
                     {
                         State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
-                        State.TodaysItems.Add(item);
+                        State.UpdateItemsByDay(item);
                     }
                     return true;
                 }
@@ -741,13 +854,10 @@ public class ArchipelagoQueueManager {
             }
         }
         // Update the pools immediately if we're in a run
-        if (ModInstance.IsInRun && ModInstance.HasInitializedRooms)
-        {
-            Plugin.ModRoomManager.UpdateRoomPools();
-        }
 
         ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
         State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
+        State.UpdateItemsByDay(item);
         Logging.Log($"Room '{room.Name}' unlocked and added to pool.");
     }
     // Handles receiving a trap. (doesn't check if it's safe to do so).
@@ -756,7 +866,7 @@ public class ArchipelagoQueueManager {
         ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
         if (!ignoreState)
         {
-            State.TodaysItems.Add(item);
+            State.UpdateItemsByDay(item);
             State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
         }
         
@@ -768,7 +878,7 @@ public class ArchipelagoQueueManager {
         ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
         if (!ignoreState)
         {
-            State.TodaysItems.Add(item);
+            State.UpdateItemsByDay(item);
             State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
         }
     }

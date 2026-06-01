@@ -454,6 +454,7 @@ namespace BluePrinceArchipelago.Core
                 {
                         ModInstance.ModEventHandler.OnFirstDrafted(this);
                         _HasBeenDrafted = value;
+
                 }
                 // No changes to value once the room has been drafted once, or if someone is not trying to set this to true for some stupid reason.
             }     

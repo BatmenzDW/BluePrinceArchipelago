@@ -75,6 +75,8 @@ namespace BluePrinceArchipelago.Items
 
         public override void AddItemToInventory()
         {
+            Logging.LogWarning(Name);
+            Logging.LogWarning(ApplySanity());
             if (!ApplySanity())
             {
                 return;
@@ -116,22 +118,19 @@ namespace BluePrinceArchipelago.Items
                 PlayMakerArrayListProxy InventoryIcons = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/")?.GetArrayListProxy("Inventory");
                 if (icon != null && InventoryIcons != null)
                 {
-                    if (IsPrespawn)
-                    {
-                        ModItemManager.PreSpawn.Remove(GameObj, "GameObject");
-                    }
                     // Re-enable the logic that adds the item to inventory. (will not cause issues if already enabled).
                     FsmState state = Plugin.UniqueItemManager.GetPickupState(Name);
                     if (state != null)
                     {
                         state.EnableActionsOfType<ArrayListAdd>();
-                        if (RoomHandlers.Commissary.CommissaryStates.ContainsKey(Name))
+                        if (Commissary.CommissaryStates.ContainsKey(Name))
                         {
-                            Logging.LogWarning(Name, "Events");
                             //Re-enable commissary purchases of the item.
-                            RoomHandlers.Commissary.CanStock.Add(Name);
+                            Commissary.CanStock.Add(Name);
                         }
+                        Logging.LogWarning("Attempting to add item to pickup list");
                         ModItemManager.PickedUp.Add(GameObj, "GameObject");
+                        Logging.LogWarning("Attempting to add item to inventory icons");
                         InventoryIcons.Add(icon, "GameObject");
                         ArchipelagoConsole.LogMessage($"Added {Name} to inventory.");
                     }
@@ -157,6 +156,7 @@ namespace BluePrinceArchipelago.Items
     {
         public List<UniqueItem> SpawnedItems = new List<UniqueItem>();
 
+        public bool ModelsReplaced = false;
         public void OnItemSpawn(GameObject obj, string poolName, GameObject transformObj, GameObject spawnedObj)
         {
             UniqueItem item = Plugin.ModItemManager.GetUniqueItem(obj.name);
@@ -231,6 +231,7 @@ namespace BluePrinceArchipelago.Items
         {
             //Reset the list of spawned items.
             SpawnedItems = new List<UniqueItem>();
+            ModelsReplaced = false;
         }
         public void StartOfDay()
         {
@@ -286,7 +287,7 @@ namespace BluePrinceArchipelago.Items
         {
 
             // Fixes a name difference for the vault keys and rabbit's foot and puts name into lower case.
-            name = name.ToLower().Replace("vault", "safety deposit").Replace("rabbit's", "rabbbit's");
+            name = name.ToLower().Replace("vault", "safety deposit").Replace("rabbit's", "rabbbit's").Replace(" kit", "");
             // Check each Global Transition in the Global Manager.
             foreach (FsmTransition transition in ModInstance.GlobalManager.FsmGlobalTransitions)
             {
