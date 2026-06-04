@@ -1,8 +1,11 @@
-﻿using BluePrinceArchipelago.Items;
+﻿using Archipelago.MultiClient.Net.Models;
+using BluePrinceArchipelago.Archipelago;
+using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using System.Collections.Generic;
+using System.Xml.Linq;
 
 namespace BluePrinceArchipelago.Events
 {
@@ -16,6 +19,13 @@ namespace BluePrinceArchipelago.Events
             { "Gemstone Caverns Unlock", new AppleOrchardUnlock() },
             { "Outer Draft Start", new OuterDraftStart() },
         };
+        public static RegisteredFSMEvent AddFSMEvent(string name, UniqueItem item) {
+            RegisteredFSMEvent Event  = new ItemPickup(name, item);
+            RegisteredEvents[name] = Event;
+
+            Event.OnRegister();
+            return Event;
+        }
 
         public static void RegisterEvents() {
             foreach (var REvent in RegisteredEvents){
@@ -169,6 +179,42 @@ namespace BluePrinceArchipelago.Events
         public override void OnTrigger()
         {
             ModInstance.OnDraftInitialize();
+        }
+    }
+    public class ItemPickup(string name, UniqueItem item) : RegisteredFSMEvent
+    {
+        public new string Name { get; set; } = name;
+
+        public UniqueItem item { get; set; } = item;
+
+        public override void OnRegister()
+        {
+            ModInstance.APEventFSM.AddState(Name);
+            ModInstance.APEventFSM.AddGlobalTransition(Name, Name);
+            // Creates a new SendEvent instance that can be called by other FSMs to communicate important events to the mod (albeit a little jankily).
+            Event = new SendEvent()
+            {
+                eventTarget = new FsmEventTarget()
+                {
+                    target = FsmEventTarget.EventTarget.GameObject,
+                    gameObject = new FsmOwnerDefault()
+                    {
+                        gameObject = Plugin.ModObject,
+                        ownerOption = OwnerDefaultOption.SpecifyGameObject
+                    },
+                    fsmName = "FSM",
+                    sendToChildren = false,
+                    excludeSelf = false
+                },
+                sendEvent = Plugin.ModObject.GetComponent<PlayMakerFSM>().GetGlobalTransition(Name).FsmEvent,
+                everyFrame = false,
+                delay = 0f
+            };
+        }
+
+        public override void OnTrigger()
+        {
+            item.HasBeenFound = true;
         }
     }
 }

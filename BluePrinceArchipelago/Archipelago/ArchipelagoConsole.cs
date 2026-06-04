@@ -338,7 +338,7 @@ public static class CommandManager
         _LocalCommands["sync"] = new SyncCommand("Sync"); // New sync command for Archipelago data
         _LocalCommands["debug"] = new DebugCommand("Debug"); // Debug command for investigating game systems
         _LocalCommands["received"] = new ReceivedCommand("Received"); // Show received Archipelago items
-
+        _LocalCommands["resetdata"] = new ResetData("ResetData");
         _LocalCommands["collect"] = new CollectCommand("Collect"); // Collect location from the Archipelago item pool, for testing purposes.
     }
     private static ParsedCommand ParseCommand(string command)
@@ -777,7 +777,7 @@ public class ItemCommand(string name) : Command(name)
 
                 ArchipelagoConsole.LogMessage($"Attemping to add item {itemName}");
 
-                GameObject item = Plugin.ModItemManager.GetPreSpawnItem(itemName);
+                GameObject item = Plugin.ModItemManager.GetInventoryItem(itemName);
                 
                 //Handle items that don't start in the prespawn pool.
                 if (item == null)

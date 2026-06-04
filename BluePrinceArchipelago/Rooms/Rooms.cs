@@ -147,14 +147,17 @@ namespace BluePrinceArchipelago.Rooms
         public void UpdateRoomsInHouse()
         {
             PlayMakerArrayListProxy rooms = ModInstance.RoomsInHouse?.GetComponent<PlayMakerArrayListProxy>();
-            if (rooms != null && rooms.arrayList.Count > 0)
+            if (rooms != null)
             {
-                foreach (GameObject room in rooms.arrayList)
+                if (rooms.arrayList.Count > 0)
                 {
-                    ModRoom modRoom = GetRoomByName(room.name);
-                    if (modRoom != null)
+                    foreach (GameObject room in rooms.arrayList)
                     {
-                        modRoom.RoomInHouseCount++;
+                        ModRoom modRoom = GetRoomByName(room.name);
+                        if (modRoom != null)
+                        {
+                            modRoom.RoomInHouseCount++;
+                        }
                     }
                 }
             }

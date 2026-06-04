@@ -3,14 +3,9 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Items;
-using BluePrinceArchipelago.Patches;
 using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
-using HarmonyLib;
-using HutongGames.PlayMaker;
 using Il2CppInterop.Runtime.Injection;
-using System.Reflection;
-using System.Xml.Linq;
 using UnityEngine;
 
 namespace BluePrinceArchipelago {

@@ -24,7 +24,7 @@ namespace BluePrinceArchipelago.Items
             {"Apple Orchard", AppleOrchard},
             {"Gemstone Caverns", GemstoneCaverns},
             {"West Gate Path", WestGatePath},
-            {"BlackBridgeGrotto", BlackBridgeGrotto},
+            {"Blackbridge Grotto", BlackBridgeGrotto},
             {"Satellite Dish", SatelliteDish}
         };
 

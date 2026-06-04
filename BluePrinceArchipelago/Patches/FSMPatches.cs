@@ -3,7 +3,6 @@ using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using System.Xml.Linq;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Patches
@@ -33,6 +32,7 @@ namespace BluePrinceArchipelago.Patches
             // Add Outer Draft Trigger.
             OuterDraftState.InsertAction(3, FSMEventHandler.RegisteredEvents["Outer Draft Start"].Event);
         }
+        // Patch this so functions can be called when the player is not frozen anymore.
 
         public static void UpgradeDiskOverride(PlayMakerFSM GlobalFSM) {
             // Disable the Global Manager FSM states to not give this item in inventory
@@ -187,17 +187,17 @@ namespace BluePrinceArchipelago.Patches
                     AbandonedMineState.InsertAction(4, addActions[1]);
 
                     // Remove the original Pickup actions
-                    state.RemoveActionsOfType<ArrayListAdd>();
+                    state.DisableActionsOfType<ArrayListAdd>();
+                    state.DisableActionsOfType<ActivateGameObject>();
                     // Fix the "Finished Transition"
                     state.ChangeTransition("FINISHED", "State 19"); //Fix transitions
-                    Logging.Log("Upgrade Disk Override applied.");
+                    Logging.Log("Upgrade Disk Override Applied.");
 
                     //Commissary Replacement Code
                     PlayMakerFSM CommissaryMenu = GameObject.Find("UI OVERLAY CAM").transform.Find("Commissary Menu")?.GetComponent<PlayMakerFSM>();
                     // Prevent the Default add to inventory behavior.
                     FsmState UpgradeDiskPurchaseState = CommissaryMenu.GetState("Upgrade Disk Purchase 2");
                     UpgradeDiskPurchaseState.DisableActionsOfType<ArrayListAdd>();
-                    UpgradeDiskPurchaseState.DisableActionsOfType<ActivateGameObject>();
                     // Attempt to create a SendEvent to send info the 
                     // There's a solid chance this just breaks.
                     UpgradeDiskPurchaseState.InsertAction(3, new SendEventByName()

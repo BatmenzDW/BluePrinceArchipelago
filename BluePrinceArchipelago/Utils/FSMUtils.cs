@@ -1,4 +1,5 @@
-﻿using BluePrinceArchipelago.Utils.Actions;
+﻿using BluePrinceArchipelago.Items;
+using BluePrinceArchipelago.Utils.Actions;
 using HutongGames.PlayMaker;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using System;
@@ -74,6 +75,19 @@ namespace BluePrinceArchipelago.Utils
                 arrayListProxy.Remove(arrayList[index], arrayList[index].GetType().ToString()); //Use the in built remove function to make sure nothing in the PlayMakerArrayListProxy Breaks.
             }
         }
+        public static bool SafeRemove(this PlayMakerArrayListProxy list, string objName) {
+            for (int i = 0; i < list.arrayList.Count; i++)
+            {
+                GameObject item = ModItemManager.PreSpawn?.arrayList[i]?.TryCast<GameObject>();
+                if (item.name != objName)
+                {
+                    list.RemoveAt(i);
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public static void AddToArray<T>(this PlayMakerArrayListProxy arrayListProxy, T item)
         {
         }

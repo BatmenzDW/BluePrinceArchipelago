@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using UnityEngine;
 using static BluePrinceArchipelago.Archipelago.ItemQueue;
 
 namespace BluePrinceArchipelago.Archipelago;
@@ -250,14 +251,14 @@ public class ArchipelagoClient
                     }
                     // Not a Room.
                     else
-                    {   
+                    {
                         session.Items.DequeueItem();
                         // Try to recieve item, on failure add it back to the queue.
                         if (!ModInstance.QueueManager.ReceiveServerItem(item))
                         {
                             ModInstance.QueueManager.AddItemToQueue(item);
                         }
-                        
+
                     }
                 }
                 else
@@ -270,6 +271,9 @@ public class ArchipelagoClient
                     }
                 }
             }
+        }
+        else {
+            ModInstance.QueueManager.SetItemQueue(new List<ItemInfo>());
         }
 
     }
@@ -321,50 +325,21 @@ public class ArchipelagoClient
             {
                 Logging.LogWarning($"Unable to find location name for location with id {locationids[i]}");
             }
-           
             
         }
-        //// Handle all the items that are not preserved by the game.
-        //foreach (string item in ServerData.ReceivedItems) {
-        //    PermanentUnlock unlock = Unlocks.GetPermanentUnlock(item);
-        //    if (unlock != null)
-        //    {
-        //        unlock.Unlocked = true;
-        //    }
-        //    // Checks if the item recieved is a Room (includes special mappings like classroom variants)
-        //    else if (Plugin.ModRoomManager.IsRoomItem(item))
-        //    {
-        //        // If rooms haven't been initialized, add it to the item queue
-        //        if (!ModInstance.HasInitializedRooms)
-        //        {
-        //            ModInstance.QueueManager.AddItemToQueue(item);
-        //            session.Items.DequeueItem();
-        //        }
-        //        else
-        //        {
-        //            ModInstance.QueueManager.ReceiveRoom(item);
-        //        }
-        //    }
-        //    else if (item.ToUpper().Contains("UPGRADE DISK"))
-        //    {
-        //        // Trim the name of the item to remove the upgrade disk part.
-        //        ModItemManager.UpgradeDisks.AddItemToInventory(item.ToUpper().Replace("UPGRADE DISK ", ""));
-        //    }
-        //    else
-        //    {
-        //        PermanentItem permanentItem = Plugin.ModItemManager.GetPermanentItem(item);
-        //        if (permanentItem != null)
-        //        {
-        //            permanentItem.IsUnlocked = true;
-        //            permanentItem.unlockedCount += 1;
-        //        }
-        //        UniqueItem uniqueItem = Plugin.ModItemManager.GetUniqueItem(item);
-        //        if (uniqueItem != null) { 
-        //            uniqueItem.IsUnlocked = true;
-        //        }
-        //    }
-        //}
-        
+        foreach (string item in ServerData.ReceivedItems)
+        {
+            // Checks if the item recieved is a Room (includes special mappings like classroom variants)
+            UniqueItem uniqueItem = Plugin.ModItemManager.GetUniqueItem(item);
+            if (uniqueItem != null)
+            {
+                uniqueItem.IsUnlocked = true;
+            }
+            if (item.ToUpper().Contains("UPGRADE DISK")) {
+                ModItemManager.UpgradeDisks.AddItemToInventory(item.ToUpper().Replace("UPGRADE DISK ", ""));
+            }
+        }
+        // Handle all the items that are not preserved by the game.
         StateRebuilt = true;
     }
     // Attempts to rebuild the checked location list based on local and server locations.
@@ -536,6 +511,7 @@ public class ArchipelagoClient
             session.Locations.CompleteLocationChecks([locationid]);
             ServerData.CheckedLocations.Add(locationid);
             State.UpdateLocations(ServerData.CheckedLocations);
+            State.UpdateRunHistory("Send: " + ServerData.LocationDict[locationid]);
         }
         else if (locationid > 1) {
             Logging.Log($"Unable to send location for {ServerData.LocationDict[locationid]}. Location has already been sent or is not being used for this seed.");
@@ -639,7 +615,7 @@ public class ArchipelagoQueueManager {
                 PermanentUnlock unlock = Unlocks.GetPermanentUnlock(item.ItemName);
                 if (unlock != null)
                 {
-                    State.UpdateItemsByDay(item);
+                    State.UpdateRunHistory("Received: " + item.ItemName);
                     State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
                     unlock.UnlockItem();
                 }
@@ -667,7 +643,7 @@ public class ArchipelagoQueueManager {
                 {
                     // Trim the name of the item to remove the upgrade disk part.
                     ModItemManager.UpgradeDisks.AddItemToInventory(item.ItemName.ToUpper().Replace("UPGRADE DISK ", ""));
-                    State.UpdateItemsByDay(item);
+                    State.UpdateRunHistory("Received: " + item.ItemName);
                     State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
                     return true;
                 }
@@ -697,7 +673,7 @@ public class ArchipelagoQueueManager {
             PermanentUnlock unlock = Unlocks.GetPermanentUnlock(item.ItemName);
             if (unlock != null)
             {
-                State.UpdateItemsByDay(item);
+                State.UpdateRunHistory("Received: " + item.ItemName);
                 State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
                 unlock.UnlockItem();
             }
@@ -730,7 +706,7 @@ public class ArchipelagoQueueManager {
                     if (!ignoreState)
                     {
                         State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
-                        State.UpdateItemsByDay(item);
+                        State.UpdateRunHistory("Received: " + item.ItemName);
                     }
                     return true;
                 }
@@ -753,6 +729,7 @@ public class ArchipelagoQueueManager {
 
                 UniqueItem uItem = Plugin.ModItemManager.GetUniqueItem(item.ItemName);
                 uItem.IsUnlocked = true;
+                State.UpdateRunHistory("Received: " + item.ItemName);
                 return true;
             }
             else
@@ -823,7 +800,7 @@ public class ArchipelagoQueueManager {
         room.Handler?.OnRoomUnlocked(room);
         ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
         State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
-        State.UpdateItemsByDay(item);
+        State.UpdateRunHistory("Received: " + item.ItemName);
         Logging.Log($"Room '{room.Name}' unlocked and added to pool.");
     }
     // Handles receiving a trap. (doesn't check if it's safe to do so).
@@ -832,7 +809,7 @@ public class ArchipelagoQueueManager {
         ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
         if (!ignoreState)
         {
-            State.UpdateItemsByDay(item);
+            State.UpdateRunHistory("Received: " + item.ItemName);
             State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
         }
         
@@ -844,7 +821,7 @@ public class ArchipelagoQueueManager {
         ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
         if (!ignoreState)
         {
-            State.UpdateItemsByDay(item);
+            State.UpdateRunHistory("Received: " + item.ItemName);
             State.UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
         }
     }
