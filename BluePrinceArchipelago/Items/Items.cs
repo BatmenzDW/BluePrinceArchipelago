@@ -1224,6 +1224,8 @@ namespace BluePrinceArchipelago.Items
             Plugin.ModItemManager.AddItem(new PermanentItem("Extra Starting Keys 2", null, false, "Keys", 2));
             Plugin.ModItemManager.AddItem(new PermanentItem("Extra Starting Steps 1", null, false, "Steps", 1));
             Plugin.ModItemManager.AddItem(new PermanentItem("Extra Starting Steps 2", null, false, "Steps", 2));
+            Plugin.ModItemManager.AddItem(new PermanentItem("Extra Starting Steps 5", null, false, "Steps", 5));
+            Plugin.ModItemManager.AddItem(new PermanentItem("Extra Starting Steps 10", null, false, "Steps", 10));
             Plugin.ModItemManager.AddItem(new PermanentItem("Extra Starting Gems 1", null, false, "Gems", 1));
             Plugin.ModItemManager.AddItem(new PermanentItem("Extra Starting Gems 2", null, false, "Gems", 2));
             Plugin.ModItemManager.AddItem(new PermanentItem("Extra Starting Luck 1", null, false, "Luck", 1));
@@ -1234,9 +1236,6 @@ namespace BluePrinceArchipelago.Items
             //Junk Items
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Allowance 1", null, false, "Allowance", 1));
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Allowance 2", null, false, "Allowance", 2));
-            Plugin.ModItemManager.AddItem(new JunkItem("Extra Stars 1", null, false, "Stars", 1));
-            Plugin.ModItemManager.AddItem(new JunkItem("Extra Stars 2", null, false, "Stars", 2));
-            Plugin.ModItemManager.AddItem(new JunkItem("Extra Stars 5", null, false, "Stars", 5));
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Stars 1", null, false, "Stars", 1));
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Stars 2", null, false, "Stars", 2));
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Stars 5", null, false, "Stars", 5));
@@ -1251,9 +1250,9 @@ namespace BluePrinceArchipelago.Items
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Gems 2", null, true, "Gems", 2));
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Keys 1", null, true, "Keys", 1));
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Keys 2", null, true, "Keys", 2));
-            Plugin.ModItemManager.AddItem(new JunkItem("Extra Keys 3", null, true, "Keys", 3));
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Steps 1", null, true, "Steps", 1));
             Plugin.ModItemManager.AddItem(new JunkItem("Extra Steps 2", null, true, "Steps", 2));
+            Plugin.ModItemManager.AddItem(new JunkItem("Extra Steps 5", null, true, "Steps", 5));
 
             //Traps
             Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Steps 1", "Steps", -1));
@@ -1262,6 +1261,8 @@ namespace BluePrinceArchipelago.Items
             Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Stars 1", "Stars", -1));
             Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Stars 2", "Stars", -2));
             Plugin.ModItemManager.AddTrap(new LoseTrap("Trap Take Stars 5", "Stars", -5));
+            Plugin.ModItemManager.AddTrap(new SetTrap("Trap Set Steps 1", "Steps", 1));
+            Plugin.ModItemManager.AddTrap(new SetTrap("Trap Set Steps 10", "Steps", 10));
             Plugin.ModItemManager.AddTrap(new EndOfDayTrap("Trap End Day", "EOD"));
             Plugin.ModItemManager.AddTrap(new FreezeTrap("Trap Freeze Items", "Freeze"));
             Plugin.ModItemManager.AddTrap(new LoseItemTrap("Trap Lose Item", "Lose Item"));
