@@ -20,6 +20,8 @@ public abstract class RoomHandler
     public virtual void OnMorajaiPuzzleSolved(string puzzleName) { }
     public virtual void OnRoomUnlocked(ModRoom room) { 
     }
+
+    public virtual void SetupEventHooks(){}
     
     public static readonly Dictionary<string, RoomHandler> RoomHandlers = new Dictionary<string, RoomHandler>()
     {

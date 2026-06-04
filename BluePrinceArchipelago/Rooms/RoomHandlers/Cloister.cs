@@ -1,6 +1,9 @@
 
 using System.Linq;
+using BluePrinceArchipelago.Events;
+using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
+using HutongGames.PlayMaker.Actions;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Rooms.RoomHandlers;
@@ -9,31 +12,58 @@ class Cloister : RoomHandler
 {
     private static bool _collected = false;
     public Cloister()
-    {
-        ObservedFSMStates.Add("ALLOWANCE TOKEN", ["State"]); // The FSM state name is empty for some reason
-    }
-
-    public override void OnFSMStateChanged(Fsm fsm, string gameObjectName, string newState)
-    {
-        if (_collected) return;
-        var gameObject = fsm.GameObject;
-        while (gameObject.name.ToUpper() == "ALLOWANCE TOKEN") // several objects called allowance token are nested
-        {
-            gameObject = gameObject.transform.parent.gameObject;
-        }
-
-        var parent = gameObject.transform.parent.parent.gameObject;
-
-        if (parent.name.ToUpper().Contains("CLOISTER") && newState == "State")
-        {
-            Logging.Log("Allowance Token state changed in Cloister.", "Cloister");
-            ModInstance.ModEventHandler.OnAllowanceCollected("Cloister Statue");
-            _collected = true;
-        }
+    { 
     }
 
     public override void OnRoomDrafted(GameObject roomGameObject)
     {
         RoomGameObject = roomGameObject;
+        SetupEventHooks();
+    }
+
+    public override void SetupEventHooks()
+    {
+        FSMEventHandler.RegisteredEvents.Add("CloisterToken", new CloisterToken());
+
+        var fsmPath = "_GAMEPLAY/_Pickup Items/Allowance Token/ALLOWANCE TOKEN";
+        PlayMakerFSM fsm = RoomGameObject.transform.Find(fsmPath)?.gameObject?.GetComponent<PlayMakerFSM>();
+        var stateName = "State 2";
+        fsm.GetState(stateName)?.DisableActionsOfType<SendEvent>();
+        fsm.GetState(stateName)?.AddAction(FSMEventHandler.RegisteredEvents["Apple Orchard Unlock"].Event);
+    }
+
+    public class CloisterToken : RegisteredFSMEvent {
+
+        public new string Name { get; set; } = "Apple Orchard Unlock";
+
+        public override void OnRegister()
+        {
+            ModInstance.APEventFSM.AddState(Name);
+            ModInstance.APEventFSM.AddGlobalTransition(Name, Name);
+            // Creates a new SendEvent instance that can be called by other FSMs to communicate important events to the mod (albeit a little jankily).
+            Event = new SendEvent()
+            {
+                eventTarget = new FsmEventTarget()
+                {
+                    target = FsmEventTarget.EventTarget.GameObject,
+                    gameObject = new FsmOwnerDefault()
+                    {
+                        gameObject = Plugin.ModObject,
+                        ownerOption = OwnerDefaultOption.SpecifyGameObject
+                    },
+                    fsmName = "FSM",
+                    sendToChildren = false,
+                    excludeSelf = false
+                },
+                sendEvent = Plugin.ModObject.GetComponent<PlayMakerFSM>().GetGlobalTransition(Name).FsmEvent,
+                everyFrame = false,
+                delay = 0f
+            };
+        }
+
+        public override void OnTrigger()
+        {
+            ModInstance.ModEventHandler.OnAllowanceCollected("Cloister Statue");
+        }
     }
 }
