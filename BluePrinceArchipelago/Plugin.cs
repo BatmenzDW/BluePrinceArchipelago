@@ -3,14 +3,9 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Items;
-using BluePrinceArchipelago.Patches;
 using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
-using HarmonyLib;
-using HutongGames.PlayMaker;
 using Il2CppInterop.Runtime.Injection;
-using System.Reflection;
-using System.Xml.Linq;
 using UnityEngine;
 
 namespace BluePrinceArchipelago {
@@ -45,7 +40,7 @@ namespace BluePrinceArchipelago {
             Logging.SetLogLevel("DeathLink", LogLevel.Info);
             Logging.SetLogLevel("ModRoomManager", LogLevel.Info);
             Logging.SetLogLevel("Items", LogLevel.Info);
-            //Logging.SetLogLevel("Events", LogLevel.Info);
+            Logging.SetLogLevel("Events", LogLevel.Info);
             Logging.SetLogLevel("StatEvents", LogLevel.Info);
             Logging.SetLogLevel("Connection", LogLevel.Info);
             //Logging.SetLogLevel("APData", LogLevel.Info);

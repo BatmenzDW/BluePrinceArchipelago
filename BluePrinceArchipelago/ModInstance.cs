@@ -203,7 +203,14 @@ namespace BluePrinceArchipelago
             Harmony.UnpatchID("RoomPatches");
             Harmony.UnpatchID("FsmRoomPatch");
         }
-        // Fires off when an event is sent from an FSM to an FSM or GameObject. Sometime fails,
+
+        private void Update() {
+            if (IsInRun)
+            {
+                QueueManager.DequeueItem();
+            }
+        }
+        // Fires off when an event is sent from an FSM to an FSM or GameObject. Sometimes fails
         public static void OnEventSend(FsmEventTarget target, FsmEvent sendEvent, FsmFloat delay, DelayedEvent delayedEvent, GameObject owner, bool isDelayed) {
             string eventName = sendEvent?.name;
             string targetType = target?.target.ToString() ?? "";
@@ -238,7 +245,29 @@ namespace BluePrinceArchipelago
             {
                 TrunkManager.OnTrunkOpen();
             }
-            else if (targetName == "Global Manager" && eventName.Contains("Pickup"))
+            else if (targetName == "Grotto Trigger" && eventName == "Go")
+            {
+
+            }
+            string SenderName = owner != null ? owner.name ?? owner.gameObject.name : "Unknown";
+            Logging.Log($"{SenderName} Sending {eventName} to {targetType}: {targetName}", "Events");
+            if (targetName.Trim() == "")
+            {
+                GameObject targetObj = target?.gameObject?.gameObject?.value;
+                if (targetObj != null && !isDelayed)
+                {
+                    targetName = targetObj.name;
+                }
+                else if (isDelayed)
+                {
+                    targetName = delayedEvent?.eventTarget?.gameObject?.gameObject?.name ?? "";
+                    if (targetName.Trim() == "")
+                    {
+                        targetName = delayedEvent?.eventTarget?.gameObject?.gameObject?.value?.name ?? "";
+                    }
+                }
+            }
+            if (targetName == "Global Manager" && eventName.Contains("Pickup"))
             {
                 Logging.Log(eventName, "Events");
                 UniqueItem item = Plugin.UniqueItemManager.GetIfSpawned(eventName);
@@ -254,23 +283,17 @@ namespace BluePrinceArchipelago
                             state.EnableActionsOfType<ArrayListAdd>();
                         }
                     }
-                    
+
                     item.HasBeenFound = true;
                     ModEventHandler.OnFirstFound(item);
                 }
                 else if (eventName.Contains("Upgrade"))
                 {
-                    ModItemManager.UpgradeDisks.UpdateUnlocked();
                     ModItemManager.UpgradeDisks.OnPickup();
                 }
             }
-            else if (targetName == "Grotto Trigger" && eventName == "Go")
-            {
-
-            }
-            string SenderName = owner != null ? owner.name ?? owner.gameObject.name : "Unknown";
-            Logging.Log($"{SenderName} Sending {eventName} to {targetType}: {targetName}", "Events");
         }
+
         public static void OnRoomSpawned(GameObject obj, GameObject transformObj) {
             if (obj != null)
             {
@@ -319,12 +342,11 @@ namespace BluePrinceArchipelago
 
             // Sync room pools with Archipelago at the start of each day, regardless of when auth happened
             SyncRoomPoolsWithArchipelago();
-           
 
-            // Initialize the Star HUD so it can be properly updated when needed.
-            GameObject.Find("__SYSTEM/HUD/Stars").SetActiveRecursively(true);
 
             State.CurrentDayNum = dayNum;
+            // Initialize the Star HUD so it can be properly updated when needed.
+            GameObject.Find("__SYSTEM/HUD/Stars").SetActiveRecursively(true);
             if (ArchipelagoClient.Authenticated)
             {
                 FSMPatches.UpgradeDiskOverride(GlobalManager);
@@ -332,9 +354,10 @@ namespace BluePrinceArchipelago
                 if (FirstLoad)
                 {
                     // Rebuild the state if it couldn't be done on the Reconnect from crash.
-                    State.FirstLoad();
+                    //State.FirstLoad();
                     if (!ArchipelagoClient.StateRebuilt)
                     {
+                        Logging.LogWarning("Rebuilding State");
                         Plugin.ArchipelagoClient.RebuildState();
                     }
                 }
@@ -344,16 +367,14 @@ namespace BluePrinceArchipelago
                 QueueManager.ReleaseAllQueuedLocations();
 
                 // Handle Start of day code for Permanent items (and maybe curses later).
-                Plugin.ModItemManager.StartOfDay(dayNum);
-                Plugin.UniqueItemManager.StartOfDay();
+                Plugin.ModItemManager.StartOfDay();
                 Plugin.ModItemManager.ReplaceItemsWithAP();
                 Unlocks.AttemptPrePatch(); //Apply patches to the FSMs
                 Unlocks.AppleOrchard.PreventDefault();
                 Unlocks.WestGatePath.PreventDefault();
-
+                Plugin.UniqueItemManager.StartOfDay();
                 Plugin.ArchipelagoClient.DeathLinkHandler.KillPlayer(); // If we have any queued death links, kill the player at the start of the day.
             }
-            
         }
 
         /// <summary>
@@ -476,16 +497,14 @@ namespace BluePrinceArchipelago
             }
         }
 
-        // Handles End of Day code, Currently unsure if this is good timing.
+        // Handles End of Day code.
         public static void OnDayEnd() {
             IsInRun = false;
-            Logging.Log("Day End", "DeathLink");
             var fsm = GameObject.Find("UI OVERLAY CAM")?.transform?.Find("END OF DAYS CHECKS")?.gameObject?.GetFsm("FSM");
 
             Plugin.ArchipelagoClient?.DeathLinkHandler?.SendEndOfDayDeathLink(fsm);
             Plugin.UniqueItemManager.EndOfDay();
             State.CurrentDayNum += 1;
-            State.TodaysItems = new List<ItemInfo>();
         }
         public static void OnDraftBeforeInitialize()
         {
@@ -758,16 +777,18 @@ namespace BluePrinceArchipelago
             if (HasInitializedRooms)
             {
                 SyncRoomPoolsWithArchipelago();
-                Plugin.ModItemManager.ReplaceItemsWithAP();
             }
             if (IsInRun)
             {
+                ModItemManager.LoadInventories();
                 FSMPatches.UpgradeDiskOverride(GlobalManager);
                 FSMPatches.AddedFloorPlanOverrides();
-            }
-                if (FirstLoad)
-            {
-                State.FirstLoad();
+                Plugin.ModItemManager.StartOfDay();
+                Plugin.ModItemManager.ReplaceItemsWithAP();
+                Unlocks.AttemptPrePatch(); //Apply patches to the FSMs
+                Unlocks.AppleOrchard.PreventDefault();
+                Unlocks.WestGatePath.PreventDefault();
+                Plugin.UniqueItemManager.StartOfDay();
             }
         }
         

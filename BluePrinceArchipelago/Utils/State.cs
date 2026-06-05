@@ -26,7 +26,7 @@ namespace BluePrinceArchipelago.Utils
         public const string LocationDictFile = "LocationDict.json";
         public const string ItemQueueFile = "ItemQueue.json";
         public const string LocationQueueFile = "LocationQueue.json";
-        public const string ItemsByDayFile = "ItemsByDay.json";
+        public const string RunHistoryFile = "RunHistory.json";
 
         public static string RecievedItemsPath => Path.Combine(ModFolder, SessionFolder, RecievedItemsFile);
         public static string SentLocationsPath => Path.Combine(ModFolder, SessionFolder, SentLocationsFile);
@@ -38,13 +38,7 @@ namespace BluePrinceArchipelago.Utils
         public static string LocationDictPath => Path.Combine(ModFolder, SessionFolder, LocationDictFile);
         public static string ItemQueuePath => Path.Combine(ModFolder, SessionFolder, ItemQueueFile);
         public static string LocationQueuePath => Path.Combine(ModFolder, SessionFolder, LocationQueueFile);
-        public static string ItemsByDayPath => Path.Combine(ModFolder, SessionFolder, ItemsByDayFile);
-
-        public static List<ItemInfo> TodaysItems = new();
-
-        public static List<ItemInfo> TempTodaysItems = new();
-
-        public static bool TodayLoaded = false;
+        public static string RunHistoryPath => Path.Combine(ModFolder, SessionFolder, RunHistoryFile);
 
         public static int CurrentDayNum = 1;
 
@@ -58,14 +52,12 @@ namespace BluePrinceArchipelago.Utils
             InitializeSessionData();
             InitializeServerDetails();
             InitializeLocationDict();
-            //InitializeItemQueue();
-            //InitializeLocationQueue();
+            InitializeRunHistory();
         }
 
         public static void UpdateAll() {
             UpdateItems(ArchipelagoClient.ServerData.ReceivedItems);
             UpdateLocations(ArchipelagoClient.ServerData.CheckedLocations);
-            UpdateItemsByDay(ArchipelagoClient.ServerData.ItemsByDay);
             SessionData session = new SessionData();
             session.SaveSlot = ModInstance.SaveSlot;
             session.Seed = ArchipelagoClient.ServerData.Seed;
@@ -141,50 +133,20 @@ namespace BluePrinceArchipelago.Utils
                 writer.Flush();
             }
         }
-
-        public static void UpdateItemsByDay(ItemInfo item) {
-            TodaysItems.Add(item);
-            ArchipelagoClient.ServerData.ItemsByDay[CurrentDayNum] = TodaysItems;
-            UpdateItemsByDay(ArchipelagoClient.ServerData.ItemsByDay);
-        }
-        private static void UpdateItemsByDay(Dictionary<int, List<ItemInfo>> itemsByDay) {
+        public static void UpdateRunHistory(string eventString) {
+           
             try
             {
-                using (var writer = new StreamWriter(ItemsByDayPath, false))
+                ArchipelagoClient.ServerData.RunHistory[CurrentDayNum - 1].Add(eventString);
+                using (var writer = new StreamWriter(RunHistoryPath, false))
                 {
-                    writer.Write(JsonConvert.SerializeObject(itemsByDay));
+                    writer.Write(JsonConvert.SerializeObject(ArchipelagoClient.ServerData.RunHistory));
                     writer.Flush();
                 }
             }
-            catch {
-                Logging.LogWarning("Error Serializing ItemsByDay to JSON.");
+            catch { 
             }
         }
-        public static void FirstLoad() {
-            // If it is a reconnect from a crash
-            if (CurrentDayNum > 0 && ArchipelagoClient.Reconnected) {
-                InitializeItemsByDay();
-                int LatestDay = ArchipelagoClient.ServerData.ItemsByDay.HighestKey<int, List<ItemInfo>>();
-                if (LatestDay > 0) {
-
-                    // If the current day is the Latest day in data, there was likely a crash mid day and any recieved items need to be re-given (Except for rooms);
-                    if (CurrentDayNum == LatestDay) {
-                        // Re-recieve all items for the current day
-                        foreach (ItemInfo item in ArchipelagoClient.ServerData.ItemsByDay[LatestDay]) {
-                            if (!ModInstance.QueueManager.ReceiveItem(item, false))
-                            {
-                                ModInstance.QueueManager.AddItemToQueue(item);
-                            }
-                        }
-                    }
-                    else if (LatestDay > CurrentDayNum) {
-                        Logging.LogWarning($"Current Day {CurrentDayNum} does not match latest day in data {LatestDay}. It's very likely an incorrect file was loaded.");
-                    }
-                }
-            }
-            // If it's not a reconnect, nothing needs to be done.
-        }
-
         private static void InitializeServerDetails()
         {
             if (File.Exists(ServerDetailsPath))
@@ -378,11 +340,11 @@ namespace BluePrinceArchipelago.Utils
         //    }
         //}
 
-        private static void InitializeItemsByDay() {
-            if (File.Exists(ItemsByDayPath))
+        private static void InitializeRunHistory() {
+            if (File.Exists(RunHistoryPath))
             {
                 string jsonData = "";
-                using (var reader = new StreamReader(ItemsByDayPath))
+                using (var reader = new StreamReader(RunHistoryPath))
                 {
                     jsonData = reader.ReadToEnd();
                 }
@@ -390,7 +352,7 @@ namespace BluePrinceArchipelago.Utils
                 {
                     try
                     {
-                        ArchipelagoClient.ServerData.ItemsByDay = JsonConvert.DeserializeObject<Dictionary<int,List<ItemInfo>>>(jsonData);
+                        ArchipelagoClient.ServerData.RunHistory = JsonConvert.DeserializeObject<List<List<string>>>(jsonData);
                     }
                     catch (Exception ex)
                     {
@@ -400,11 +362,9 @@ namespace BluePrinceArchipelago.Utils
             }
             else
             {
-                using (var writer = new StreamWriter(ItemsByDayPath, false))
+                using (var writer = new StreamWriter(RunHistoryPath, false))
                 {
-                    Dictionary<int, List<ItemInfo>> tempDict = new();
-                    tempDict[1] = new List<ItemInfo>(); // Blank Day 1
-                    writer.Write(JsonConvert.SerializeObject(tempDict));
+                    writer.Write(JsonConvert.SerializeObject(new List<List<string>>()));
                     writer.Flush();
                 }
             }
@@ -556,11 +516,9 @@ namespace BluePrinceArchipelago.Utils
             //    writer.Write(JsonConvert.SerializeObject(new List<String>()));
             //    writer.Flush();
             //}
-            using (var writer = new StreamWriter(ItemsByDayPath, false))
+            using (var writer = new StreamWriter(RunHistoryPath, false))
             {
-                Dictionary<int, List<ItemInfo>> tempDict = new();
-                tempDict[1] = new List<ItemInfo>(); // Blank Day 1
-                writer.Write(JsonConvert.SerializeObject(tempDict));
+                writer.Write(JsonConvert.SerializeObject(new List<List<string>>()));
                 writer.Flush();
             }
             //Don't reset the connection details since they might be useful.

@@ -1,5 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Models;
 using BluePrinceArchipelago.Archipelago;
+using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Rooms.RoomHandlers;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
@@ -7,13 +8,13 @@ using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 using UnityEngine;
-using static ES3;
 
 
 namespace BluePrinceArchipelago.Items
 {
-    public class UniqueItem(string name, GameObject gameObject, bool isUnlocked, ItemSanityType sanityType = ItemSanityType.None, bool isPreSpawn = true) : ModItem(name, gameObject, isUnlocked)
+    public class UniqueItem : ModItem
     {
 
         private bool _IsUnique = true;
@@ -22,13 +23,13 @@ namespace BluePrinceArchipelago.Items
             get { return _IsUnique; }
             set { _IsUnique = value; }
         }
-        private bool _IsPrespawn = isPreSpawn;
+        private bool _IsPrespawn;
 
         public bool IsPrespawn { get; set; }
 
         private bool _HasBeenFound = false;
 
-        private ItemSanityType _SanityType = sanityType;
+        private ItemSanityType _SanityType;
         public ItemSanityType SanityType
         {
             get { return _SanityType; }
@@ -50,6 +51,12 @@ namespace BluePrinceArchipelago.Items
                 }
                 // No changes to value once the item has been found once, or if someone is trying to set this to false some reason.
             }
+        }
+        public UniqueItem(string name, GameObject gameObject, bool isUnlocked, ItemSanityType sanityType = ItemSanityType.None, bool isPreSpawn = true) : base(name, gameObject, isUnlocked)
+        {
+            _IsPrespawn = isPreSpawn;
+            _SanityType = sanityType;
+            FSMEventHandler.AddFSMEvent(name, this);
         }
 
         public void RemoveFromPool()
@@ -78,7 +85,6 @@ namespace BluePrinceArchipelago.Items
             {
                 return;
             }
-            bool isSpawned = false;
             if (!IsUnlocked)
             {
                 IsUnlocked = true;
@@ -87,56 +93,40 @@ namespace BluePrinceArchipelago.Items
             {
                 if (_IsPrespawn)
                 {
-                    GameObj = Plugin.ModItemManager.GetPreSpawnItem(Name);
+                    GameObj = Plugin.ModItemManager.GetInventoryItem(Name);
                 }
             }
-            if (Plugin.UniqueItemManager.SpawnedItems.Contains(this))
+            if (GameObj != null)
             {
-                isSpawned = true;
-            }
-
-            // If the item is spawned or is not in the prespawn list.
-            if (Plugin.ModItemManager.IsItemSpawnable(GameObj, IsPrespawn) && !isSpawned)
-            {
-                // Re-enable the logic that adds the item to inventory. (will not cause issues if already enabled).
-                FsmState state = Plugin.UniqueItemManager.GetPickupState(Name);
-                if (state != null)
+                if (Commissary.CommissaryStates.ContainsKey(Name))
                 {
-                    state.EnableActionsOfType<ArrayListAdd>();
-                    if (Commissary.CommissaryStates.ContainsKey(Name))
-                    {
-                        //Re-enable commissary purchases of the item.
-                        Commissary.CanStock.Add(Name);
-                    }
-                    // This may not cause it to re-trigger.
-                    ModItemManager.PreSpawn.Add(GameObj, "GameObject");
-                    // Disable this game action so it doesn't try and display 2 UIs.
-                    state.DisableActionsOfType<ActivateGameObject>();
-                    try
-                    {
-                        ModInstance.GlobalManager.SendEvent(GetPickUpEventName(Name));
-                    }
-                    catch {
-                        Logging.LogWarning($"Error While attempting to add {Name} to inventory.");
-                    }
+                    //Re-enable commissary purchases of the item.
+                    Commissary.CanStock.Add(Name);
                 }
-            }
-        }
-
-        private string GetPickUpEventName(string name)
-        {
-            // Fixes a name difference for the vault keys and rabbit's foot and puts name into lower case.
-            name = name.ToLower().Replace("vault", "safety deposit").Replace("rabbit's", "rabbbit's").Replace(" kit", "");
-            // Check each Global Transition in the Global Manager.
-            foreach (FsmTransition transition in ModInstance.GlobalManager.FsmGlobalTransitions)
-            {
-                // If the transition's event name contains the item name it's the transition we want.
-                if (transition.EventName.ToLower().Contains(name))
+                // This may not cause it to re-trigger.
+                // Disable this game action so it doesn't try and display 2 UIs.
+                string iconName = Name.ToTitleCase() + " Icon(Clone)001";
+                GameObject icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
+                // Some icons use 
+                if (icon == null)
                 {
-                    return transition.EventName;
+                    iconName = Name.ToTitleCase() + " icon(Clone)001";
+                    icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
+                }
+                if (icon == null)
+                {
+                    iconName = Name.ToTitleCase();
+                    icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName);
+                }
+                PlayMakerArrayListProxy InventoryIcons = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/")?.GetArrayListProxy("Inventory");
+                if (icon != null && InventoryIcons != null)
+                {
+                    Logging.LogWarning("Here 2");
+
+                    ModItemManager.PickedUp.Add(GameObj, "GameObject");
+                    InventoryIcons.Add(icon, "GameObject");
                 }
             }
-            return "";
         }
 
         public bool ApplySanity()
@@ -160,6 +150,7 @@ namespace BluePrinceArchipelago.Items
         public bool ModelsReplaced = false;
         public void OnItemSpawn(GameObject obj, string poolName, GameObject transformObj, GameObject spawnedObj)
         {
+            Logging.LogWarning(obj.name);
             UniqueItem item = Plugin.ModItemManager.GetUniqueItem(obj.name);
             //Check if Connected in before replacing items.
             if (ArchipelagoClient.Authenticated)
@@ -167,71 +158,13 @@ namespace BluePrinceArchipelago.Items
                 if (item != null)
                 {
                     FsmState state = GetPickupState(obj.name);
-                    // If the item has not been found before.
-                    if (!item.HasBeenFound)
+                    if (item.IsUnlocked && item.HasBeenFound)
                     {
-                        ReplacePickup(item);
-                    }
-                    else
-                    {
-                        if (!item.IsUnlocked) {
-                            GameObject.Destroy(spawnedObj);
-                        }
-                    }
-                }
-                else if (obj.name.ToUpper().Contains("UPGRADE"))
-                {
-                }
-            }
-            else
-            {
-                if (item != null)
-                {
-                    FsmState state = GetPickupState(obj.name);
-                    if (state != null)
-                    {
-                        if (item.IsUnlocked)
-                        {
-                            //Re-enable the previously disabled actions.
-                            state.EnableActionsOfType<ArrayListAdd>();
-                        }
+                        //Re-enable the previously disabled actions.
+                        state.EnableActionsOfType<ArrayListAdd>();
                     }
                 }
             }
-        }
-        //Finds the associated Pickup State and replaces the item.
-        private FsmState ReplacePickup(UniqueItem item)
-        {
-            FsmState state = GetPickupState(item.Name);
-            if (state != null)
-            {
-                //If the item is not unlocked, prevent it from being added to inventory.
-                if (!item.IsUnlocked && item.ApplySanity())
-                {
-                    //Disable the actions that add the item to inventory.
-                    state.DisableActionsOfType<ArrayListAdd>();
-                    long locationid = Plugin.ArchipelagoClient.GetLocationFromName(item.Name.ToTitleCase() + " First Pickup");
-                    ScoutedItemInfo scout = null;
-                    if (locationid != -1)
-                    {
-                        if (ArchipelagoClient.ServerData.LocationItemMap.ContainsKey(locationid))
-                        {
-                            scout = ArchipelagoClient.ServerData.LocationItemMap[locationid];
-                        }
-                    }
-                    // Skip spawning items if the item mapped to itself.
-                    if (scout != null) {
-                        if (scout.ItemName.ToUpper().Trim() == item.Name) {
-                            return state;
-                        }
-                    }
-                    SpawnedItems.Add(Plugin.ModItemManager.GetUniqueItem(item.Name));
-                }
-                return state;
-            }
-            // If the item pickup state was not found output an error.
-            Logging.LogError($"No FSM state {item.Name.Trim().ToTitleCase() + " Pickup"} found for: {item.Name}");
-            return null;
         }
 
         public void EndOfDay()
@@ -294,7 +227,7 @@ namespace BluePrinceArchipelago.Items
         {
 
             // Fixes a name difference for the vault keys and rabbit's foot and puts name into lower case.
-            name = name.ToLower().Replace("vault", "safety deposit").Replace("rabbit's", "rabbbit's").Replace(" kit", "");
+            name = name.ToLower().Replace("vault", "saftey deposit").Replace("rabbit's", "rabbbit's").Replace(" kit", "");
             // Check each Global Transition in the Global Manager.
             foreach (FsmTransition transition in ModInstance.GlobalManager.FsmGlobalTransitions)
             {
@@ -303,7 +236,8 @@ namespace BluePrinceArchipelago.Items
                 {
                     // Treasure Map requires going 1 state deeper
                     if (name == "treasure map") {
-                        return transition?.toFsmState?.GetTransition("FINISHED")?.ToFsmState;
+                        ModInstance.GlobalManager.GetBoolVariable("Treasure Already").Value = true;
+                        return ModInstance.GlobalManager.GetState("Treasure Map Pickup");
                     }
                     //Return the state the transition found goes to.
                     return transition.ToFsmState;
