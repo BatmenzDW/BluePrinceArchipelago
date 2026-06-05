@@ -54,18 +54,12 @@ namespace BluePrinceArchipelago.Items
         }
         public void ReplaceItemsWithAP()
         {
-            if (!Plugin.UniqueItemManager.ModelsReplaced)
+            ReplaceUniqueItemsWithAP();
+            if (ArchipelagoOptions.UpgradeDiskSanity)
             {
-                ReplaceUniqueItemsWithAP();
-                if (ArchipelagoOptions.UpgradeDiskSanity)
-                {
-                    ReplaceUpgradeDisksWithAP();
-                }
-                Plugin.UniqueItemManager.ModelsReplaced = true;
+                ReplaceUpgradeDisksWithAP();
             }
-
         }
-
         public void ReplaceUniqueItemsWithAP()
         {
             foreach (UniqueItem item in UniqueItemList)
