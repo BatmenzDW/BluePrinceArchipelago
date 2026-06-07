@@ -512,7 +512,7 @@ public class ArchipelagoClient
             State.UpdateRunHistory("Send: " + ServerData.LocationDict[locationid]);
         }
         else if (locationid > 1) {
-            Logging.Log($"Unable to send location for {ServerData.LocationDict[locationid]}. Location has already been sent or is not being used for this seed.");
+            Logging.LogWarning($"Unable to send location for {ServerData.LocationDict[locationid]}. Location has already been sent or is not being used for this seed.");
         }
     }
 

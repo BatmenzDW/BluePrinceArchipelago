@@ -285,7 +285,7 @@ namespace BluePrinceArchipelago
                         }
                     }
                     item.HasBeenFound = true;
-                    ModInstance.QueueManager.AddLocationToQueue(item.Name + " First Pickup");
+                    ModInstance.QueueManager.AddLocationToQueue($"{item.Name.ToTitleCase()} First Pickup");
                 }
                 else if (eventName.Contains("Upgrade"))
                 {
