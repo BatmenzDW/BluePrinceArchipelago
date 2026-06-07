@@ -80,7 +80,7 @@ namespace BluePrinceArchipelago
         public static bool AppliedHarmony { get; private set; } = false;
 
         public static bool FirstLoad { get; set; } = true;
-        public static bool RanStartOfDay { get; set; } = true;
+        public static bool RanStartOfDay { get; set; } = false;
 
         public static int LoadCount = 0;
 
@@ -140,7 +140,6 @@ namespace BluePrinceArchipelago
             {
                 SceneLoaded = true;
                 RanStartOfDay = false;
-
                 Unlocks.HasPrepatched = false;
                 LoadCount++;
                 if (LoadCount > 1)

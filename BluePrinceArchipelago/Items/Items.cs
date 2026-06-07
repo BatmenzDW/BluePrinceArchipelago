@@ -1,5 +1,4 @@
 ﻿using Archipelago.MultiClient.Net.Models;
-using AsmResolver.PE.DotNet.ReadyToRun;
 using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Utils;

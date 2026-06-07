@@ -8,9 +8,7 @@ using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
 using UnityEngine;
-using UnityStandardAssets.ImageEffects;
 
 
 namespace BluePrinceArchipelago.Items
