@@ -375,6 +375,7 @@ namespace BluePrinceArchipelago
                 {
                     // Rebuild the state if it couldn't be done on the Reconnect from crash.
                     //State.FirstLoad();
+                    
                     if (!ArchipelagoClient.StateRebuilt)
                     {
                         Logging.LogWarning("Rebuilding State");
