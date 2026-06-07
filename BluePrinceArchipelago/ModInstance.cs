@@ -12,6 +12,7 @@ using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using JetBrains.Annotations;
+using PathologicalGames;
 using System;
 using System.Collections;
 using System.Collections.Generic;

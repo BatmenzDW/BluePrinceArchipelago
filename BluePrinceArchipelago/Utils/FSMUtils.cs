@@ -24,7 +24,7 @@ namespace BluePrinceArchipelago.Utils
         {
             foreach (PlayMakerArrayListProxy arrayListProxy in go.GetComponents<PlayMakerArrayListProxy>())
             {
-                if (arrayListProxy.name == arrayListProxyName)
+                if (arrayListProxy.referenceName == arrayListProxyName)
                 {
                     return arrayListProxy;
                 }

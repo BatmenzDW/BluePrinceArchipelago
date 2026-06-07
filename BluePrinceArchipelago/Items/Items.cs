@@ -41,11 +41,11 @@ namespace BluePrinceArchipelago.Items
         public static void LoadInventories()
         {
 
-            PreSpawn = GameObject.Find("__SYSTEM/Inventory/Inventory (PreSpawn)")?.GetArrayListProxy("Inventory (PreSpawn)");
-            EstateItems = GameObject.Find("__SYSTEM/Inventory/Inventory (EstateItems)")?.GetArrayListProxy("Inventory (EstateItems)");
-            PickedUp = GameObject.Find("__SYSTEM/Inventory/Inventory (PickedUp)")?.GetArrayListProxy("Inventory (PickedUp)");
-            CoatCheck = GameObject.Find("__SYSTEM/Inventory/Inventory (CoatCheck)")?.GetArrayListProxy("Inventory (CoatCheck)");
-            UsedItems = GameObject.Find("__SYSTEM/Inventory/Inventory (UsedItems)")?.GetArrayListProxy("Inventory (UsedItems)");
+            PreSpawn = GameObject.Find("__SYSTEM/Inventory/Inventory (PreSpawn)")?.GetArrayListProxy("PreSpawn");
+            EstateItems = GameObject.Find("__SYSTEM/Inventory/Inventory (EstateItems)")?.GetArrayListProxy("EstateItems");
+            PickedUp = GameObject.Find("__SYSTEM/Inventory/Inventory (PickedUp)")?.GetArrayListProxy("PickedUp");
+            CoatCheck = GameObject.Find("__SYSTEM/Inventory/Inventory (CoatCheck)")?.GetArrayListProxy("CoatCheck");
+            UsedItems = GameObject.Find("__SYSTEM/Inventory/Inventory (UsedItems)")?.GetArrayListProxy("UsedItems");
             InventoryItems = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/InventoryGameobjects")?.GetArrayListProxy("InventoryGameobjects");
             UpgradeDisks.GameObj = GameObject.Find("__SYSTEM/Upgrade Disks");
         }
@@ -1133,36 +1133,24 @@ namespace BluePrinceArchipelago.Items
             if (!UsedLocations.Contains(location.ToUpper()))
             {
 
-                string iconName = Plugin.UniqueItemManager.GetIconName("Upgrade Disk");
-                GameObject icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName + "(Clone)001");
-                // Some icons use 
-                if (icon == null)
-                {
-                    icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName.Replace("Icon", "icon") + "(Clone)001");
-                }
-                if (icon == null)
-                {
-                    PlayMakerArrayListProxy iconList = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/InventoryIcons").GetComponent<PlayMakerArrayListProxy>();
-                    foreach (var invIcon in iconList.arrayList)
-                    {
-                        GameObject iconGo = invIcon.TryCast<GameObject>();
-                        if (iconGo != null)
-                        {
-                            if (iconGo.name.Contains(iconName))
-                            {
-                                icon = iconGo;
-                            }
-                        }
-                    }
-                }
-                PlayMakerArrayListProxy InventoryIcons = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/")?.GetArrayListProxy("Inventory");
+                GameObject InventoryGO = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory");
+                PlayMakerFSM Inventory = InventoryGO.GetFsm("Inventory Icons");
+                PlayMakerArrayListProxy InventoryIcons = InventoryGO.GetArrayListProxy("Inventory Icons");
+                GameObject icon = Plugin.UniqueItemManager.GetIconGameObject("UPGRADE DISK");
+
                 if (icon != null && InventoryIcons != null)
                 {
-                    ModInstance.GlobalPersistentManager.GetBoolVariable("?Upgrade").Value = true;
                     ModItemManager.PickedUp.Add(GameObj, "GameObject");
                     InventoryIcons.Add(icon, "GameObject");
+
+                    if (Name == "RUNNING SHOES")
+                    {
+                        ModInstance.RunningEngine.SendEvent("Update");
+                    }
+                    //Send Event 0 to the Global Manager.
                 }
-            }
+             }
+            
         }
     }
 

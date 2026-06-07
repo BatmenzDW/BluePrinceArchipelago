@@ -5,6 +5,8 @@ using BluePrinceArchipelago.Rooms.RoomHandlers;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using Mono.Cecil;
+using PathologicalGames;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -104,40 +106,22 @@ namespace BluePrinceArchipelago.Items
                 // This may not cause it to re-trigger.
                 // Disable this game action so it doesn't try and display 2 UIs.
                 Logging.LogWarning("Attempting to add item to Inventory");
-                string iconName = Plugin.UniqueItemManager.GetIconName(Name);
-                GameObject icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName + "(Clone)001");
-                // Some icons use 
-                if (icon == null)
-                {
-                    icon = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/" + iconName.Replace("Icon", "icon") + "(Clone)001");
-                }
-                if (icon == null)
-                {
-                    PlayMakerArrayListProxy iconList = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/InventoryIcons").GetComponent<PlayMakerArrayListProxy>();
-                    foreach (var invIcon in iconList.arrayList) {
-                        GameObject iconGo = invIcon.TryCast<GameObject>();
-                        if (iconGo != null)
-                        {
-                            if (iconGo.name.Contains(iconName))
-                            {
-                                icon = iconGo;
-                            }
-                        }
-                    }
-                }
-                Logging.LogWarning(icon != null);
-                PlayMakerArrayListProxy InventoryIcons = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/")?.GetArrayListProxy("Inventory");
-                Logging.LogWarning(InventoryIcons != null);
+                GameObject InventoryGO = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory");
+                PlayMakerFSM Inventory = InventoryGO.GetFsm("Inventory Icons");
+                PlayMakerArrayListProxy InventoryIcons = InventoryGO.GetArrayListProxy("Inventory Icons");
+                GameObject icon = Plugin.UniqueItemManager.GetIconGameObject(Name);
+       
                 if (icon != null && InventoryIcons != null)
                 {
-                    ModItemManager.PickedUp.Add(GameObj, "GameObject");
                     InventoryIcons.Add(icon, "GameObject");
+                    if (!ModItemManager.PickedUp.Contains(Name)) {
+                        ModItemManager.PickedUp.Add(GameObj, "GameObject");
+                    }
                     if (Name == "RUNNING SHOES")
                     {
                         ModInstance.RunningEngine.SendEvent("Update");
                     }
                     //Send Event 0 to the Global Manager.
-                    ModInstance.GlobalManager.SendEvent("Event 0");
                 }
                
             }
@@ -223,6 +207,18 @@ namespace BluePrinceArchipelago.Items
                 default:
                     return name + " Icon";
             }
+        }
+        public GameObject GetIconGameObject(string name) {
+            name = GetIconName(name);
+            PlayMakerArrayListProxy Inventory = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory/InventoryIconMeshes").GetComponent<PlayMakerArrayListProxy>();
+            for (int i=0; i < Inventory.arrayList.Count; i++)
+            {
+                GameObject child = Inventory.arrayList[i].TryCast<GameObject>();
+                if (child.name.Contains(name)) {
+                    return child;
+                }
+            }
+            return null;
         }
 
         //Finds the "You Found" Event based on the what "You Found" is called in the GlobalManager Pickup FSM State. Returns null if not found.
