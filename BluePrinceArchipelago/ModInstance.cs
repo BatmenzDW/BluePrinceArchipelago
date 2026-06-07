@@ -800,7 +800,7 @@ namespace BluePrinceArchipelago
             {
                 SyncRoomPoolsWithArchipelago();
             }
-            if (IsInRun && !RanStartOfDay);
+            if (IsInRun && !RanStartOfDay)
             {
                 ModItemManager.LoadInventories();
                 if (ArchipelagoOptions.UpgradeDiskSanity)

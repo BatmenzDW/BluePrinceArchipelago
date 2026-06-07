@@ -254,20 +254,26 @@ namespace BluePrinceArchipelago.Items
             // Fixes a name difference for the vault keys and rabbit's foot and puts name into lower case.
             name = name.ToLower().Replace("vault", "saftey deposit").Replace("rabbit's", "rabbbit's").Replace(" kit", "");
             // Check each Global Transition in the Global Manager.
-            foreach (FsmTransition transition in ModInstance.GlobalManager.FsmGlobalTransitions)
-            {
-                // If the transition's event name contains the item name it's the transition we want.
-                if (transition.EventName.ToLower().Contains(name))
+            FsmTransition[] GlobalTransitions = ModInstance.GlobalManager?.FsmGlobalTransitions;
+            if (GlobalTransitions != null) {
+                FsmTransition[] transitions = new FsmTransition[ModInstance.GlobalManager?.FsmGlobalTransitions?.Count ?? 0];
+                GlobalTransitions.CopyTo(transitions, 0);
+            foreach (FsmTransition transition in transitions)
                 {
-                    // Treasure Map requires going 1 state deeper
-                    if (name == "treasure map") {
-                        ModInstance.GlobalManager.GetBoolVariable("Treasure Already").Value = true;
-                        return ModInstance.GlobalManager.GetState("Treasure Map Pickup");
+                    // If the transition's event name contains the item name it's the transition we want.
+                    if (transition.EventName.ToLower().Contains(name))
+                    {
+                        // Treasure Map requires going 1 state deeper
+                        if (name == "treasure map") {
+                            ModInstance.GlobalManager.GetBoolVariable("Treasure Already").Value = true;
+                            return ModInstance.GlobalManager.GetState("Treasure Map Pickup");
+                        }
+                        //Return the state the transition found goes to.
+                        return transition.ToFsmState;
                     }
-                    //Return the state the transition found goes to.
-                    return transition.ToFsmState;
                 }
             }
+            Logging.LogWarning($"Failed to Get pickup state for: {name}");
             return null;
         }
         public FsmTransition GetPickupTransition(string name) {
