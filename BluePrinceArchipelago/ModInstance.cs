@@ -349,7 +349,10 @@ namespace BluePrinceArchipelago
             GameObject.Find("__SYSTEM/HUD/Stars").SetActiveRecursively(true);
             if (ArchipelagoClient.Authenticated)
             {
-                FSMPatches.UpgradeDiskOverride(GlobalManager);
+                if (ArchipelagoClient.ServerData.Options.UpgradeDiskSanity)
+                {
+                    FSMPatches.UpgradeDiskOverride(GlobalManager);
+                }
                 FSMPatches.AddedFloorPlanOverrides();
                 if (FirstLoad)
                 {
@@ -782,7 +785,10 @@ namespace BluePrinceArchipelago
             if (IsInRun)
             {
                 ModItemManager.LoadInventories();
-                FSMPatches.UpgradeDiskOverride(GlobalManager);
+                if (ArchipelagoClient.ServerData.Options.UpgradeDiskSanity)
+                {
+                    FSMPatches.UpgradeDiskOverride(GlobalManager);
+                }
                 FSMPatches.AddedFloorPlanOverrides();
                 Plugin.ModItemManager.StartOfDay();
                 Plugin.ModItemManager.ReplaceItemsWithAP();
