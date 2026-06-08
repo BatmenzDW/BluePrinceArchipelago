@@ -89,6 +89,7 @@ public class DeathLinkHandler
         {
             if (!ModInstance.IsInRun) return;
             if (deathLinks.Count < 1) return;
+            if (!deathLinkEnabled) return;
 
             var deathLink = deathLinks.Dequeue();
             var cause = deathLink.Cause.IsNullOrWhiteSpace() ? GetDeathLinkCause(deathLink) : deathLink.Cause;
