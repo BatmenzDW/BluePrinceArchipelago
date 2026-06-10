@@ -23,18 +23,28 @@ class Cloister : RoomHandler
 
     public override void SetupEventHooks()
     {
-        FSMEventHandler.RegisteredEvents.Add("CloisterToken", new CloisterToken());
+        try 
+        {
+            if (FSMEventHandler.RegisteredEvents.ContainsKey("CloisterToken"))
+                return;
 
-        var fsmPath = "_GAMEPLAY/_Pickup Items/Allowance Token/ALLOWANCE TOKEN";
-        PlayMakerFSM fsm = RoomGameObject.transform.Find(fsmPath)?.gameObject?.GetComponent<PlayMakerFSM>();
-        var stateName = "State 2";
-        fsm.GetState(stateName)?.DisableActionsOfType<SendEvent>();
-        fsm.GetState(stateName)?.AddAction(FSMEventHandler.RegisteredEvents["Apple Orchard Unlock"].Event);
+            FSMEventHandler.RegisteredEvents.Add("CloisterToken", new CloisterToken());
+
+            var fsmPath = "_GAMEPLAY/_Pickup Items/Allowance Token/ALLOWANCE TOKEN";
+            PlayMakerFSM fsm = RoomGameObject.transform.Find(fsmPath)?.gameObject?.GetComponent<PlayMakerFSM>();
+            var stateName = "State 2";
+            fsm.GetState(stateName)?.DisableActionsOfType<SendEvent>();
+            fsm.GetState(stateName)?.AddAction(FSMEventHandler.RegisteredEvents["CloisterToken"].Event);
+        } 
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"Error setting up event hooks for Cloister: {ex}");
+        }
     }
 
     public class CloisterToken : RegisteredFSMEvent {
 
-        public new string Name { get; set; } = "Apple Orchard Unlock";
+        public new string Name { get; set; } = "CloisterToken";
 
         public override void OnRegister()
         {
