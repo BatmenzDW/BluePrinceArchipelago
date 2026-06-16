@@ -7,7 +7,7 @@ public class Underpass : RoomHandler
         AllowanceTokens.Add("Underpass"); // TODO: Find the path of this token
     }
 
-    public override void OnAllowanceTokenCollected()
+    public override void OnAllowanceTokenCollected(string token)
     {
         ModInstance.ModEventHandler.OnMoraJaiSolved("Underpass");
     }

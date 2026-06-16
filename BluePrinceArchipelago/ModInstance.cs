@@ -300,6 +300,7 @@ namespace BluePrinceArchipelago
             }
             if (eventName == "Allowance Token Pickup")
             {
+                bool matched = false;
                 var path = owner.gameObject.GetPath();
                 Logging.Log($"Allowance Token Pickup event sent from {owner.gameObject.name} with path {path}", "Events");
                 foreach (var roomHandler in RoomHandler.RoomHandlers.Values)
@@ -309,9 +310,14 @@ namespace BluePrinceArchipelago
                         if (path.Contains(token))
                         {
                             Logging.Log($"Allowance Token matched for room handler {roomHandler.GetType().Name} with token {token}", "ArchipelagoEvents");
-                            roomHandler.OnAllowanceTokenCollected();
+                            roomHandler.OnAllowanceTokenCollected(token);
+                            matched = true;
                         }
                     }
+                }
+                if (!matched)
+                {
+                    Logging.LogWarning($"No matching room handler found for Allowance Token Pickup event with path {path}.", "ArchipelagoEvents");
                 }
             }
         }

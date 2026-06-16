@@ -7,7 +7,7 @@ public class MasterBedroom : RoomHandler
         AllowanceTokens.Add("Master Bedroom");
     }
 
-    public override void OnAllowanceTokenCollected()
+    public override void OnAllowanceTokenCollected(string token)
     {
         ModInstance.ModEventHandler.OnMoraJaiSolved("Master Bedroom");
     }

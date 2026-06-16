@@ -17,7 +17,7 @@ public abstract class RoomHandler
     public virtual void OnRoomDrafted(GameObject roomGameObject) {}
     public virtual void OnAfterRoomDrafted() { }
     public virtual void OnFSMStateChanged(Fsm fsm, string gameObjectName, string newState) { }
-    public virtual void OnAllowanceTokenCollected() { }
+    public virtual void OnAllowanceTokenCollected(string token) { }
     public virtual void OnRoomUnlocked(ModRoom room) { 
     }
 
@@ -27,6 +27,9 @@ public abstract class RoomHandler
     {
         {"BASEMENT", new Basement()},
         {"THE WELL", new Well()},
+        {"UNDERPASS", new Underpass()},
+        {"TUNNEL AREA", new TunnelArea()},
+        {"SANCTUMS", new Sanctums()},
     };
 
     public static RoomHandler CreateRoomHandler(string roomName)
@@ -51,6 +54,12 @@ public abstract class RoomHandler
             "CLOSED EXHIBIT" => new ClosedExhibit(),
             //"UTILITY CLOSET" => new UtilityCloset(),
             //"LABORATORY" => new Laboratory(),
+            "TOMB" => new Tomb(),
+            "TUNNEL" => new Tunnel(),
+            "MASTER BEDROOM" => new MasterBedroom(),
+            "SOLARIUM" => new Solarium(),
+            "LOST & FOUND" => new LostAndFound(),
+            "THRONE ROOM" => new ThroneRoom(),
             _ => null
         };
 

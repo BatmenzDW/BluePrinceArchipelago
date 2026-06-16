@@ -7,7 +7,7 @@ public class ClosedExhibit : RoomHandler
         AllowanceTokens.Add("Closed Exhibit");
     }
 
-    public override void OnAllowanceTokenCollected()
+    public override void OnAllowanceTokenCollected(string token)
     {
         ModInstance.ModEventHandler.OnMoraJaiSolved("Closed Exhibit");
     }
