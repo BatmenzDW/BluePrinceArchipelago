@@ -80,7 +80,7 @@ public static class ArchipelagoConsole
     private static bool IsRelevantMessage(string message)
     {
         if (!ShowOnlyRelevantMessages) return true;
-        if (message.Contains(ArchipelagoClient.ServerData.SlotName) || message.Contains("[Server]")) return true;
+        if (message.Contains(ArchipelagoClient.ServerData.SlotName) || message.Contains("[Server]") || message.Contains("You can't afford the hint")) return true;
         return false;
     }
 
