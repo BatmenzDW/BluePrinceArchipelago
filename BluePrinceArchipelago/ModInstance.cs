@@ -685,6 +685,9 @@ namespace BluePrinceArchipelago
                 case EventID.Drafting_Studio_Safe_Opened:
                     ModEventHandler.OnSafeOpened("Drafting Studio Safe");
                     break;
+                case EventID.Shelter_Safe_Opened:
+                    ModEventHandler.OnSafeOpened("Shelter Safe");
+                    break;
                 case EventID.Mayait_Opened:
                     ModEventHandler.OnGateOpened("Underpass Gate");
                     break;
