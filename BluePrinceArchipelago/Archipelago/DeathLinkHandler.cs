@@ -202,7 +202,18 @@ public class DeathLinkHandler
 
         if (!deathLinkEnabled) return;
         // Check Current Room
-        string currentRoom = GameObject.Find("__SYSTEM/HUD/RoomText")?.GetComponent<TextMeshPro>()?.text ?? "";
+        var roomTextObj = GameObject.Find("__SYSTEM/HUD/RoomText");
+
+        if (roomTextObj == null)
+        {
+            var parent = GameObject.Find("__SYSTEM/HUD");
+            if (parent != null)
+            {
+                roomTextObj = parent.transform.Find("RoomText")?.gameObject;
+            }
+        }
+
+        string currentRoom = roomTextObj?.GetComponent<TextMeshPro>()?.text ?? "";
 
         if (_bedroomStrings.Any(s => currentRoom.Contains(s)))
         {
