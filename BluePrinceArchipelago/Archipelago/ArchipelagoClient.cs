@@ -116,7 +116,7 @@ public class ArchipelagoClient
                     ServerData.SlotName,
                     ItemsHandlingFlags.AllItems,
                     new Version(APVersion),
-                    tags: ["AP"],
+                    tags: DeathLinkHandler._deathLinkEnabled ? ["AP", "DeathLink"] : ["AP"],
                     password: ServerData.Password,
                     requestSlotData: true
          );
