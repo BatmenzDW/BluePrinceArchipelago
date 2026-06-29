@@ -40,6 +40,7 @@ namespace BluePrinceArchipelago.Rooms
         };
 
         public static List<string> CurrentPickerArrays = [];
+        public static List<string> CurrentPickerLists = [];
 
         public static List<ModRoom> ForceRoomQueue = new(); // Not actually a queue, but is handled like that by the functions that interact with it.
 
@@ -268,16 +269,6 @@ namespace BluePrinceArchipelago.Rooms
                 room.UpdatePools();
             }
             UpdateCurrentPickerArrays();
-            foreach (string arrayName in CurrentPickerArrays)
-            {
-                if (arrayName != "")
-                {
-                    if (ModInstance.PickerDict.ContainsKey(arrayName))
-                    {
-                        PlayMakerArrayListProxy array = ModInstance.PickerDict[arrayName];
-                    }
-                }
-            }
         }
         public void EmptyDraftPool()
         {
@@ -344,6 +335,21 @@ namespace BluePrinceArchipelago.Rooms
             if (room != null)
             {
                 room.IsUnlocked = true;
+
+                // Update the RoomRecords to simulate the room as having been drafted once. This makes it so the directory properly displays the unlocked room pool.
+                if (!room.AddedToDirectory)
+                {
+                    Il2CppSystem.Collections.Hashtable RoomRecords = GameObject.Find("Global Persitent Manager").GetHashTableProxy("RoomRecords").hashTable;
+                    if (RoomRecords.ContainsKey(room.Name))
+                    {
+                        int value = RoomRecords[room.Name].Unbox<int>();
+                        if (value == 0)
+                        {
+                            RoomRecords[room.Name] = 1;
+                        }
+                        room.AddedToDirectory = true;
+                    }
+                }
                 Logging.Log($"Archipelago: Unlocked room '{room.Name}'");
                 return true;
             }
@@ -382,6 +388,7 @@ namespace BluePrinceArchipelago.Rooms
             PlayMakerFSM grid = ModInstance.TheGrid;
             PlayMakerFSM planPicker = grid.GetGameObjectVariable("theplanpick").value?.GetComponent<PlayMakerFSM>();
             CurrentPickerArrays.Clear();
+            CurrentPickerLists.Clear();
             //Check all the states for SetFsmGameObject actions. If that action is setting one of the picker arrays, add it to the current picker list.
             if (planPicker != null)
             {
@@ -392,7 +399,19 @@ namespace BluePrinceArchipelago.Rooms
                         //Add the array to the list if it's getting set as a picker array, and it's not already on the list (some pickers use dupe lists).
                         if (action.variableName.value.Contains("Array") && ! CurrentPickerArrays.Contains(action.setValue.Value.name))
                         {
-                            CurrentPickerArrays.Add(action.setValue.Value.name);
+                            if (action.setValue.Value.name.Contains("CENTER"))
+                            {
+                                CurrentPickerArrays.Add("CENTER - Tier 1");
+                                CurrentPickerArrays.Add("CENTER - Tier 2");
+                                CurrentPickerArrays.Add("CENTER - Tier 3");
+                                CurrentPickerArrays.Add("CENTER - Tier 1 G");
+                                CurrentPickerArrays.Add("CENTER - Tier 2 G");
+                                CurrentPickerArrays.Add("CENTER - Tier 3 G");
+                            }
+                            else
+                            {
+                                CurrentPickerArrays.Add(action.setValue.Value.name);
+                            }
                         }
                     }
                 }
@@ -458,6 +477,8 @@ namespace BluePrinceArchipelago.Rooms
         private bool _IsUnlocked = isUnlocked;
 
         public List<Func<ModRoom,bool>> Dependencies = new List<Func<ModRoom, bool>>();
+
+        public bool AddedToDirectory = false;
 
         public bool IsUnlocked {
             get { return _IsUnlocked; }
@@ -636,7 +657,6 @@ namespace BluePrinceArchipelago.Rooms
             if (RoomsLeftInPool > 0)
             {
                 int count = 0;
-                List<int> indexes = [];
                 // Find all copies of the room currently in the list
                 // Use GameObjectName for comparison since that's the actual Unity object name
                 for (int i = 0; i < array.GetCount(); i++)
@@ -646,7 +666,6 @@ namespace BluePrinceArchipelago.Rooms
                     {
                         if (Plugin.ModRoomManager.GetRoomByName(room.name) != null)
                         {
-                            indexes.Insert(0, i); //add to front of list so it's in descending order.
                             count++;
                         }
                     }
@@ -661,7 +680,7 @@ namespace BluePrinceArchipelago.Rooms
                             FsmBool poolRemoval = GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName)?.GetFsm(_GameObjectName)?.GetBoolVariable("POOL REMOVAL");
                             if (poolRemoval != null)
                             {
-                                poolRemoval.Value = false;
+                                poolRemoval.Value = true;
                             } //Set the FSMBool to true so that it removes the room from the pool.
                         }
                         return;
@@ -702,28 +721,6 @@ namespace BluePrinceArchipelago.Rooms
                     } //Set the FSMBool to true so that it removes the room from the pool.
                 }
             }
-        }
-
-        public bool CanDraft() {
-            PlayMakerFSM grid = ModInstance.TheGrid;
-            PlayMakerFSM planPicker = grid.GetGameObjectVariable("theplanpick").Value?.GetComponent<PlayMakerFSM>();
-            //Check all the states for SetFsmGameObject actions. If that action is setting one of the picker Arrays, 
-            if (planPicker != null) {
-                foreach (FsmState state in planPicker.FsmStates) {
-                    foreach (SetFsmGameObject action in state.GetActionsOfType<SetFsmGameObject>()) {
-                        if (action.variableName.value.Contains("Array")) {
-                            if (_PickerArrays.Contains(action.setValue.value.name)) {
-                                return true;
-                            }
-
-                        }
-                    }
-                }
-
-
-                return true;
-            }
-            return false;
         }
 
         public void UpdatePools()

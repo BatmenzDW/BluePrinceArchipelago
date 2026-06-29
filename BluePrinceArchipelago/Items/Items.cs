@@ -1,4 +1,5 @@
-﻿using Archipelago.MultiClient.Net.Models;
+﻿using Archipelago.MultiClient.Net.Helpers;
+using Archipelago.MultiClient.Net.Models;
 using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Utils;
@@ -12,7 +13,6 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using static ES3;
 
 namespace BluePrinceArchipelago.Items
 {
@@ -867,13 +867,14 @@ namespace BluePrinceArchipelago.Items
         // Adds all permanent items to inventory, meant to be run at start of day.
         public void AddAllPermanenentItems()
         {
+            Logging.LogWarning("Adding Permanent Items", "Items");
             if (PermanentItemList.Count > 0)
             {
                 foreach (PermanentItem item in PermanentItemList)
                 {
-                    for(int i = 0; i < item.unlockedCount; i++)
+                    if (item.UnlockedCount > 0)
                     {
-                        Logging.Log($"Adding {item.Count} {item.ItemType}(s)", "items");
+                        Logging.LogWarning($"Adding {item.UnlockedCount} x {item.Count} {item.ItemType}(s)", "Items");
                         item.AddItemToInventory();
                     }
                 }
@@ -922,7 +923,7 @@ namespace BluePrinceArchipelago.Items
             PermanentItem permanentItem = GetPermanentItem(itemInfo.ItemName);
             if (permanentItem != null) { 
                 permanentItem.IsUnlocked = true;
-                permanentItem.unlockedCount += 1;
+                permanentItem.UnlockedCount += 1;
             }
             else if (ItemDict.ContainsKey(itemInfo.ItemName))
             {
@@ -1125,30 +1126,35 @@ namespace BluePrinceArchipelago.Items
         }
         private void AdjustGems(int count = 1)
         {
-            ModInstance.GemManager.FindIntVariable("Gem Adjustment Amount").Value = count;
+            FsmInt AdjustmentAmount = ModInstance.GemManager.FindIntVariable("Gem Adjustment Amount");
+            AdjustmentAmount.Value = AdjustmentAmount.Value + count;
             // I think sound would be neat since it's more noticeable.
             ModInstance.GemManager.SendEvent("Update with Sound");
         }
         private void AdjustSteps(int count = 1)
         {
             // change the adjustment amount.
-            ModInstance.StepManager.FindIntVariable("Adjustment Amount").Value = count;
+            FsmInt AdjustmentAmount = ModInstance.StepManager.FindIntVariable("Adjustment Amount");
+            AdjustmentAmount.Value = AdjustmentAmount.Value + count;
             // Send the "Update" event and the step counter should update.
             ModInstance.StepManager.SendEvent("Update");
         }
         private void AdjustGold(int count = 1)
         {
-            ModInstance.GoldManager.FindIntVariable("Adjustment Amount").Value = count;
+            FsmInt AdjustmentAmount = ModInstance.GoldManager.FindIntVariable("Adjustment Amount");
+            AdjustmentAmount.Value = AdjustmentAmount.Value + count;
             ModInstance.GoldManager.SendEvent("Update"); // Might need to be "Add Coins" instead.
         }
         private void AdjustDice(int count = 1)
         {
-            ModInstance.DiceManager.FindIntVariable("Adjustment Amount").Value = count;
+            FsmInt AdjustmentAmount = ModInstance.DiceManager.FindIntVariable("Adjustment Amount");
+            AdjustmentAmount.Value = AdjustmentAmount.Value + count;
             ModInstance.DiceManager.SendEvent("Update");
         }
         private void AdjustKeys(int count = 1)
         {
-            ModInstance.KeyManager.FindIntVariable("Adjustment Amount").Value = count;
+            FsmInt AdjustmentAmount = ModInstance.KeyManager.FindIntVariable("Adjustment Amount");
+            AdjustmentAmount.Value = AdjustmentAmount.Value + count;
             ModInstance.KeyManager.SendEvent("Update");
         }
         private void AdjustLuck(int count = 1)
@@ -1193,7 +1199,7 @@ namespace BluePrinceArchipelago.Items
     public class PermanentItem(string name, GameObject gameObject, bool isUnlocked, string itemType, int count = 1) : ModItem(name, gameObject, isUnlocked)
     {
         private string _ItemType = itemType;
-        public int unlockedCount = 0;
+        public int UnlockedCount = 0;
 
         public string ItemType
         {
@@ -1243,32 +1249,37 @@ namespace BluePrinceArchipelago.Items
         }
         private void AdjustGems(int count = 1)
         {
-            ModInstance.GemManager.FindIntVariable("Gem Adjustment Amount").Value = count;
+            FsmInt AdjustmentAmount = ModInstance.GemManager.FindIntVariable("Gem Adjustment Amount");
+            AdjustmentAmount.Value = AdjustmentAmount.Value + (UnlockedCount * count);
             // I think sound would be neat since it's more noticeable.
             ModInstance.GemManager.SendEvent("Update with Sound");
         }
         private void AdjustSteps(int count = 1)
         {
             // change the adjustment amount.
-            ModInstance.StepManager.FindIntVariable("Adjustment Amount").Value = count;
+            FsmInt AdjustmentAmount = ModInstance.StepManager.FindIntVariable("Adjustment Amount");
+            AdjustmentAmount.Value = AdjustmentAmount.Value + (UnlockedCount * count);
             // Send the "Update" event and the step counter should update.
             ModInstance.StepManager.SendEvent("Update");
         }
         //Todo replace with allowance.
         private void AdjustGold(int count = 1)
         {
-            ModInstance.GoldManager.FindIntVariable("Adjustment Amount").Value = count;
+            FsmInt AdjustmentAmount = ModInstance.GoldManager.FindIntVariable("Adjustment Amount");
+            AdjustmentAmount.Value = AdjustmentAmount.Value + (UnlockedCount * count);
             ModInstance.GoldManager.SendEvent("Update"); // Might need to be "Add Coins" instead.
         }
         //Todo replace with allowance.
         private void AdjustDice(int count = 1)
         {
-            ModInstance.DiceManager.FindIntVariable("Adjustment Amount").Value = count;
+            FsmInt AdjustmentAmount = ModInstance.DiceManager.FindIntVariable("Adjustment Amount");
+            AdjustmentAmount.Value = AdjustmentAmount.Value + (UnlockedCount * count);
             ModInstance.DiceManager.SendEvent("Update");
         }
         private void AdjustKeys(int count = 1)
         {
-            ModInstance.KeyManager.FindIntVariable("Adjustment Amount").Value = count;
+            FsmInt AdjustmentAmount = ModInstance.KeyManager.FindIntVariable("Adjustment Amount");
+            AdjustmentAmount.Value = AdjustmentAmount.Value + (UnlockedCount * count);
             ModInstance.KeyManager.SendEvent("Update");
         }
         private void AdjustLuck(int count = 1)
@@ -1276,7 +1287,7 @@ namespace BluePrinceArchipelago.Items
             int luck = ModInstance.LuckManager.FindIntVariable("LUCK").Value;
             if (luck + count > 0)
             {
-                ModInstance.LuckManager.FindIntVariable("LUCK").Value = luck + count;
+                ModInstance.LuckManager.FindIntVariable("LUCK").Value = luck + (UnlockedCount * count);
             }
             else
             {
@@ -1323,12 +1334,14 @@ namespace BluePrinceArchipelago.Items
         public List<string> UsedVariables = ["Upgrade Disc - Archives", "Upgrade Disc - Bootleg", "Upgrade Disc - Cloister", "Upgrade Disc - Commissary", "Upgrade Disc - Foundation", "Upgrade Disc - Freezer", "Upgrade Disc - Garage", "Upgrade Disc - Great Hall", "Upgrade Disc - LostFound", "Upgrade Disc - Master Bedroom", "Upgrade Disc - Mechanarium", "Upgrade Disc - Morning Room", "Upgrade Disc - Office", "Upgrade Disc - Shop", "Upgrade Disc - Tomb", "Upgrade Disc - Torch Room"];
         public new GameObject GameObj = gameObject;
 
-
         public bool UnlockLocationIfExists(string locationName) {
             foreach (string location in Locations) {
                 string lowlocation = location.ToLower().Replace("ladyships", "ladyship\'s").Replace("and ", "& ");
                 if (locationName.ToLower().Contains(lowlocation)) {
-                    FoundLocations.Add(location);
+                    if (!FoundLocations.Contains(location))
+                    {
+                        FoundLocations.Add(location);
+                    }
                 }
             }
             return false;
@@ -1337,22 +1350,26 @@ namespace BluePrinceArchipelago.Items
         public void StartOfDay() {
             int i = 0;
             // Skip this Start of Day if it's a reconnect from crash or quit.
-            if (ModInstance.FirstLoad && ArchipelagoClient.Reconnected && !ArchipelagoClient.Disconnected) {
-                Logging.LogWarning("Updating Upgrade Disk Used States");
-                int j = -1;
-                foreach (string boolName in UsedVariables) {
-                    j++;
-                    string location = Locations[j];
-                    if (ModInstance.GlobalPersistentManager.GetComponent<PlayMakerFSM>().GetBoolVariable(boolName).Value) {
+            Logging.LogWarning("Updating Upgrade Disk Used States");
+            int j = -1;
+            foreach (string boolName in UsedVariables)
+            {
+                j++;
+                string location = Locations[j];
+                if (ModInstance.GlobalPersistentManager.GetComponent<PlayMakerFSM>().GetBoolVariable(boolName).Value)
+                {
+                    if (!UsedLocations.Contains(location))
+                    {
                         UsedLocations.Add(location);
                     }
                 }
-                return;
             }
+            Logging.LogWarning($"[{UsedLocations.Join(", ")}]");
             foreach (string location in RecievedItems)
             {
+                Logging.LogWarning($"{location}");
                 // Check if the item has been used, and if it has, 
-                if (!UsedLocations.Contains(location))
+                if (!UsedLocations.Contains(location.ToUpper()))
                 {
                     AddItemToInventory(location);
                 }
@@ -1363,26 +1380,23 @@ namespace BluePrinceArchipelago.Items
         // Handles the pickup of the Upgrade Disk. The Vanilla code handles the rest.
         public void OnPickup() {
             string roomname = ModInstance.RoomText.GetStringVariable("Current Room").Value;
-            roomname = roomname.ToUpper().Replace("'", "").Replace("POST", "POST DYNAMITE").Replace(" AND", "&"); // HLC, TP Dynamite, and Lost & Found name fix
+            roomname = roomname.ToUpper().Replace("'", "").Replace("POST", "POST DYNAMITE").Replace(" AND", " &"); // HLC, TP Dynamite, and Lost & Found name fix
             OnFind(roomname);
         }
         public void OnUsed(int upgradeid) {
+            Logging.LogWarning($"Upgrade With ID {upgradeid} used.");
             if (RecievedItems.Count > UsedLocations.Count)
             {
-                string location = Locations[upgradeid];
-                UsedLocations.Add(location);
-                if (CanRemoveSpawn(location))
+                string location = Locations[upgradeid-1];
+                if (!UsedLocations.Contains(location))
                 {
-                    ModInstance.GlobalPersistentManager.GetComponent<PlayMakerFSM>().GetBoolVariable(UsedVariables[upgradeid]).Value = true;
+                    UsedLocations.Add(location);
                 }
+                ModInstance.GlobalPersistentManager.GetComponent<PlayMakerFSM>().GetBoolVariable(UsedVariables[upgradeid-1]).Value = true;
             }
             else {
                 Logging.LogWarning("Unable to set Locaation as used, no received locations are currently unused.", "UpgradeDisks");
             }
-        }
-        // Checks if the vanilla way to prevent the item from being spawned can be used.
-        private bool CanRemoveSpawn(string location) { 
-            return UsedLocations.Contains(location) && RecievedItems.Contains(location);
         }
 
         // Sends the location for the found upgrade disk.
@@ -1392,12 +1406,23 @@ namespace BluePrinceArchipelago.Items
             {
                 FoundLocations.Add(location.ToUpper());
                 //Fix location name for pickup event.
-                location = location.Replace("LADYSHIPS", "LADYSHIP's");
-                if (CanRemoveSpawn(location)) {
-                    ModInstance.GlobalManager.GetComponent<PlayMakerFSM>().GetBoolVariable(UsedVariables[Locations.IndexOf(location)]).Value = true;
-                }
+                location = location.Replace("LADYSHIPS", "LADYSHIP's").Replace(" &", " AND");
+                Logging.LogWarning(location);
+                ModInstance.GlobalManager.GetComponent<PlayMakerFSM>().GetBoolVariable(UsedVariables[Locations.IndexOf(location)]).Value = true;
                 ModInstance.ModEventHandler.OnUgradeDiskFound(location);
             }
+        }
+
+        public void OnSpawn(string location, GameObject spawnedObj) {
+            if (spawnedObj != null) {
+                if (FoundLocations.Contains(location.ToUpper())) {
+                    GameObject.Destroy(spawnedObj);
+                    Logging.LogWarning($"Despawned Upgrade Disk in {location}, since it has been found before.");
+                }
+                Logging.LogWarning($"Unable to despawn Upgrade Disk in {location}, location is not a valid location.");
+                return;
+            }
+            Logging.LogWarning($"Unable to despawn Upgrade Disk in {location}, spawnedObj does not exist.");
         }
 
         public void AddItemToInventory(string location)
@@ -1406,32 +1431,28 @@ namespace BluePrinceArchipelago.Items
             if (!RecievedItems.Contains(location.ToUpper()))
             {
                 RecievedItems.Add(location.ToUpper());
-                ModInstance.GlobalManager.GetBoolVariable(location.ToTitleCase() + " Disk").Value = true;
             }
-            if (!UsedLocations.Contains(location.ToUpper()))
+            GameObject InventoryGO = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory");
+            PlayMakerFSM Inventory = InventoryGO.GetFsm("Inventory Icons");
+            PlayMakerArrayListProxy InventoryIcons = InventoryGO.GetArrayListProxy("Inventory Icons");
+            GameObject icon = Plugin.UniqueItemManager.GetIconGameObject("UPGRADE DISK");
+            PlayMakerArrayListProxy UpgradeDisks = GameObject.Find("__SYSTEM/Upgrade Disks").GetArrayListProxy("upgrade disk pickup");
+
+            if (icon != null && InventoryIcons != null)
             {
+                UpgradeDisks.Add(Locations.IndexOf(location) + 1, "Integer");
+                ModItemManager.PickedUp.Add(Plugin.ModItemManager.GetInventoryItem("UPGRADE DISK"), "GameObject");
+                InventoryIcons.Add(icon, "GameObject");
 
-                GameObject InventoryGO = GameObject.Find("UI OVERLAY CAM/MENU/Blue Print /Inventory");
-                PlayMakerFSM Inventory = InventoryGO.GetFsm("Inventory Icons");
-                PlayMakerArrayListProxy InventoryIcons = InventoryGO.GetArrayListProxy("Inventory Icons");
-                GameObject icon = Plugin.UniqueItemManager.GetIconGameObject("UPGRADE DISK");
-                PlayMakerArrayListProxy UpgradeDisks = GameObject.Find("__SYSTEM/Upgrade Disks").GetArrayListProxy("upgrade disk pickup");
 
-                if (icon != null && InventoryIcons != null)
+                if (Name == "RUNNING SHOES")
                 {
-                    UpgradeDisks.Add(Locations.IndexOf(location), "Integer");
-                    ModItemManager.PickedUp.Add(Plugin.ModItemManager.GetInventoryItem("UPGRADE DISK"), "GameObject");
-                    InventoryIcons.Add(icon, "GameObject");
-
-
-                    if (Name == "RUNNING SHOES")
-                    {
-                        ModInstance.RunningEngine.SendEvent("Update");
-                    }
-                    //Send Event 0 to the Global Manager.
+                    ModInstance.RunningEngine.SendEvent("Update");
                 }
-             }
-            
+                //Send Event 0 to the Global Manager.
+            }
+
+
         }
     }
 
@@ -1448,19 +1469,19 @@ namespace BluePrinceArchipelago.Items
         {
             //Unique Items
             //  Keys
-            Plugin.ModItemManager.AddItem(new UniqueItem("CAR KEYS", Plugin.ModItemManager.GetInventoryItem("CAR KEYS"), false, ItemSanityType.Key));
+            Plugin.ModItemManager.AddItem(new UniqueItem("CAR KEYS", Plugin.ModItemManager.GetInventoryItem("CAR KEYS"), false, ItemSanityType.Key, true, false, ["Locksmith"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("KEYCARD", Plugin.ModItemManager.GetInventoryItem("KEYCARD"), false, ItemSanityType.Key));
-            Plugin.ModItemManager.AddItem(new UniqueItem("SILVER KEY", Plugin.ModItemManager.GetInventoryItem("SILVER KEY"), false, ItemSanityType.Key));
+            Plugin.ModItemManager.AddItem(new UniqueItem("SILVER KEY", Plugin.ModItemManager.GetInventoryItem("SILVER KEY"), false, ItemSanityType.Key, true, false, ["Locksmith", "Dig"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("KEY 8", Plugin.ModItemManager.GetInventoryItem("KEY 8"), false, ItemSanityType.Key, true, true));
             Plugin.ModItemManager.AddItem(new UniqueItem("BASEMENT KEY", Plugin.ModItemManager.GetInventoryItem("BASEMENT KEY"), false, ItemSanityType.Key));
-            Plugin.ModItemManager.AddItem(new UniqueItem("VAULT KEY 149", Plugin.ModItemManager.GetInventoryItem("VAULT KEY 149"), false, ItemSanityType.Key));
-            Plugin.ModItemManager.AddItem(new UniqueItem("VAULT KEY 233", Plugin.ModItemManager.GetInventoryItem("VAULT KEY 233"), false, ItemSanityType.Key));
-            Plugin.ModItemManager.AddItem(new UniqueItem("VAULT KEY 304", Plugin.ModItemManager.GetInventoryItem("VAULT KEY 304"), false, ItemSanityType.Key));
-            Plugin.ModItemManager.AddItem(new UniqueItem("VAULT KEY 370", Plugin.ModItemManager.GetInventoryItem("VAULT KEY 370"), false, ItemSanityType.Key));
+            Plugin.ModItemManager.AddItem(new UniqueItem("VAULT KEY 149", Plugin.ModItemManager.GetInventoryItem("VAULT KEY 149"), false, ItemSanityType.Key, true, false, ["Dig"]));
+            Plugin.ModItemManager.AddItem(new UniqueItem("VAULT KEY 233", Plugin.ModItemManager.GetInventoryItem("VAULT KEY 233"), false, ItemSanityType.Key, true, false, ["Dig"]));
+            Plugin.ModItemManager.AddItem(new UniqueItem("VAULT KEY 304", Plugin.ModItemManager.GetInventoryItem("VAULT KEY 304"), false, ItemSanityType.Key, true, false, ["Dig"]));
+            Plugin.ModItemManager.AddItem(new UniqueItem("VAULT KEY 370", Plugin.ModItemManager.GetInventoryItem("VAULT KEY 370"), false, ItemSanityType.Key, true, false, ["Dig"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("DIARY KEY", Plugin.ModItemManager.GetInventoryItem("DIARY KEY"), false, ItemSanityType.Key, true, true));
-            Plugin.ModItemManager.AddItem(new UniqueItem("PRISM KEY_0", Plugin.ModItemManager.GetInventoryItem("PRISM KEY"), false, ItemSanityType.Key, false));
+            Plugin.ModItemManager.AddItem(new UniqueItem("PRISM KEY_0", Plugin.ModItemManager.GetInventoryItem("PRISM KEY"), false, ItemSanityType.Key, false, false, ["Locksmith"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("KEY of Aries", Plugin.ModItemManager.GetInventoryItem("KEY of Aries"), false, ItemSanityType.Key, false));
-            Plugin.ModItemManager.AddItem(new UniqueItem("SECRET GARDEN KEY", Plugin.ModItemManager.GetInventoryItem("SECRET GARDEN KEY"), false, ItemSanityType.Key));
+            Plugin.ModItemManager.AddItem(new UniqueItem("SECRET GARDEN KEY", Plugin.ModItemManager.GetInventoryItem("SECRET GARDEN KEY"), false, ItemSanityType.Key, true, false, ["Locksmith", "Dig"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("MICROCHIP 1", Plugin.ModItemManager.GetInventoryItem("MICROCHIP 1"), false, ItemSanityType.Key, true, true));
             Plugin.ModItemManager.AddItem(new UniqueItem("MICROCHIP 2", Plugin.ModItemManager.GetInventoryItem("MICROCHIP 2"), false, ItemSanityType.Key, true, true));
             Plugin.ModItemManager.AddItem(new UniqueItem("MICROCHIP 3", Plugin.ModItemManager.GetInventoryItem("MICROCHIP 3"), false, ItemSanityType.Key, true, true));
@@ -1470,21 +1491,21 @@ namespace BluePrinceArchipelago.Items
 
             //  Standard Items
             Plugin.ModItemManager.AddItem(new UniqueItem("BATTERY PACK", Plugin.ModItemManager.GetInventoryItem("BATTERY PACK"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("BROKEN LEVER", Plugin.ModItemManager.GetInventoryItem("BROKEN LEVER"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("MAGNIFYING GLASS", Plugin.ModItemManager.GetInventoryItem("MAGNIFYING GLASS"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("METAL DETECTOR", Plugin.ModItemManager.GetInventoryItem("METAL DETECTOR"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("SHOVEL", Plugin.ModItemManager.GetInventoryItem("SHOVEL"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("SLEDGE HAMMER", Plugin.ModItemManager.GetInventoryItem("SLEDGE HAMMER"), false, ItemSanityType.Standard));
+            Plugin.ModItemManager.AddItem(new UniqueItem("BROKEN LEVER", Plugin.ModItemManager.GetInventoryItem("BROKEN LEVER"), false, ItemSanityType.Standard, true, false, ["Dig"]));
+            Plugin.ModItemManager.AddItem(new UniqueItem("MAGNIFYING GLASS", Plugin.ModItemManager.GetInventoryItem("MAGNIFYING GLASS"), false, ItemSanityType.Standard, true, false, ["Commissary"]));
+            Plugin.ModItemManager.AddItem(new UniqueItem("METAL DETECTOR", Plugin.ModItemManager.GetInventoryItem("METAL DETECTOR"), false, ItemSanityType.Standard, true, false, ["Commissary"]));
+            Plugin.ModItemManager.AddItem(new UniqueItem("SHOVEL", Plugin.ModItemManager.GetInventoryItem("SHOVEL"), false, ItemSanityType.Standard, true, false, ["Commissary"]));
+            Plugin.ModItemManager.AddItem(new UniqueItem("SLEDGE HAMMER", Plugin.ModItemManager.GetInventoryItem("SLEDGE HAMMER"), false, ItemSanityType.Standard, true, false, ["Commissary"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("TELESCOPE", Plugin.ModItemManager.GetInventoryItem("TELESCOPE"), false, ItemSanityType.Standard, true, true));
-            Plugin.ModItemManager.AddItem(new UniqueItem("RUNNING SHOES", Plugin.ModItemManager.GetInventoryItem("RUNNING SHOES"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("SALT SHAKER", Plugin.ModItemManager.GetInventoryItem("SALT SHAKER"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("SLEEPING MASK", Plugin.ModItemManager.GetInventoryItem("SLEEPING MASK"), false, ItemSanityType.Standard));
+            Plugin.ModItemManager.AddItem(new UniqueItem("RUNNING SHOES", Plugin.ModItemManager.GetInventoryItem("RUNNING SHOES"), false, ItemSanityType.Standard, true, false, ["Commissary"]));
+            Plugin.ModItemManager.AddItem(new UniqueItem("SALT SHAKER", Plugin.ModItemManager.GetInventoryItem("SALT SHAKER"), false, ItemSanityType.Standard, true, false, ["Commissary"]));
+            Plugin.ModItemManager.AddItem(new UniqueItem("SLEEPING MASK", Plugin.ModItemManager.GetInventoryItem("SLEEPING MASK"), false, ItemSanityType.Standard, true, false, ["Commissary"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("COIN PURSE", Plugin.ModItemManager.GetInventoryItem("COIN PURSE"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("COUPON BOOK", Plugin.ModItemManager.GetInventoryItem("COUPON BOOK"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("LOCK PICK KIT", Plugin.ModItemManager.GetInventoryItem("LOCK PICK KIT"), false, ItemSanityType.Standard));
+            Plugin.ModItemManager.AddItem(new UniqueItem("LOCK PICK KIT", Plugin.ModItemManager.GetInventoryItem("LOCK PICK KIT"), false, ItemSanityType.Standard, true, false, ["Locksmith"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("LUCKY RABBIT'S FOOT", Plugin.ModItemManager.GetInventoryItem("LUCKY RABBIT'S FOOT"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("TREASURE MAP", Plugin.ModItemManager.GetInventoryItem("TREASURE MAP"), false, ItemSanityType.Standard));
-            Plugin.ModItemManager.AddItem(new UniqueItem("STOPWATCH", Plugin.ModItemManager.GetInventoryItem("STOPWATCH"), false, ItemSanityType.Standard));
+            Plugin.ModItemManager.AddItem(new UniqueItem("STOPWATCH", Plugin.ModItemManager.GetInventoryItem("STOPWATCH"), false, ItemSanityType.Standard, true, false, ["Dig"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("REPELLENT", Plugin.ModItemManager.GetInventoryItem("REPELLENT"), false, ItemSanityType.Standard, false, true));
             Plugin.ModItemManager.AddItem(new UniqueItem("WATERING CAN", Plugin.ModItemManager.GetInventoryItem("WATERING CAN"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("LUNCH BOX", Plugin.ModItemManager.GetInventoryItem("LUNCH BOX"), false, ItemSanityType.Standard, false, true));
@@ -1492,7 +1513,7 @@ namespace BluePrinceArchipelago.Items
             Plugin.ModItemManager.AddItem(new UniqueItem("CROWN", Plugin.ModItemManager.GetInventoryItem("CROWN"), false, ItemSanityType.Standard));
             Plugin.ModItemManager.AddItem(new UniqueItem("PAPER CROWN", Plugin.ModItemManager.GetInventoryItem("PAPER CROWN"), false, ItemSanityType.Standard, true, true));
             Plugin.ModItemManager.AddItem(new UniqueItem("GEAR WRENCH", Plugin.ModItemManager.GetInventoryItem("GEAR WRENCH"), false, ItemSanityType.Standard, true, true));
-            Plugin.ModItemManager.AddItem(new UniqueItem("COMPASS", Plugin.ModItemManager.GetInventoryItem("COMPASS"), false, ItemSanityType.Standard));
+            Plugin.ModItemManager.AddItem(new UniqueItem("COMPASS", Plugin.ModItemManager.GetInventoryItem("COMPASS"), false, ItemSanityType.Standard, true, false, ["Commissary"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("HALL PASS", Plugin.ModItemManager.GetInventoryItem("HALL PASS"), false, ItemSanityType.Standard, true, true));
 
             // Workshop Items
@@ -1508,13 +1529,13 @@ namespace BluePrinceArchipelago.Items
             // Special Shop Items
             Plugin.ModItemManager.AddItem(new UniqueItem("CHRONOGRAPH", Plugin.ModItemManager.GetInventoryItem("CHRONOGRAPH"), false, ItemSanityType.SpecialShop));
             Plugin.ModItemManager.AddItem(new UniqueItem("EMERALD BRACELET", Plugin.ModItemManager.GetInventoryItem("EMERALD BRACELET"), false, ItemSanityType.SpecialShop));
-            Plugin.ModItemManager.AddItem(new UniqueItem("MASTER KEY", Plugin.ModItemManager.GetInventoryItem("MASTER KEY"), false, ItemSanityType.SpecialShop));
+            Plugin.ModItemManager.AddItem(new UniqueItem("MASTER KEY", Plugin.ModItemManager.GetInventoryItem("MASTER KEY"), false, ItemSanityType.SpecialShop, true, false, ["Locksmith"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("MOON PENDANT", Plugin.ModItemManager.GetInventoryItem("MOON PENDANT"), false, ItemSanityType.SpecialShop));
             Plugin.ModItemManager.AddItem(new UniqueItem("ORNATE COMPASS", Plugin.ModItemManager.GetInventoryItem("ORNATE COMPASS"), false, ItemSanityType.SpecialShop));
             Plugin.ModItemManager.AddItem(new UniqueItem("SILVER SPOON", Plugin.ModItemManager.GetInventoryItem("SLIVER SPOON"), false, ItemSanityType.SpecialShop));
             Plugin.ModItemManager.AddItem(new UniqueItem("MORNING STAR", Plugin.ModItemManager.GetInventoryItem("MORNING STAR"), false, ItemSanityType.SpecialShop));
             Plugin.ModItemManager.AddItem(new UniqueItem("THE AXE", Plugin.ModItemManager.GetInventoryItem("THE AXE"), false, ItemSanityType.SpecialShop));
-            Plugin.ModItemManager.AddItem(new UniqueItem("KNIGHTS SHIELD", Plugin.ModItemManager.GetInventoryItem("KNIGHTS SHIELD"), false, ItemSanityType.SpecialShop));
+            Plugin.ModItemManager.AddItem(new UniqueItem("KNIGHTS SHIELD", Plugin.ModItemManager.GetInventoryItem("KNIGHTS SHIELD"), false, ItemSanityType.SpecialShop, true, false, ["Dig"]));
             Plugin.ModItemManager.AddItem(new UniqueItem("TORCH", Plugin.ModItemManager.GetInventoryItem("KNIGHTS SHIELD"), false, ItemSanityType.SpecialShop));
 
             //Permanent Items

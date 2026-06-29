@@ -822,14 +822,17 @@ public class ItemCommand(string name) : Command(name)
                             if (!ModItemManager.PickedUp.Contains(item.name))
                             {
                                 ModItemManager.PickedUp.Add(item, "GameObject");
+                                
                             }
                             InventoryIcons.Add(icon, "GameObject");
 
                             if (itemName == "RUNNING SHOES")
                             {
                                 ModInstance.RunningEngine.SendEvent("Update");
+                                
                             }
                             //Send Event 0 to the Global Manager.
+                            return;
                         }
                         ArchipelagoConsole.LogMessage($"Error Running Command {Name} {subcommand}: {itemName} is not a valid Item Name");
                         return;
