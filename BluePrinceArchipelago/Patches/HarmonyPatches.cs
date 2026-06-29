@@ -25,6 +25,7 @@ namespace BluePrinceArchipelago.Patches
                 // Unsure why this results in a null object in some instances.
                 if (poolName == "Pickup" && obj != null)
                 {
+                    Logging.LogWarning($"Spawning item {obj.name}");
                     Plugin.UniqueItemManager.OnItemSpawn(obj, poolName, transformObj, spawnedObj);
                     //Can theoritically replace the game object spawned by replacing the __instance.gameObject.
                 }
@@ -110,7 +111,7 @@ namespace BluePrinceArchipelago.Patches
 
         [HarmonyPatch(typeof(StatsLogger), nameof(StatsLogger.EndDay))]
         [HarmonyPostfix]
-        static void EndDayPostfix()
+        static void EndDayPostfix(StatsLogger __instance)
         {
             Logging.Log("StatsLogger EndDay Postfix called.", "DeathLink");
             ModInstance.OnDayEnd();

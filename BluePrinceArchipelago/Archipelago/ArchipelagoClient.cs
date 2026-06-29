@@ -8,12 +8,14 @@ using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Models;
 using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
+using Il2CppSystem.Collections;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using static BluePrinceArchipelago.Archipelago.ItemQueue;
+using UnityEngine;
+using static ES3;
 
 namespace BluePrinceArchipelago.Archipelago;
 
@@ -283,7 +285,7 @@ public class ArchipelagoClient
             {
                 session.Items.DequeueItem();
                 // Handle any items that have not been received formally.
-                if (Received.RemoveFirst(item.ItemName) == -1 || (item.ItemName.Contains("UPGRADE DISK") && ArchipelagoOptions.UpgradeDiskSanity)) {
+                if (Received.RemoveFirst(item.ItemName) == -1) {
                     Logging.LogWarning($"Requeueing {item.ItemName}");
                     ModInstance.QueueManager.AddItemToQueue(item);
                 } 
@@ -367,10 +369,22 @@ public class ArchipelagoClient
         }
         foreach (ItemInfo item in session.Items.AllItemsReceived)
         {
+            if (item.ItemName.ToUpper().Contains("UPGRADE DISK")) {
+                string location = item.ItemName.ToUpper().Replace("UPGRADE DISK ", "");
+                if (!ModItemManager.UpgradeDisks.RecievedItems.Contains(location))
+                {
+                    ModItemManager.UpgradeDisks.RecievedItems.Add(location);
+                }
+            }
             UniqueItem uniqueItem = Plugin.ModItemManager.GetUniqueItem(item.ItemName);
+            PermanentItem permanentItem = Plugin.ModItemManager.GetPermanentItem(item.ItemName);
             if (uniqueItem != null)
             {
                 uniqueItem.IsUnlocked = true;
+            }
+            else if (permanentItem != null) { 
+                permanentItem.IsUnlocked = true;
+                permanentItem.UnlockedCount++;
             }
             else
             {
@@ -581,8 +595,8 @@ public class ArchipelagoQueueManager {
     public void SetItemQueue(List<ItemInfo> queueList) {
         _ReceivedItemQueue.SetQueueList(queueList);
     }
-    public void AddUpgradeUsedToQueue(int value) {
-        _UpgradeUsedQueue.Enqueue(value);
+    public bool AddUpgradeUsedToQueue(int value) {
+        return _UpgradeUsedQueue.Enqueue(value);
     }
 
     public void SetLocationQueue(List<string> queueList) {
@@ -744,7 +758,11 @@ public class ArchipelagoQueueManager {
             // If the item is an upgrade disk.
             if (item.ItemName.ToUpper().Contains("UPGRADE DISK")) {
                 // Trim the name of the item to remove the upgrade disk part.
-                ModItemManager.UpgradeDisks.RecievedItems.Add(item.ItemName.ToUpper().Replace("UPGRADE DISK ", ""));
+                string location = item.ItemName.ToUpper().Replace("UPGRADE DISK ", "");
+                if (!ModItemManager.UpgradeDisks.RecievedItems.Contains(location))
+                {
+                    ModItemManager.UpgradeDisks.RecievedItems.Add(location);
+                }
                 return false;
             }
             // if not handle it as an Item.
@@ -801,7 +819,7 @@ public class ArchipelagoQueueManager {
     public void DequeueUsedUpgrade() {
         if (_UpgradeUsedQueue.Count > 0) {
             int upgradeId = _UpgradeUsedQueue.Dequeue() ?? -1;
-            if (upgradeId > -1)
+            if (upgradeId > 0)
             {
                 ModItemManager.UpgradeDisks.OnUsed(upgradeId);
             }
@@ -840,6 +858,20 @@ public class ArchipelagoQueueManager {
 
         room.IsUnlocked = true;
 
+        // Update the RoomRecords to simulate the room as having been drafted once. This makes it so the directory properly displays the unlocked room pool.
+        if (!room.AddedToDirectory)
+        {
+            Il2CppSystem.Collections.Hashtable RoomRecords = GameObject.Find("Global Persitent Manager").GetHashTableProxy("RoomRecords").hashTable;
+            if (RoomRecords.ContainsKey(room.Name))
+            {
+                int value = RoomRecords[room.Name].Unbox<int>();
+                if (value == 0)
+                {
+                    RoomRecords[room.Name] = 1;
+                }
+                room.AddedToDirectory = true;
+            }
+        }
         // Special handling for CLASSROOM: always increment pool count
         // This allows receiving multiple "Classroom" items to add multiple copies to the pool
         // The base game will randomly pick which grade appears when drafted
@@ -885,7 +917,7 @@ public class ArchipelagoQueueManager {
 // Using a list as a Queue due to issues with Queues breaking. May revert back to a proper Queue later.
 public class ItemQueue(string name) {
     private readonly string _Name = name;
-    public string Name { 
+    public string Name {
         get { return _Name; }
     }
     private List<ItemInfo> _Queue = new List<ItemInfo>();
@@ -900,18 +932,18 @@ public class ItemQueue(string name) {
         }
     }
     public void Enqueue(ItemInfo[] items) {
-            _Queue.AddRange(items);
+        _Queue.AddRange(items);
     }
-    public void RemoveItemFromQueue(ItemInfo item) { 
+    public void RemoveItemFromQueue(ItemInfo item) {
         int index = IndexOf(item.ItemName);
-        if (index != -1) { 
+        if (index != -1) {
             _Queue.RemoveAt(index);
         }
     }
     private int IndexOf(string itemName) {
         for (int i = 0; i < _Queue.Count; i++) {
-            if (_Queue[i].ItemName == itemName) { 
-                return i; 
+            if (_Queue[i].ItemName == itemName) {
+                return i;
             }
         }
         return -1;
@@ -936,77 +968,83 @@ public class ItemQueue(string name) {
     {
         return _Queue;
     }
-    public class LocationQueue(string name) {
-        private readonly string _Name = name;
-        public string Name
-        {
-            get { return _Name; }
-        }
-        private List<string> _Queue = new List<string>();
-        public int Count
-        {
-            get { return _Queue.Count; }
-        }
-        public void Enqueue(string location)
-        {
-            _Queue.Add(location);
-        }
-        public void Enqueue(string[] locations) {
-            _Queue.AddRange(locations);
-        }
-        public string Dequeue()
-        {
-            if (_Queue.Count == 0)
-            {
-                Logging.LogWarning("No Locations in Queue, cannot Dequeue");
-                return null;
-            }
-            string temp = _Queue[0];
-            _Queue.RemoveAt(0);
-            return temp;
-        }
-
-        public void SetQueueList(List<string> queueList)
-        {
-            _Queue = queueList;
-        }
-
-        public List<string> GetLocationQueue()
-        {
-            return _Queue;
-        }
-    }
-    public class UpgradeDiskUsedQueue(string name)
+}
+public class LocationQueue(string name) {
+    private readonly string _Name = name;
+    public string Name
     {
-        private readonly string _Name = name;
-        public string Name
+        get { return _Name; }
+    }
+    private List<string> _Queue = new List<string>();
+    public int Count
+    {
+        get { return _Queue.Count; }
+    }
+    public void Enqueue(string location)
+    {
+        _Queue.Add(location);
+    }
+    public void Enqueue(string[] locations)
+    {
+        _Queue.AddRange(locations);
+    }
+    public string Dequeue()
+    {
+        if (_Queue.Count == 0)
         {
-            get { return _Name; }
+            Logging.LogWarning("No Locations in Queue, cannot Dequeue");
+            return null;
         }
-        private List<int> _Queue = new List<int>();
-        public int Count
-        {
-            get { return _Queue.Count; }
-        }
-        public void Enqueue(int value)
-        {
-            _Queue.Add(value);
-        }
-        public int? Dequeue()
-        {
-            if (_Queue.Count == 0)
-            {
-                Logging.LogWarning("No Locations in Queue, cannot Dequeue");
-                return null;
-            }
-            int temp = _Queue[0];
-            _Queue.RemoveAt(0);
-            return temp;
-        }
+        string temp = _Queue[0];
+        _Queue.RemoveAt(0);
+        return temp;
+    }
 
-        public void SetQueueList(List<int> queueList)
-        {
-            _Queue = queueList;
+    public void SetQueueList(List<string> queueList)
+    {
+        _Queue = queueList;
+    }
+
+    public List<string> GetLocationQueue()
+    {
+        return _Queue;
+    }
+
+}
+public class UpgradeDiskUsedQueue(string name)
+{
+    private readonly string _Name = name;
+    public string Name
+    {
+        get { return _Name; }
+    }
+    private List<int> _Queue = new List<int>();
+    public int Count
+    {
+        get { return _Queue.Count; }
+    }
+    public bool Enqueue(int value)
+    {
+        if (!_Queue.Contains(value)) {
+            _Queue.Add(value);
+            return true;
         }
+        return false;
+    }
+    public int? Dequeue()
+    {
+        if (_Queue.Count == 0)
+        {
+            Logging.LogWarning("No Locations in Queue, cannot Dequeue");
+            return null;
+        }
+        int temp = _Queue[0];
+        _Queue.RemoveAt(0);
+        return temp;
+    }
+
+    public void SetQueueList(List<int> queueList)
+    {
+        _Queue = queueList;
     }
 }

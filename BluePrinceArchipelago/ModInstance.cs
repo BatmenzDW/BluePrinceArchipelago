@@ -35,6 +35,7 @@ namespace BluePrinceArchipelago
         public static GameObject StatsLogger = new();
         public static GameObject PickupSpawnPool = new();
         public static GameObject Prefabs = new();
+        public static GameObject UpgradeDisksObj = new();
 
         // FSMs
         public static PlayMakerFSM GemManager = new();
@@ -48,12 +49,14 @@ namespace BluePrinceArchipelago
         public static PlayMakerFSM GlobalManager = new();
         public static PlayMakerFSM TheGrid = new();
         public static PlayMakerFSM MasterPicker = new();
+        public static PlayMakerFSM LocksmithMenu = new();
         public static PlayMakerFSM CommissaryMenu = new();
         public static PlayMakerFSM TradingPostSelection = new();
         public static PlayMakerFSM EndGameClicker = new();
         public static PlayMakerFSM RoomText = new();
         public static PlayMakerFSM APEventFSM = new();
         public static PlayMakerFSM RunningEngine = new();
+        public static PlayMakerFSM DigEngine = new();
 
         // Transforms
         public static Transform YouFoundText = new();
@@ -70,7 +73,7 @@ namespace BluePrinceArchipelago
         public static bool ArchipelagoPrefabsLoaded { get; private set; } = false;
 
         // Other
-        public static Dictionary<string, PlayMakerArrayListProxy> PickerDict = [];
+        public static Dictionary<string, PlayMakerArrayListProxy> PickerDict { set; get; } =  [];
         public static int SaveSlot = 5; // Will be used to better confirm the loaded archipelago run.
 
         public static HashSet<string> SanctumsSolved = [];
@@ -163,12 +166,15 @@ namespace BluePrinceArchipelago
                 GlobalPersistentManager = GameObject.Find("Global Persitent Manager")?.GetComponent<PlayMakerFSM>();
                 TheGrid = GameObject.Find("__SYSTEM/THE GRID")?.GetComponent<PlayMakerFSM>();
                 MasterPicker = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE")?.GetComponent<PlayMakerFSM>();
+                LocksmithMenu = GameObject.Find("UI OVERLAY CAM/Locksmith Menu")?.GetComponent<PlayMakerFSM>();
                 CommissaryMenu = GameObject.Find("UI OVERLAY CAM/Commissary Menu/")?.GetComponent<PlayMakerFSM>();
                 EndGameClicker = GameObject.Find("ROOMS/Antechamber/NON STATIC/DOOR 46/grey door/End Game Clicker")?.GetComponent<PlayMakerFSM>();//TODO get the full proper path name for this GameObject.
                 DraftValidationAction = MasterPicker.GetState("3").GetFirstActionOfType<CallMethod>();
                 RoomText = GameObject.Find("__SYSTEM/HUD/Room Text")?.GetComponent<PlayMakerFSM>();
                 PickupSpawnPool = GameObject.Find("__SYSTEM/Pickup Spawn Pools").gameObject;
                 RunningEngine = GameObject.Find("__SYSTEM/RUN ENGINE/Running Engine")?.GetComponent<PlayMakerFSM>();
+                DigEngine = GameObject.Find("__SYSTEM/Utility/Dig Engine")?.GetComponent<PlayMakerFSM>();
+                UpgradeDisksObj = GameObject.Find("__SYSTEM/Upgrade Disks");
                 FSMPatches.RoomForcer(MasterPicker); //Applies the Room Forcing patch (which also removes the forced Day 1 Draft 1 draft).
                 LoadArrays();
                 Plugin.ModRoomManager.Reset(); // Clear stale room state from any previous scene load
@@ -274,8 +280,29 @@ namespace BluePrinceArchipelago
                 }
             }
             if (targetName == "Upgrade Disks" && eventName == "Go") {
-                int usedVariable = ModItemManager.UpgradeDisks.UsedVariables.IndexOf(ModItemManager.UpgradeDisks.RecievedItems[ModItemManager.UpgradeDisks.UsedLocations.Count]);
-                QueueManager.AddUpgradeUsedToQueue(usedVariable);
+                PlayMakerArrayListProxy UpgradeIDs = UpgradeDisksObj.GetComponent<PlayMakerArrayListProxy>();
+                int length = UpgradeIDs.arrayList.Count;
+                int i = 0;
+                int id = -1;
+                bool exit = false;
+                while (i < length && !exit) {
+                    try
+                    {
+                        id = UpgradeIDs.GetItemAt(i).Unbox<int>();
+                    }
+                    catch {
+                        id = -1;
+                        Logging.LogWarning("Error While attempting to convert Array item to integer");
+                    }
+                    if (id > -1) {
+                        if (QueueManager.AddUpgradeUsedToQueue(i)) {
+                            exit = true;
+                            QueueManager.AddUpgradeUsedToQueue(id);
+                        }
+                    }
+                    i++;
+                }
+                
             }
             if (targetName == "Global Manager" && eventName.Contains("Pickup"))
             {
@@ -794,6 +821,7 @@ namespace BluePrinceArchipelago
         }
 
         public static void OnConnectToArchipelago() {
+            GameObject.Find("__SYSTEM/HUD/Stars").SetActiveRecursively(true);
             // Only sync if rooms are already initialized (connected mid-run, not from main menu)
             if (HasInitializedRooms)
             {
@@ -837,7 +865,7 @@ namespace BluePrinceArchipelago
 
             GameObject CommissaryDiskNotification = GameObject.Instantiate(YouBoughtUpgradeDisk, YouBoughtUpgradeDisk.transform.parent);
             CommissaryDiskNotification.SetActive(false);
-            CommissaryDiskNotification.name = "You Found Upgrade Disk - Commissary";
+            CommissaryDiskNotification.name = "You Bought Upgrade Disk - Commissary";
 
             GameObject FoundationDiskNotification = GameObject.Instantiate(YouFoundUpgradeDisk, YouFoundUpgradeDisk.transform.parent);
             FoundationDiskNotification.SetActive(false);
@@ -883,7 +911,7 @@ namespace BluePrinceArchipelago
             AbandonedMineDiskNotification.SetActive(false);
             AbandonedMineDiskNotification.name = "You Found Upgrade Disk - Abandoned Mine";
 
-            UpgradeDisks.YouFoundObjects = [ArchivesDiskNotification, TradingPostDiskNotification, TombDiskNotification, CommissaryDiskNotification, FoundationDiskNotification, FreezerDiskNotification, GarageDiskNotification, GarageDiskNotification, GreatHallDiskNotification, LostAndFoundDiskNotification, HLCDiskNotification, MechanariumDiskNotification, MorningRoomDiskNotification, OfficeDiskNotification, null, VaultDiskNotification, AbandonedMineDiskNotification];
+            UpgradeDisks.YouFoundObjects = [ArchivesDiskNotification, TradingPostDiskNotification, TombDiskNotification, CommissaryDiskNotification, FoundationDiskNotification, FreezerDiskNotification, GarageDiskNotification, GreatHallDiskNotification, LostAndFoundDiskNotification, HLCDiskNotification, MechanariumDiskNotification, MorningRoomDiskNotification, OfficeDiskNotification, null, VaultDiskNotification, AbandonedMineDiskNotification];
         }
 
         private static void InitializeRooms()

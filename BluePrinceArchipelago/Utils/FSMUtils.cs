@@ -1,6 +1,7 @@
 ﻿using BluePrinceArchipelago.Utils.Actions;
 using HutongGames.PlayMaker;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using Rewired.Data.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +27,18 @@ namespace BluePrinceArchipelago.Utils
                 if (arrayListProxy.referenceName == arrayListProxyName)
                 {
                     return arrayListProxy;
+                }
+            }
+            return null;
+        }
+
+        public static PlayMakerHashTableProxy GetHashTableProxy(this GameObject go, string name)
+        {
+            foreach (PlayMakerHashTableProxy hashTableProxy in go.GetComponents<PlayMakerHashTableProxy>())
+            {
+                if (hashTableProxy.referenceName == name)
+                {
+                    return hashTableProxy;
                 }
             }
             return null;

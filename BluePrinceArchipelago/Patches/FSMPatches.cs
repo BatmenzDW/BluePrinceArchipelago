@@ -3,8 +3,6 @@ using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Patches
@@ -34,7 +32,6 @@ namespace BluePrinceArchipelago.Patches
             // Add Outer Draft Trigger.
             OuterDraftState.InsertAction(3, FSMEventHandler.RegisteredEvents["Outer Draft Start"].Event);
         }
-        // Patch this so functions can be called when the player is not frozen anymore.
 
         public static void UpgradeDiskOverride(PlayMakerFSM GlobalFSM) {
             // Disable the Global Manager FSM states to not give this item in inventory

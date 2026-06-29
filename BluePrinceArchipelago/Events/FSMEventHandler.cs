@@ -1,11 +1,8 @@
-﻿using Archipelago.MultiClient.Net.Models;
-using BluePrinceArchipelago.Archipelago;
-using BluePrinceArchipelago.Items;
+﻿using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using System.Collections.Generic;
-using System.Xml.Linq;
 
 namespace BluePrinceArchipelago.Events
 {
@@ -27,8 +24,15 @@ namespace BluePrinceArchipelago.Events
             Event.OnRegister();
             return Event;
         }
-        public static RegisteredFSMEvent AddCommissaryFSMEvent(string name, UniqueItem item) {
+        public static RegisteredFSMEvent AddBuyFSMEvent(string name, UniqueItem item) {
             RegisteredFSMEvent Event = new ItemBought(name, item);
+            RegisteredEvents[name] = Event;
+
+            Event.OnRegister();
+            return Event;
+        }
+        public static RegisteredFSMEvent AddDigFSMEvent(string name, UniqueItem item) {
+            RegisteredFSMEvent Event = new ItemDugUp(name, item);
             RegisteredEvents[name] = Event;
 
             Event.OnRegister();
@@ -229,7 +233,7 @@ namespace BluePrinceArchipelago.Events
     {
         public new string Name { get; set; } = name;
 
-        public UniqueItem item { get; set; } = item;
+        public UniqueItem Item { get; set; } = item ?? null;
 
         public override void OnRegister()
         {
@@ -258,21 +262,64 @@ namespace BluePrinceArchipelago.Events
 
         public override void OnTrigger()
         {
-            if (!item.HasBeenFound)
+            if (!Item.HasBeenFound)
             {
-                item.HasBeenFound = true;
-                Plugin.ModItemManager.RemoveUniqueItemAPSwirly(item);
-                if (item.IsCommissary)
+                Item.HasBeenFound = true;
+                Plugin.ModItemManager.RemoveUniqueItemAPSwirly(Item);
+                if (Item.IsCommissary)
                 {
-                    FsmState state = item.CommissaryState;
+                    FsmState state = Item.CommissaryState;
                     if (state != null)
                     {
                         // If the item is not unlocked, prevent it from being added to inventory.
                         if (item.IsUnlocked && item.ApplySanity())
                         {
                             //Disable the actions that add the item to inventory.
-                            state.EnableLastActionOfType<ArrayListAdd>();
-                            state.RemoveFirstActionOfType<SendEvent>();
+                            state.EnableActionsOfType<ArrayListAdd>();
+                            // Check if the event we are trying to remove is the custom event we added.
+                            SendEvent CustomEvent = state.GetLastActionOfType<SendEvent>();
+                            if (CustomEvent.sendEvent.Name.Contains("Commissary"))
+                            {
+                                state.RemoveFirstActionOfType<SendEvent>();
+                            }
+                        }
+                    }
+                }
+                if (Item.IsDig)
+                {
+                    FsmState state = Item.DigState;
+                    if (state != null)
+                    {
+                        // If the item is not unlocked, prevent it from being added to inventory.
+                        if (item.IsUnlocked && item.ApplySanity())
+                        {
+                            //Disable the actions that add the item to inventory.
+                            state.EnableActionsOfType<ArrayListAdd>();
+                            SendEvent CustomEvent = state.GetLastActionOfType<SendEvent>();
+                            // Check if the event we are trying to remove is the custom event we added.
+                            if (CustomEvent.sendEvent.Name.Contains("Dug Up"))
+                            {
+                                state.RemoveFirstActionOfType<SendEvent>();
+                            }
+                        }
+                    }
+                }
+                if (Item.IsLocksmith)
+                {
+                    FsmState state = Item.LocksmithState;
+                    if (state != null)
+                    {
+                        // If the item is not unlocked, prevent it from being added to inventory.
+                        if (item.IsUnlocked && item.ApplySanity())
+                        {
+                            //Disable the actions that add the item to inventory.
+                            state.EnableActionsOfType<ArrayListAdd>();
+                            SendEvent CustomEvent = state.GetLastActionOfType<SendEvent>();
+                            // Check if the event we are trying to remove is the custom event we added.
+                            if (CustomEvent.sendEvent.Name.Contains("Locksmith"))
+                            {
+                                state.RemoveFirstActionOfType<SendEvent>();
+                            }
                         }
                     }
                 }
@@ -280,6 +327,52 @@ namespace BluePrinceArchipelago.Events
             }
         }
     }
+    public class ItemDugUp(string name, UniqueItem item) : RegisteredFSMEvent
+    {
+        public new string Name { get; set; } = name;
+
+        public UniqueItem Item { get; set; } = item ?? null;
+
+        public override void OnRegister()
+        {
+            ModInstance.APEventFSM.AddState(Name);
+            ModInstance.APEventFSM.AddGlobalTransition(Name, Name);
+            // Creates a new SendEvent instance that can be called by other FSMs to communicate important events to the mod (albeit a little jankily).
+            Event = new SendEvent()
+            {
+                eventTarget = new FsmEventTarget()
+                {
+                    target = FsmEventTarget.EventTarget.GameObject,
+                    gameObject = new FsmOwnerDefault()
+                    {
+                        gameObject = Plugin.ModObject,
+                        ownerOption = OwnerDefaultOption.SpecifyGameObject
+                    },
+                    fsmName = "FSM",
+                    sendToChildren = false,
+                    excludeSelf = false
+                },
+                sendEvent = Plugin.ModObject.GetComponent<PlayMakerFSM>().GetGlobalTransition(Name).FsmEvent,
+                everyFrame = false,
+                delay = 0f
+            };
+        }
+
+        public override void OnTrigger()
+        {
+            //Handle
+            if (!Item.HasBeenFound)
+            {
+                if (Item.ApplySanity())
+                {
+                    Item.HasBeenFound = true;
+                    Plugin.ModItemManager.RemoveUniqueItemAPSwirly(Item);
+                    ModInstance.QueueManager.AddLocationToQueue($"{Item.Name.ToTitleCase()} First Pickup");
+                }
+            }
+        }
+    }
+
     public class AllowanceEnvelopePickedUp(string name) : RegisteredFSMEvent
     {
         public new string Name { get; set; } = name;
@@ -311,14 +404,13 @@ namespace BluePrinceArchipelago.Events
 
         public override void OnTrigger()
         {
-            //Handle
         }
     }
 
     public class ItemBought(string name, UniqueItem item) : RegisteredFSMEvent {
         public new string Name { get; set; } = name;
 
-        public UniqueItem item { get; set; } = item;
+        public UniqueItem Item { get; set; } = item ?? null;
 
         public override void OnRegister()
         {
@@ -346,11 +438,11 @@ namespace BluePrinceArchipelago.Events
         }
         public override void OnTrigger()
         {
-            if (!item.HasBeenFound)
+            if (!Item.HasBeenFound)
             {
-                item.HasBeenFound = true;
-                Plugin.ModItemManager.RemoveUniqueItemAPSwirly(item);
-                ModInstance.QueueManager.AddLocationToQueue($"{item.Name.ToTitleCase()} First Pickup");
+                Item.HasBeenFound = true;
+                Plugin.ModItemManager.RemoveUniqueItemAPSwirly(Item);
+                ModInstance.QueueManager.AddLocationToQueue($"{Item.Name.ToTitleCase()} First Pickup");
             }
         }
     }

@@ -4,6 +4,7 @@ using BluePrinceArchipelago.Rooms.RoomHandlers;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,13 +37,46 @@ namespace BluePrinceArchipelago.Items
 
         public bool ModelReplaced { get; set; }
 
+        private static List<string> _ShopTags = new();
+
         public bool IsPersistent { get; set; }
 
-        public bool IsCommissary { get; set; }
+        public bool IsCommissary { get {
+                return _ShopTags.Contains("Commissary");
+            } }
+
+
+
+        public bool IsDig
+        {
+            get
+            {
+                return _ShopTags.Contains("Dig");
+            }
+        }
+        public bool IsLocksmith
+        {
+            get
+            {
+                return _ShopTags.Contains("Locksmith");
+            }
+        }
 
         public SendEvent CommissaryEvent { get; set; } = null;
 
+        public SendEvent DigEvent { get; set; } = null;
+
+        public SendEvent LocksmithEvent { get; set; } = null;
+
+        public SendEvent TradingEvent { get; set; } = null;
+
         public FsmState CommissaryState { get; set; } = null;
+
+        public FsmState DigState { get; set; } = null;
+
+        public FsmState LocksmithState { get; set; } = null;
+
+        public FsmState TradingState { get; set; } = null;
 
         public bool HasBeenFound
         {
@@ -57,18 +91,27 @@ namespace BluePrinceArchipelago.Items
                 // No changes to value once the item has been found once, or if someone is trying to set this to false some reason.
             }
         }
-        public UniqueItem(string name, GameObject gameObject, bool isUnlocked, ItemSanityType sanityType = ItemSanityType.None, bool isPreSpawn = true, bool isPersistent = false, bool isCommissary = false) : base(name, gameObject, isUnlocked)
+        public UniqueItem(string name, GameObject gameObject, bool isUnlocked, ItemSanityType sanityType = ItemSanityType.None, bool isPreSpawn = true, bool isPersistent = false, List<string> shopTags = null) : base(name, gameObject, isUnlocked)
         {
             _IsPrespawn = isPreSpawn;
             _SanityType = sanityType;
             IsPersistent = isPersistent;
-            IsCommissary = isCommissary;
+            _ShopTags = shopTags ?? new List<string>();
+
             FSMEventHandler.AddFSMEvent(name, this);
-            if (isCommissary) {
-                CommissaryEvent = FSMEventHandler.AddCommissaryFSMEvent(name, this).Event;
+            if (IsCommissary)
+            {
+                CommissaryEvent = FSMEventHandler.AddBuyFSMEvent("Commissary: Bought" + name, this).Event;
+            }
+            if (IsDig)
+            {
+                DigEvent = FSMEventHandler.AddDigFSMEvent("Dug Up " + name, this).Event;
+            }
+            if (IsLocksmith)
+            {
+                LocksmithEvent = FSMEventHandler.AddBuyFSMEvent("Locksmith: Bought" + name, this).Event;
             }
         }
-
         public void RemoveFromPool()
         {
             if (!ApplySanity())
@@ -180,7 +223,19 @@ namespace BluePrinceArchipelago.Items
                             state.EnableActionsOfType<ArrayListAdd>();
                         }
                     }
+                    else if (item.HasBeenFound)
+                    {
+                        // If the item has been found before but isn't unlocked, destroy the spawned object.
+                        Logging.LogWarning("Despawning Item.");
+                        GameObject.Destroy(spawnedObj);
+                    }
                 }
+            }
+            else if (obj.name.ToUpper().Trim().Contains("UPGRADE DISK"))
+            {
+                string CurrentRoom = GameObject.Find("__SYSTEM/HUD/Room Text").GetComponent<PlayMakerFSM>().GetStringVariable("Current Room").Value;
+                CurrentRoom = CurrentRoom.ToUpper().Replace("'", "").Replace("POST", "POST DYNAMITE").Replace(" AND", "&"); // HLC, TP Dynamite, and Lost & Found name fix
+                ModItemManager.UpgradeDisks.OnSpawn(CurrentRoom, spawnedObj);
             }
         }
 
@@ -203,6 +258,28 @@ namespace BluePrinceArchipelago.Items
                 {"RUNNING SHOES", "Running Shoes Purchase"},
                 {"METAL DETECTOR", "MEtal Detector Purchase"}
             };
+            Dictionary<string, string> DigStates = new Dictionary<string, string>()
+            {
+                {"BROKEN LEVER", "Broken Lever" },
+                {"VAULT KEY 149", "Vault Key 149"},
+                {"VAULT KEY 233", "Vault Key 233"},
+                {"VAULT KEY 304", "Vault Key 304"},
+                {"VAULT KEY 370", "Vault Key 370"},
+                {"SILVER KEY", "Silver Key"},
+                {"SECRET GARDEN KEY", "Secret Garden Key"},
+                {"STOPWATCH", "Stopwatch"},
+                {"KNIGHTS SHIELD", "Knight's Sheild"}
+            };
+            Dictionary<string, string> LockSmithStates = new Dictionary<string, string>()
+            {
+                {"SECRET GARDEN KEY", "Secret Garden Key Purchase"},
+                {"PRISM KEY_0", "Prism Key Purchase"},
+                {"SILVER KEY", "Silver Key Purchase"},
+                {"CAR KEYS", "Car Keys Purchase"},
+                {"MASTER KEY", "Master Key Purchase"},
+                {"LOCK PICK KIT", "Lockpick Kit Purchase"}
+            };
+
             foreach (UniqueItem item in ModItemManager.UniqueItemList)
             {
                 // Handles start of Day Item Removal
@@ -218,10 +295,51 @@ namespace BluePrinceArchipelago.Items
                         if (!item.IsUnlocked && item.ApplySanity())
                         {
                             //Disable the actions that add the item to inventory.
-                            state.DisableLastActionOfType<ArrayListAdd>();
+                            state.DisableActionsOfType<ArrayListAdd>();
                             state.AddAction(item.CommissaryEvent);
                         }
                     }
+                }
+                if (!item.HasBeenFound && item.IsDig) {
+                    FsmState state = ModInstance.DigEngine?.GetState(DigStates[item.Name]);
+                    item.DigState = state;
+                    if (state != null)
+                    {
+                        //If the item is not unlocked, prevent it from being added to inventory.
+                        if (!item.IsUnlocked && item.ApplySanity())
+                        {
+                            //Disable the actions that add the item to inventory.
+                            state.DisableActionsOfType<ArrayListAdd>();
+                            state.AddAction(item.DigEvent);
+                        }
+                    }
+                }
+                if (!item.HasBeenFound && item.IsLocksmith)
+                {
+                    FsmState state = ModInstance.LocksmithMenu?.GetState(LockSmithStates[item.Name]);
+                    item.LocksmithState = state;
+                    if (state != null)
+                    {
+                        //If the item is not unlocked, prevent it from being added to inventory.
+                        if (!item.IsUnlocked && item.ApplySanity())
+                        {
+                            //Disable the actions that add the item to inventory.
+                            state.DisableActionsOfType<ArrayListAdd>();
+                            state.AddAction(item.LocksmithEvent);
+                        }
+                    }
+                }
+                // Despawn Microchips if Found but not unlocked (since they don't use the spawn system).
+                if (item.HasBeenFound && item.Name == "MICROCHIP 1" && !item.IsUnlocked) { 
+                    GameObject.Find("TERRAIN/_GAMEPLAY (terrain)/New Clue Dig - menu/COUNTERTOP").SetActive(false);
+                }
+                else if (item.HasBeenFound && item.Name == "MICROCHIP 2" && !item.IsUnlocked)
+                {
+                    // Despawn the microchip if it has been autospawned.
+                    GameObject.Find("ROOMS/Entrance Hall/_GAMEPLAY/VASES/Vase 2 BROKEN/MICRO 2 SPAWN").SetActive(false);
+                }
+                else if (item.HasBeenFound && item.Name == "MICROCHIP 3" && !item.IsUnlocked) {
+                    GameObject.Find("TERRAIN/EAST SECTOR/_GROTTO/_GROTTO GAMEPLAY/Microchip Pillar/Microchip 3").SetActive(false);
                 }
             }
         }
