@@ -29,7 +29,7 @@ public static class ArchipelagoConsole
     private static string scrollText = "";
     private static float lastUpdateTime = Time.time;
     private const float HideTimeout = 15f;
-    private const int MaxLogLines = 100;
+    private const int MaxLogLines = 1000;
 
     private static string CommandText = "/help";
     private static Rect CommandTextRect;

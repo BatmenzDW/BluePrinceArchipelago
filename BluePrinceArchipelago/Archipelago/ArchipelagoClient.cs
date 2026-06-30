@@ -8,14 +8,12 @@ using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Models;
 using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
-using Il2CppSystem.Collections;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
-using static ES3;
 
 namespace BluePrinceArchipelago.Archipelago;
 
@@ -668,16 +666,13 @@ public class ArchipelagoQueueManager {
         if (ModInstance.SceneLoaded && ModInstance.HasInitializedRooms && ArchipelagoClient.Authenticated)
         {
             ArchipelagoClient.ServerData.ReceivedItems.Add(item.ItemName);
-            if (ModInstance.IsInRun)
+            PermanentUnlock unlock = Unlocks.GetPermanentUnlock(item.ItemName);
+            if (unlock != null)
             {
-                PermanentUnlock unlock = Unlocks.GetPermanentUnlock(item.ItemName);
-                if (unlock != null)
-                {
-                    
-                    Logging.Log($"Attempting to receive Unlock: {item.ItemName}", "Items");
-                    unlock.UnlockItem();
-                    return true;
-                }
+
+                Logging.Log($"Attempting to receive Unlock: {item.ItemName}", "Items");
+                unlock.UnlockItem();
+                return true;
             }
             // Checks if the item recieved is a Room (includes special mappings like classroom variants)
             if (Plugin.ModRoomManager.IsRoomItem(item.ItemName))
