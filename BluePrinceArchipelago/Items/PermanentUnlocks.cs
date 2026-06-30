@@ -182,35 +182,44 @@ namespace BluePrinceArchipelago.Items
         }
 
         public override void PreventDefault() {
-            if (RoomObject == null)
+            SendEventByName unfreeze = new SendEventByName()
             {
-                GameObject RoomSpawnPools = GameObject.Find("__SYSTEM/Room Spawn Pools");
-                for (int i = 0; i < RoomSpawnPools.transform.childCount; i++)
+                eventTarget = new FsmEventTarget()
                 {
-                    Transform child = RoomSpawnPools.transform.GetChild(i);
-                    if (child.name.Contains("Utility Closet"))
+                    target = FsmEventTarget.EventTarget.GameObject,
+                    gameObject = new FsmOwnerDefault()
                     {
-                        RoomObject = child.gameObject;
-                        FsmState State2 = RoomObject.transform.Find("_GAMEPLAY/Giant Switch/Giant Switch Lever").GetComponent<PlayMakerFSM>().GetState("State 2");
-                        State2.AddAction(FSMEventHandler.RegisteredEvents["Gemstone Caverns Unlock"].Event);
-                        if (!Unlocked)
-                        {
-                            // This code may needs to be run after the utility closet has been spawned.
-                            State2.DisableFirstActionOfType<ActivateGameObject>();
-                        }
-                    }
-                }
-            }
-            else {
-                FsmState State2 = RoomObject.transform.Find("_GAMEPLAY/Giant Switch/Giant Switch Lever").GetComponent<PlayMakerFSM>().GetState("State 2");
-                State2.AddAction(FSMEventHandler.RegisteredEvents["Gemstone Caverns Unlock"].Event);
-                if (!Unlocked)
+                        gameObject = GameObject.Find("__SYSTEM/FPS Home/FPSController - Prince"),
+                        ownerOption = OwnerDefaultOption.SpecifyGameObject
+                    },
+                    fsmName = "FSM",
+                    sendToChildren = false,
+                    excludeSelf = false
+                },
+                sendEvent = "UnFreeze",
+                delay = 0f,
+                everyFrame = false
+            };
+
+            GameObject RoomSpawnPools = GameObject.Find("__SYSTEM/Room Spawn Pools");
+            for (int i = 0; i < RoomSpawnPools.transform.childCount; i++)
+            {
+                Transform child = RoomSpawnPools.transform.GetChild(i);
+                if (child.name.Contains("Utility Closet"))
                 {
-                    // This code may needs to be run after the utility closet has been spawned.
-                    State2.DisableFirstActionOfType<ActivateGameObject>();
+                    RoomObject = child.gameObject;
+                    FsmState State2 = RoomObject.transform.Find("_GAMEPLAY/Giant Switch/Giant Switch Lever").GetComponent<PlayMakerFSM>().GetState("State 2");
+                    if (!Unlocked)
+                    {
+                        // This code may needs to be run after the utility closet has been spawned.
+                        State2.DisableAction(2);
+                    }
+                    State2.AddAction(FSMEventHandler.RegisteredEvents["Gemstone Caverns Unlock"].Event);
+                    State2.AddAction(unfreeze);
+                    
                 }
             }
-            
+
         }
 
         public override void FoundLocation()
