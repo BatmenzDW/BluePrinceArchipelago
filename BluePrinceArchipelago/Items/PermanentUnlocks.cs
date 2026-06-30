@@ -151,7 +151,7 @@ namespace BluePrinceArchipelago.Items
         // Override the Name
         public override string Name { get; set; } = "Gemstone Caverns";
         public override string LocationName { get; set; } = "VAC Controls";
-        public GameObject RoomObject = new();
+        public GameObject RoomObject = null;
 
         // Run the unlock code.
         public override void UnlockItem()
@@ -160,7 +160,8 @@ namespace BluePrinceArchipelago.Items
             if (RoomObject != null)
             {
                 FsmState State2 = RoomObject.transform.Find("_GAMEPLAY/Giant Switch/Giant Switch Lever").GetComponent<PlayMakerFSM>().GetState("State 2");
-                State2.EnableFirstActionOfType<ActivateGameObject>();
+                State2.EnableAction(2);
+                State2.RemoveLastActionOfType<SendEventByName>();
             }
             if (Solved)
             {
@@ -277,11 +278,16 @@ namespace BluePrinceArchipelago.Items
     {
         public override string Name { get; set; } = "Blackbridge Grotto";
         public override string LocationName { get; set; } = "Laboratory Puzzle - Blackbridge";
+
+        public GameObject RoomObject = null;
         public override void UnlockItem()
         {
             Unlocked = true;
-            PlayMakerFSM LabMachine = GameObjectExtensions.FindGameObject("Lab Machine")?.GetComponent<PlayMakerFSM>();
-            LabMachine?.GetState("Chek if Grotto Is Open")?.EnableActionsOfType<GetFsmBool>();
+            if (RoomObject != null)
+            {
+                PlayMakerFSM LabMachine = RoomObject.transform.Find("_GAMEPLAY/Lab Machine").GetComponent<PlayMakerFSM>();
+                LabMachine?.GetState("Chek if Grotto Is Open")?.EnableActionsOfType<GetFsmBool>();
+            }
             if (Solved)
             {
                 // Only 90% sure this is the correct event.
@@ -321,18 +327,29 @@ namespace BluePrinceArchipelago.Items
                 delay = 0f,
                 everyFrame = false
             };
-            PlayMakerFSM GrottoTrigger = GameObject.Find("Grotto Trigger")?.GetComponent<PlayMakerFSM>();
-            FsmState GrottoState = GameObject.Find("Grotto Trigger")?.GetComponent<PlayMakerFSM>()?.GetState("State 2");
-            GrottoState?.DisableActionsOfType<SendEvent>();
-            GrottoState?.InsertAction(5, unfreeze);
-            GrottoState?.InsertAction(6, FSMEventHandler.RegisteredEvents["Blackbridge Grotto Unlock"].Event);
-            PlayMakerFSM LabMachine = GameObjectExtensions.FindGameObject("Lab Machine")?.GetComponent<PlayMakerFSM>();
-            if (!Solved)
+            GameObject RoomSpawnPools = GameObject.Find("__SYSTEM/Room Spawn Pools");
+            for (int i = 0; i < RoomSpawnPools.transform.childCount; i++)
             {
-                LabMachine?.GetState("Chek if Grotto Is Open")?.DisableActionsOfType<GetFsmBool>();
-                FsmBool GrottoOpen = LabMachine.GetBoolVariable("Grotto Open");
-                GrottoOpen.Value = Solved;
+                Transform child = RoomSpawnPools.transform.GetChild(i);
+                if (child.name.Contains("Utility Closet"))
+                {
+                    RoomObject = child.gameObject;
+                    PlayMakerFSM LabMachine = RoomObject.transform.Find("_GAMEPLAY/Lab Machine").GetComponent<PlayMakerFSM>();
+                    PlayMakerFSM GrottoTrigger = RoomObject.transform.Find("_GAMEPLAY/Lab Machine/Grotto Trigger").GetComponent<PlayMakerFSM>();
+                    FsmState GrottoState = GrottoTrigger?.GetState("State 2");
+                    GrottoState?.DisableActionsOfType<SendEvent>();
+                    GrottoState?.InsertAction(5, unfreeze);
+                    GrottoState?.InsertAction(6, FSMEventHandler.RegisteredEvents["Blackbridge Grotto Unlock"].Event);
+                    FsmBool GrottoOpen = LabMachine.GetBoolVariable("Grotto Open");
+                    GrottoOpen.Value = Solved;
+                    if (!Solved)
+                    {
+                        LabMachine?.GetState("Chek if Grotto Is Open")?.DisableActionsOfType<GetFsmBool>();
+                        
+                    }
+                }
             }
+            
 
         }
         public override void FoundLocation()
