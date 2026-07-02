@@ -320,14 +320,14 @@ namespace BluePrinceArchipelago
             {
                 bool matched = false;
                 var path = owner.gameObject.GetPath();
-                Logging.Log($"Allowance Token Pickup event sent from {owner.gameObject.name} with path {path}", "Events");
+                Logging.LogWarning($"Allowance Token Pickup event sent from {owner.gameObject.name} with path {path}", "Events");
                 foreach (var roomHandler in RoomHandler.RoomHandlers.Values)
                 {
                     foreach (var token in roomHandler.AllowanceTokens)
                     {
                         if (path.Contains(token))
                         {
-                            Logging.Log($"Allowance Token matched for room handler {roomHandler.GetType().Name} with token {token}", "ArchipelagoEvents");
+                            Logging.LogWarning($"Allowance Token matched for room handler {roomHandler.GetType().Name} with token {token}", "ArchipelagoEvents");
                             roomHandler.OnAllowanceTokenCollected(token);
                             matched = true;
                         }
