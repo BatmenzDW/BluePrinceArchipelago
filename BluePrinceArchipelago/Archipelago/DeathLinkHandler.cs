@@ -1,7 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using BepInEx;
 using BepInEx.Unity.IL2CPP.Utils;
-using BluePrinceArchipelago.Models;
 using BluePrinceArchipelago.Utils;
 using System;
 using System.Collections;
@@ -57,6 +56,7 @@ public class DeathLinkHandler
         service = deathLinkService;
         service.OnDeathLinkReceived += DeathLinkReceived;
         slotName = name;
+        DeathLinkMessages.Initialize();
 
         if (deathLinkEnabled)
         {

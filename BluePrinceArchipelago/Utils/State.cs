@@ -411,6 +411,7 @@ namespace BluePrinceArchipelago.Utils
                         DeathLinkHandler.TotalDeathLinksSent = data.TotalDeathLinksSent;
                         DeathLinkHandler.BlockedDeathLinks = data.BlockedDeaths;
                         DeathLinkHandler.DeathLinkOverride = data.DeathLinkOverride;
+                        DeathLinkMessages.SpoilersEnabled = data.EnableSpoilers;
                         DeathLinkHandler.DeathLinkTypeOverride = (DeathLinkType)data.DeathLinkTypeOverride;
                     }
                     catch (Exception ex)
@@ -430,6 +431,7 @@ namespace BluePrinceArchipelago.Utils
                     data.BlockedDeaths = 0;
                     data.DeathLinkOverride = false;
                     data.DeathLinkTypeOverride = 0;
+                    data.EnableSpoilers = false;
                     writer.Write(JsonConvert.SerializeObject(data));
                     writer.Flush();
                 }
@@ -520,6 +522,7 @@ namespace BluePrinceArchipelago.Utils
                 data.BlockedDeaths = 0;
                 data.DeathLinkOverride = false;
                 data.DeathLinkTypeOverride = 0;
+                data.EnableSpoilers = false;
                 writer.Write(JsonConvert.SerializeObject(data));
                 writer.Flush();
             }
