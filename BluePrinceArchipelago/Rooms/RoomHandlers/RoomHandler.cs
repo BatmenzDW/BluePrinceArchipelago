@@ -53,6 +53,7 @@ public abstract class RoomHandler
             "DRAFTING STUDIO" => new DraftingStudio(),
             "CLOISTER" => new Cloister(),
             "ENTRANCE HALL" => new EntranceHall(),
+            "THE FOUNDATION" => new Foundation(),
             "CLOSED EXHIBIT" => new ClosedExhibit(),
             "TOMB" => new Tomb(),
             "TUNNEL" => new Tunnel(),

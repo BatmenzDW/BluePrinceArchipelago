@@ -204,7 +204,9 @@ namespace BluePrinceArchipelago.Rooms
         /// </summary>
         public static void StartOfDay()
         {
+            ModRoom Foundation = GetRoomByName("The Foundation");
             Transform RoomSpawnPools = GameObject.Find("__SYSTEM/Room Spawn Pools/").transform;
+            bool Found = false;
             for (int i = 0; i < RoomSpawnPools.childCount; i++)
             {
                 Transform child = RoomSpawnPools.GetChild(i);
@@ -212,11 +214,17 @@ namespace BluePrinceArchipelago.Rooms
                 {
                     if (child.name.Contains("Foundation"))
                     {
+                        
                         // Remove a copy of the Foundation to prevent extra foundations from being in the pool.
-                        GetRoomByName("The Foundation").RoomPoolAdjustment = -1;
+                        Foundation.RoomPoolAdjustment = -1;
+                        Found = true;
+                        RoomHandlers.Foundation.StartedDayInHouse = true;
                     }
                 }
-            }      
+            }
+            if (!Found) {
+                RoomHandlers.Foundation.StartedDayInHouse = false;
+            }
         }
 
         /// <summary>
