@@ -10,7 +10,7 @@ class MorningRoom : RoomHandler
 {
     public override void OnAfterRoomDrafted(GameObject roomGameObject)
     {
-        roomGameObject = ModRoomManager.GetRoomInstance("Office");
+        roomGameObject = ModRoomManager.GetRoomInstance("Morning Room");
         if (roomGameObject != null)
         {
             PlayMakerFSM ItemDropFSM = roomGameObject.transform.Find("_GAMEPLAY/_Pickup Items/12")?.GetComponent<PlayMakerFSM>();

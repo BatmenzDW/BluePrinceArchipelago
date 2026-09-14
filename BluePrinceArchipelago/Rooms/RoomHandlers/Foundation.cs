@@ -15,7 +15,7 @@ namespace BluePrinceArchipelago.Rooms.RoomHandlers
             PlayMakerFSM FoundationSpawn = GameObject.Find("UNDERGROUND").transform.Find("Below Foundation (Cullable)").Find("Below Foundation - Prefab").Find("_GAMEPLAY").Find("5")?.GetComponent<PlayMakerFSM>();
             if (FoundationSpawn != null)
             {
-                bool found = !ModItemManager.UpgradeDisks.FoundLocations.Contains("Foundation");
+                bool found = !ModItemManager.UpgradeDisks.FoundLocations.Contains("FOUNDATION");
                 FsmBool CanSpawnDisk = FoundationSpawn.AddBoolVariable("CanSpawnDisk");
                 CanSpawnDisk.Value = found;
                 FoundationSpawn.GetState("State 1").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
