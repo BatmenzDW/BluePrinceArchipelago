@@ -363,16 +363,16 @@ public class DeathLinkHandler
 
     private string GetDeathLinkCauseMsg(string currentRoom)
     {
-        string deathLinkMsg = $"{slotName} ended the day in {currentRoom}";
+        string deathLinkMsg = $"[DeathLink] {slotName} ended the day in {currentRoom}";
         if (currentRoom.IsNullOrWhiteSpace())
         {
-            return $"{slotName} ended the day";
+            return $"[DeathLink] {slotName} ended the day.";
         }
         if (DeathLinkMessages.DeathLinkMsgDict.ContainsKey(currentRoom)){
             string[] messages = DeathLinkMessages.DeathLinkMsgDict[currentRoom];
             if (messages.Length > 1)
             {
-                return string.Format(messages[System.Random.Shared.Next(messages.Length)], slotName);
+                return string.Format("[DeathLink] " + messages[System.Random.Shared.Next(messages.Length)], slotName);
             }
             return messages[0];
         }
