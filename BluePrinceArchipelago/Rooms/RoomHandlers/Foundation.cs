@@ -2,11 +2,6 @@
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Rooms.RoomHandlers
@@ -15,7 +10,7 @@ namespace BluePrinceArchipelago.Rooms.RoomHandlers
     {
         public static bool StartedDayInHouse { set; get; } = false;
 
-        public override void OnRoomDrafted(GameObject roomGameObject)
+        public override void OnAfterRoomDrafted(GameObject roomGameObject)
         {
             PlayMakerFSM FoundationSpawn = GameObject.Find("UNDERGROUND").transform.Find("Below Foundation (Cullable)").Find("Below Foundation - Prefab").Find("_GAMEPLAY").Find("5")?.GetComponent<PlayMakerFSM>();
             if (FoundationSpawn != null)

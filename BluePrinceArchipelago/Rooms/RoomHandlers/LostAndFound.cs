@@ -16,26 +16,34 @@ class LostAndFound : RoomHandler
     {
         ModInstance.ModEventHandler.OnMoraJaiSolved("Lost & Found");
     }
-    public override void OnRoomDrafted(GameObject roomGameObject)
+    public override void OnAfterRoomDrafted(GameObject roomGameObject)
     {
-        PlayMakerFSM ItemDropFSM = roomGameObject.transform.Find("_GAMEPLAY/9")?.gameObject?.GetComponent<PlayMakerFSM>();
-        if (ItemDropFSM != null)
+        GameObject RoomSpawnPools = GameObject.Find("__SYSTEM/Room Spawn Pools");
+        roomGameObject = ModRoomManager.GetRoomInstance("Lost & Found");
+        if (roomGameObject != null)
         {
-            bool found = ModItemManager.UpgradeDisks.FoundLocations.Contains("LOST AND FOUND");
-            Logging.LogWarning(found);
-            FsmBool CanSpawnDisk = ItemDropFSM.AddBoolVariable("CanSpawnDisk");
-            CanSpawnDisk.Value = found;
-            ItemDropFSM.GetState("State 4").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
-            ArrayListContains CheckInInventory = ItemDropFSM.GetState("State 2").GetFirstActionOfType<ArrayListContains>();
-            if (CheckInInventory != null)
+            PlayMakerFSM ItemDropFSM = roomGameObject.transform.Find("_GAMEPLAY/9")?.gameObject?.GetFsm("Go Items Random");
+
+            if (ItemDropFSM != null)
             {
-                BoolTest CheckFound = new BoolTest() { boolVariable = CanSpawnDisk, isTrue = CheckInInventory.isContainedEvent, isFalse = CheckInInventory.isNotContainedEvent, everyFrame = false };
-                ItemDropFSM.GetState("State 2").ReplaceAction(CheckFound, 4);
+                bool found = ModItemManager.UpgradeDisks.FoundLocations.Contains("LOST & FOUND");
+                Logging.LogWarning(found);
+                FsmBool CanSpawnDisk = ItemDropFSM.AddBoolVariable("CanSpawnDisk");
+                CanSpawnDisk.Value = found;
+                ItemDropFSM.GetState("State 4").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
+                ArrayListContains CheckInInventory = ItemDropFSM.GetState("State 2").GetFirstActionOfType<ArrayListContains>();
+                if (CheckInInventory != null)
+                {
+                    BoolTest CheckFound = new BoolTest() { boolVariable = CanSpawnDisk, isTrue = CheckInInventory.isContainedEvent, isFalse = CheckInInventory.isNotContainedEvent, everyFrame = false };
+                    ItemDropFSM.GetState("State 2").ReplaceAction(CheckFound, 4);
+                    return;
+                }
+                Logging.LogWarning("Error changing Lost and Found Upgrade disk spawn logic.");
+                return;
             }
+            Logging.LogWarning("Error changing Lost and Found Upgrade disk spawn logic. Couldn't get Item Drop FSM.S");
+            return;
         }
-        else
-        {
-            Logging.LogWarning("Error changing Lost and Found Upgrade disk spawn logic.");
-        }
+        Logging.LogWarning("Error changing Lost and Found Upgrade disk spawn logic. Couldn't Find Room Instance.");
     }
 }

@@ -8,22 +8,26 @@ namespace BluePrinceArchipelago.Rooms.RoomHandlers;
 
 class HLC : RoomHandler
 {
-    public override void OnRoomDrafted(GameObject roomGameObject)
+    public override void OnAfterRoomDrafted(GameObject roomGameObject)
     {
-        PlayMakerFSM ItemDropFSM = roomGameObject.transform.Find("_GAMEPLAY/_Pickup Items/10")?.GetComponent<PlayMakerFSM>();
-        if (ItemDropFSM != null)
+        roomGameObject = ModRoomManager.GetRoomInstance("Her Ladyship's Chamber");
+        if (roomGameObject != null)
         {
-            bool found = ModItemManager.UpgradeDisks.FoundLocations.Contains("HER LADYSHIPS CHAMBER");
-            Logging.LogWarning(found);
-            FsmBool CanSpawnDisk = ItemDropFSM.AddBoolVariable("CanSpawnDisk");
-            CanSpawnDisk.Value = found;
-            ItemDropFSM.GetState("State 1").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
-            ArrayListContains CheckInInventory = ItemDropFSM.GetState("State 2").GetFirstActionOfType<ArrayListContains>();
-            CheckInInventory.isContainedEvent = CheckInInventory.isNotContainedEvent;
-        }
-        else
-        {
-            Logging.LogWarning("Error changing HLC Upgrade disk spawn logic.");
+            PlayMakerFSM ItemDropFSM = roomGameObject.transform.Find("_GAMEPLAY/_Pickup Items/10")?.GetComponent<PlayMakerFSM>();
+            if (ItemDropFSM != null)
+            {
+                bool found = ModItemManager.UpgradeDisks.FoundLocations.Contains("HER LADYSHIPS CHAMBER");
+                Logging.LogWarning(found);
+                FsmBool CanSpawnDisk = ItemDropFSM.AddBoolVariable("CanSpawnDisk");
+                CanSpawnDisk.Value = found;
+                ItemDropFSM.GetState("State 1").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
+                ArrayListContains CheckInInventory = ItemDropFSM.GetState("State 2").GetFirstActionOfType<ArrayListContains>();
+                CheckInInventory.isContainedEvent = CheckInInventory.isNotContainedEvent;
+            }
+            else
+            {
+                Logging.LogWarning("Error changing HLC Upgrade disk spawn logic.");
+            }
         }
     }
 }

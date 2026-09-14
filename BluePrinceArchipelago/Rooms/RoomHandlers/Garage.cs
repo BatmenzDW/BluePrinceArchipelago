@@ -8,21 +8,25 @@ namespace BluePrinceArchipelago.Rooms.RoomHandlers;
 
 class Garage : RoomHandler
 {
-    public override void OnRoomDrafted(GameObject roomGameObject)
+    public override void OnAfterRoomDrafted(GameObject roomGameObject)
     {
-        PlayMakerFSM ItemDropFSM = roomGameObject.transform.Find("_GAMEPLAY/TrunkSpawn/1 Spawn/7")?.GetComponent<PlayMakerFSM>();
-        if (ItemDropFSM != null)
+        roomGameObject = ModRoomManager.GetRoomInstance("Garage");
+        if (roomGameObject != null)
         {
-            bool found = ModItemManager.UpgradeDisks.FoundLocations.Contains("GARAGE");
-            FsmBool CanSpawnDisk = ItemDropFSM.AddBoolVariable("CanSpawnDisk");
-            CanSpawnDisk.Value = found;
-            ItemDropFSM.GetState("State 1").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
-            ArrayListContains CheckInInventory = ItemDropFSM.GetState("State 2").GetFirstActionOfType<ArrayListContains>();
-            CheckInInventory.isContainedEvent = CheckInInventory.isNotContainedEvent;
-        }
-        else
-        {
-            Logging.LogWarning("Error changing Garage Upgrade disk spawn logic.");
+            PlayMakerFSM ItemDropFSM = roomGameObject.transform.Find("_GAMEPLAY/TrunkSpawn/1 Spawn/7")?.GetComponent<PlayMakerFSM>();
+            if (ItemDropFSM != null)
+            {
+                bool found = ModItemManager.UpgradeDisks.FoundLocations.Contains("GARAGE");
+                FsmBool CanSpawnDisk = ItemDropFSM.AddBoolVariable("CanSpawnDisk");
+                CanSpawnDisk.Value = found;
+                ItemDropFSM.GetState("State 1").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
+                ArrayListContains CheckInInventory = ItemDropFSM.GetState("State 2").GetFirstActionOfType<ArrayListContains>();
+                CheckInInventory.isContainedEvent = CheckInInventory.isNotContainedEvent;
+            }
+            else
+            {
+                Logging.LogWarning("Error changing Garage Upgrade disk spawn logic.");
+            }
         }
     }
 }

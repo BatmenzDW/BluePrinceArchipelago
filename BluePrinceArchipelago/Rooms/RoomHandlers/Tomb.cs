@@ -16,22 +16,26 @@ class Tomb : RoomHandler
     {
         ModInstance.ModEventHandler.OnMoraJaiSolved("Tomb");
     }
-    public override void OnRoomDrafted(GameObject roomGameObject)
+    public override void OnAfterRoomDrafted(GameObject roomGameObject)
     {
-        PlayMakerFSM ItemDropFSM = roomGameObject.transform.Find("_CULLABLE/_GAMEPLAY/Sliding Wall A Anchor/Gold Pay Off/3")?.GetComponent<PlayMakerFSM>();
-        if (ItemDropFSM != null)
+        roomGameObject = ModRoomManager.GetRoomInstance("Tomb");
+        if (roomGameObject != null)
         {
-            bool found = ModItemManager.UpgradeDisks.FoundLocations.Contains("TOMB");
-            Logging.LogWarning(found);
-            FsmBool CanSpawnDisk = ItemDropFSM.AddBoolVariable("CanSpawnDisk");
-            CanSpawnDisk.Value = found;
-            ItemDropFSM.GetState("State 1").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
-            ArrayListContains CheckInInventory = ItemDropFSM.GetState("State 2").GetFirstActionOfType<ArrayListContains>();
-            CheckInInventory.isContainedEvent = CheckInInventory.isNotContainedEvent;
-        }
-        else
-        {
-            Logging.LogWarning("Error changing Tomb Upgrade disk spawn logic.");
+            PlayMakerFSM ItemDropFSM = roomGameObject.transform.Find("_CULLABLE/_GAMEPLAY/Sliding Wall A Anchor/Gold Pay Off/3")?.GetComponent<PlayMakerFSM>();
+            if (ItemDropFSM != null)
+            {
+                bool found = ModItemManager.UpgradeDisks.FoundLocations.Contains("TOMB");
+                Logging.LogWarning(found);
+                FsmBool CanSpawnDisk = ItemDropFSM.AddBoolVariable("CanSpawnDisk");
+                CanSpawnDisk.Value = found;
+                ItemDropFSM.GetState("State 1").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
+                ArrayListContains CheckInInventory = ItemDropFSM.GetState("State 2").GetFirstActionOfType<ArrayListContains>();
+                CheckInInventory.isContainedEvent = CheckInInventory.isNotContainedEvent;
+            }
+            else
+            {
+                Logging.LogWarning("Error changing Tomb Upgrade disk spawn logic.");
+            }
         }
     }
 }

@@ -121,12 +121,11 @@ namespace BluePrinceArchipelago.Items
         /// <param name="location">The name of the location.</param>
         public void OnFind(string location)
         {
-            Logging.Log("Location");
             if (!FoundLocations.Contains(location.ToUpper()))
             {
                 FoundLocations.Add(location.ToUpper());
                 State.UpdateUpgradeDiskData();
-                ModInstance.ModEventHandler.OnUgradeDiskFound(LocationNames[ItemNames.IndexOf(location.ToUpper())]);
+                ModInstance.ModEventHandler.OnUgradeDiskFound(LocationNames[LocationNames.IndexOf(location.ToUpper())]);
             }
             ModInstance.GlobalPersistentManager.GetComponent<PlayMakerFSM>().GetBoolVariable(UsedVariables[LocationNames.IndexOf(location.ToUpper())]).Value = true;
         }

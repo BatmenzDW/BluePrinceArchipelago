@@ -1076,6 +1076,25 @@ namespace BluePrinceArchipelago.Rooms
                 }
             }
         }
+        /// <summary>
+        ///     Gets the newest Room Instance with a matching name.
+        /// </summary>
+        /// <param name="roomInstanceName">The Name of the Room Instance to get.</param>
+        /// <returns>The GameObject of the found room instance. Null if not found.</returns>
+        public static GameObject GetRoomInstance(string roomInstanceName) {
+            GameObject RoomSpawnPools = GameObject.Find("__SYSTEM/Room Spawn Pools");
+            GameObject roomInstance = null;
+            // Start at end of list since newer objects are usually at the end of the children.
+            for (int i = RoomSpawnPools.transform.childCount-1; i > -1; i--) { 
+                roomInstance = RoomSpawnPools?.transform?.GetChild(i)?.gameObject;
+                if (roomInstance != null) {
+                    if (roomInstance.name.Contains(roomInstanceName)) {
+                        return roomInstance;
+                    }
+                }
+            }
+            return roomInstance;
+        }
 
         /// <summary>
         ///     Internal. Intializes all of the base game rooms as mod objects so the mod can track details about them.
