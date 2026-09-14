@@ -61,7 +61,7 @@ namespace BluePrinceArchipelago.Archipelago
             {"Electric Eel Aquarium", ["{0} discovered where the Electric Eel Aquarium's power comes from."]},
             {"Empty Closet", ["{0} wasn't adjacent to a Red Room."]},
             {"Entrance Hall", ["{0} thought it was an Exit Hall.", "{0} didn't know how to make an Entrance.", "{0} spent the rest of the day entranced in the Entrance Hall."]},
-            {"Fall it a day?", ["{0} Has Tripped and can't get back up.", "{0} was banned for cheating.", "{0} fell out of the world."]},
+            //{"Fall it a day?", ["{0} Has Tripped and can't get back up.", "{0} was banned for cheating.", "{0} fell out of the world."]}, To Do, add fall it a day handling
             {"Foundation", ["{0} reached the Basement without the elevator.", "{0} found an unused repellent at the corner of the room and accidentally sprayed on self."]},
             {"Foyer", ["{0} went bust in the Foyer."]},
             {"Freezer", ["{0} lost their cool in the Freezer.", "More than {0}'s accounts were frozen."]},

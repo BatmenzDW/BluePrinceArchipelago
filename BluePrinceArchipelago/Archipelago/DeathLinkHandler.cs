@@ -1,10 +1,12 @@
 ﻿using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using BepInEx;
 using BepInEx.Unity.IL2CPP.Utils;
+using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -206,7 +208,9 @@ public class DeathLinkHandler
     }
 
     private bool _bedroom = false;
-    private static readonly string[] _bedroomStrings = ["adyship", "aster", "uarters", "unk", "edroom", "quarium", "oudoir", "ormitory", "ovel", "aid", "ursery", "ampsite"];
+    private static readonly string[] _bedroomStrings = ["Nurse's Station", "Nursery", "Dormitory", "Quest Bedroom", "Bedroom", "Aquarium", "Boudoir", "Bunk Room", "Master Bedroom", "Hovel", "Maid's Chamber", "Spare Bedroom",
+                                                        "Spare Master Bedroom", "Starfish Aquarium", "Spare Servant's Quarters", "Servant's Quarter", "Campsite", "Geist Bedroom", "Goldfish Aquarium", "Guess Bedroom", "Guest Bedroom",
+                                                        "Her Ladyship's Chamber", "Her Ladyship's Spare Room"];
 
     /// <summary>
     ///     Attempts to send a death link from running out of steps.
@@ -301,7 +305,7 @@ public class DeathLinkHandler
         }
 
         string currentRoom = roomTextObj?.GetComponent<TextMeshPro>()?.text ?? "";
-        if (_bedroomStrings.Any(s => currentRoom.Contains(s)) && deathLinkType == DeathLinkType.option_bedroom)
+        if (_bedroomStrings.Contains(currentRoom) && deathLinkType == DeathLinkType.option_bedroom)
         {
             _bedroom = true;
         }
