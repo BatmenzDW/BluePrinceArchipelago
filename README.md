@@ -121,6 +121,7 @@ Blue Prince Archipelago does not touch the save file process in any way, but I c
 * Extract the files inside the  Blue Prince folder (Steam default of `C:\Program Files (x86)\Steam\steamapps\common\Blue Prince` )
 
 2. After installing Bepinex, start the game once from Steam. Wait for the game to start as normal then quit out. This will take some extra time only on the first time you do this on a fresh patch.
+	- If you are on linux you will need to add the following to your steam launch options `WINEDLLOVERRIDES="winhttp=n,b" %command%`. You can find them by clicking the gear icon on the right side of the game and click properties.
 
 3. Download the Latest mod release from [here](https://github.com/Yascob99/BluePrinceArchipelago/releases) and the APworld Release from [here](https://github.com/BatmenzDW/Archipelago/releases).
 
