@@ -349,7 +349,6 @@ namespace BluePrinceArchipelago.Rooms
         /// </summary>
         public static void RecheckRoomUnlockStatus()
         {
-            Logging.LogWarning(_Rooms.Count);
             // Forcibly set certain rooms as removed from the pool so they are not actually draftable.
             foreach (ModRoom room in _Rooms)
             {
@@ -359,13 +358,18 @@ namespace BluePrinceArchipelago.Rooms
                     // If there are still copies in today's pool (or a safety for if extra copies are added without the mod tracking it.)
                     if (room.RoomsLeftInPool > 0)
                     {
+                        bool found = false;
                         // Confirm all dependencies of the room have been met. If one is not met, turn the room off until the next draft. (very important for Foundation)
                         foreach (Func<ModRoom, bool> dependency in room.Dependencies)
                         {
                             if (!dependency.Invoke(room))
                             {
                                 SetPoolRemovalVar(room.GameObjectName, true);
+                                found = true;
                             }
+                        }
+                        if (!found) {
+                            SetPoolRemovalVar(room.GameObjectName, false);
                         }
                     }
                 }

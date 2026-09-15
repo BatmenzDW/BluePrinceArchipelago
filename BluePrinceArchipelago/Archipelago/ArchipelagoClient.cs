@@ -886,10 +886,6 @@ public class ArchipelagoQueueManager {
                     ModItemManager.UpgradeDisks.RecievedItems.Add(location);
                     return true;
                 }
-                // Do not requeue Upgrade Disks when Upgrade Disk Sanity is off.
-                if (!ArchipelagoOptions.UpgradeDiskSanity) {
-                    return true;
-                }
                 return false;
             }
             // if not handle it as an Item.

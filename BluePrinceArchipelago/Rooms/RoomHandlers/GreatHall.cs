@@ -1,22 +1,22 @@
 ﻿using BluePrinceArchipelago.Items;
+using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using BluePrinceArchipelago.Utils;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Rooms.RoomHandlers;
 
 class GreatHall : RoomHandler
 {
-    public override void OnRoomDrafted(GameObject roomGameObject)
+    public override void OnAfterRoomDrafted(GameObject roomGameObject)
     {
         roomGameObject = ModRoomManager.GetRoomInstance("Great Hall");
         if (roomGameObject != null)
         {
-            Transform[] tranforms = roomGameObject.transform.FindAllRecursive("8");
-            foreach (Transform transform in tranforms)
+            List<PlayMakerFSM> ItemDropFSMs = GetItemDropFSMs(roomGameObject);
+            foreach (PlayMakerFSM ItemDropFSM in ItemDropFSMs)
             {
-                PlayMakerFSM ItemDropFSM = transform.GetComponent<PlayMakerFSM>();
 
                 if (ItemDropFSM != null)
                 {
@@ -36,5 +36,20 @@ class GreatHall : RoomHandler
         }
 
     }
+    private List<PlayMakerFSM> GetItemDropFSMs(GameObject roomGameObject)
+    {
+        List<PlayMakerFSM> ItemDropFSMs = new List<PlayMakerFSM>();
+        Transform SubWalls = roomGameObject.transform.Find("_GAMEPLAY").Find("SubWalls");
+        for (int i = 0; i < SubWalls.childCount; i++) { 
+            Transform Side = SubWalls.GetChild(i).transform;
+            for (int j = 0; j < Side.childCount; j++) {
+                Transform Subwall = Side.GetChild(j);
+                PlayMakerFSM ItemDropFSM = Subwall.Find("Static").Find("Lever Off").GetChild(0).Find("8").gameObject.GetComponent<PlayMakerFSM>();
+                ItemDropFSMs.Add(ItemDropFSM);
+            }
+        }
+        return ItemDropFSMs;
+    }
 }
+
 
