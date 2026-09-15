@@ -43,34 +43,34 @@ public abstract class RoomHandler
 
         handler = roomName switch
         {
-            "COMMISSARY" => new Commissary(),
-            "SHOWROOM" => new Showroom(),
-            "THE ARMORY" => new Armory(),
-            "BOOKSHOP" => new Bookshop(),
-            "GIFT SHOP" => new GiftShop(),
-            "LOCKSMITH" => new Locksmith(),
-            "TRADING POST" => new TradingPost(),
-            "DRAFTING STUDIO" => new DraftingStudio(),
-            "CLOISTER" => new Cloister(),
-            "ENTRANCE HALL" => new EntranceHall(),
-            "THE FOUNDATION" => new Foundation(),
-            "CLOSED EXHIBIT" => new ClosedExhibit(),
-            "TOMB" => new Tomb(),
-            "TUNNEL" => new Tunnel(),
-            "MASTER BEDROOM" => new MasterBedroom(),
-            "SOLARIUM" => new Solarium(),
-            "LOST & FOUND" => new LostAndFound(),
-            "THRONE ROOM" => new ThroneRoom(),
-            "UTILITY CLOSET" => new UtilityCloset(),
-            "LABORATORY" => new Laboratory(),
             "ARCHIVES" => new Archives(),
+            "BOOKSHOP" => new Bookshop(),
+            "CLOISTER" => new Cloister(),
+            "CLOSED EXHIBIT" => new ClosedExhibit(),
+            "COMMISSARY" => new Commissary(),
+            "DRAFTING STUDIO" => new DraftingStudio(),
+            "ENTRANCE HALL" => new EntranceHall(),
             "FREEZER" => new Freezer(),
             "GARAGE" => new Garage(),
+            "GIFT SHOP" => new GiftShop(),
             "GREAT HALL" => new GreatHall(),
             "HER LADYSHIP\'S CHAMBER" => new HLC(),
+            "LABORATORY" => new Laboratory(),
+            "LOCKSMITH" => new Locksmith(),
+            "LOST & FOUND" => new LostAndFound(),
+            "MASTER BEDROOM" => new MasterBedroom(),
             "MECHANARIUM" => new Mechanarium(),
             "MORNING ROOM" => new MorningRoom(),
             "OFFICE" => new Office(),
+            "SHOWROOM" => new Showroom(),
+            "SOLARIUM" => new Solarium(),
+            "THE ARMORY" => new Armory(),
+            "THE FOUNDATION" => new Foundation(),
+            "THRONE ROOM" => new ThroneRoom(),
+            "TOMB" => new Tomb(),
+            "TRADING POST" => new TradingPost(),
+            "TUNNEL" => new Tunnel(),
+            "UTILITY CLOSET" => new UtilityCloset(),
             "VAULT" => new Vault(),
             _ => null
         };
@@ -83,5 +83,3 @@ public abstract class RoomHandler
         return handler;
     }
 }
-
-// Vault 053 FSM = "LOCK CLICK"
