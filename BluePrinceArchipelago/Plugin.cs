@@ -18,7 +18,7 @@ namespace BluePrinceArchipelago {
     {
         public const string PluginGUID = "com.Yascob.BluePrinceArchipelago";
         public const string PluginName = "BluePrinceArchipelago";
-        public const string PluginVersion = "0.1.0";
+        public const string PluginVersion = "0.1.2";
 
         private static Plugin _instance;
         public static Plugin Instance => _instance;
@@ -47,7 +47,7 @@ namespace BluePrinceArchipelago {
             //Logging.SetLogLevel("Items", LogLevel.Info);
             Logging.SetLogLevel("Locations", LogLevel.Info);
             Logging.SetLogLevel("Trades", LogLevel.Info);
-            //Logging.SetLogLevel("Rooms", LogLevel.Info);
+            Logging.SetLogLevel("Rooms", LogLevel.Info);
             //Logging.SetLogLevel("Events", LogLevel.Info);
             Logging.SetLogLevel("StatEvents", LogLevel.Info);
             Logging.SetLogLevel("Connection", LogLevel.Info);

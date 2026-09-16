@@ -50,11 +50,16 @@
       <ul>
         <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
-		 <li><a href="#unity-setup">Contributing</a></li>
+		  <ul>
+			  <li><a href="#disclaimer">Disclaimer</a></li>
+			  <li><a href="#player-setup">Player Setup</a></li>
+			  <li><a href="#developer-setup">Developer Setup</a></li>
+		  </ul>
+		<li><a href="#unity-setup">Contributing</a></li>
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#development-roadmap">Development Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
   </ol>
@@ -66,7 +71,7 @@
 ## About The Project
 
 
-This is an in development Archipelago mod for the 2025 roguelite puzzle game Blue Prince. **Please note that the mod is not currently playable yet** and is still being developed.
+This is the Alpha version of the Archipelago mod for the 2025 roguelite puzzle game Blue Prince. This mod is still in active development as we continue to add features and QoL changes.
 
 Special Thanks to: 
 - ChaseoQueso for the inital item code and the custom archipelago swirly asset.
@@ -74,23 +79,67 @@ Special Thanks to:
 - deefdragon and BatemenzDW for their work on the APworld.
 - Shavnir for helping out with the mod.
 - Zygan for some custom art assets.
+- The Blue Prince community on the Archipelago Discord for all of their fantastic ideas.
 - The Silksong/HK community for a lot of great tools which made modding so much easier.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- GETTING STARTED -->
 ## Getting Started
 
-If you are a player, there's no installation instructions yet. If you are developer please check out the <a href=#installation>Installation</a> section.
-
-### Prerequisites
-
-Please make sure you have Bepinex 6 installed as we need the IL2CPP support.
-* [Bepinex 6](https://docs.bepinex.dev/master/articles/user_guide/installation/index.html)
+If you are a player, Installation instructions are just below. If you are developer please check out the <a href=#developer-setup>Developer Setup</a> section.
 
 ### Installation
+
+#### Disclaimer:
+This version of Blue Prince Archipelago is in Alpha and as such has quite a few known issues and limitations. All known Bugs will be listed [here](https://github.com/Yascob99/BluePrinceArchipelago/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug). Any QoL changes or future planned changes will live [here](https://github.com/Yascob99/BluePrinceArchipelago/issues?q=is%3Aissue%20state%3Aopen%20label%3Aenhancement).
+
+Below are a List of Limitations and Known issues of the Mod that are not expected to be fixed in the short term.
+While fixes are being looked into and worked on they were not prioritized for Alpha.
+- Only save files created on Bequest Mode (the game's default mode) are currently compatible.
+- Some special items and rooms can bypass the limited draft pool (such as the Prism Key and Secret Passage).
+- Room Upgrades aren't accounted for in logic and may result in out of logic checks.
+- Item logic only accounts for the possibility of an item spawning, regardless of the rarity of that item actually showing up.
+- Trunk logic currently doesn't account for how likely the rooms are to appear and the luck requirements for a trunk to spawn. I have made a [list in discord](https://discord.com/channels/731205301247803413/1362478224604397739/1524408912114221238) to use as a guide for selecting trunk options for now.
+- This implementation requires some late game knowledge for items and locations even on early goals.
+- Certain items don't look quite right in pickup menus or in game please add any to [this bug](https://github.com/Yascob99/BluePrinceArchipelago/issues/63) if they aren't already listed so this can be fixed in a future patch.
+- Sometimes rooms outside of your draft pool appear in drafts. I am currently unsure on how to fix this fully and need more data on which rooms drafted from where Please add any new instances of this to [this issue](https://github.com/Yascob99/BluePrinceArchipelago/issues/62).
+- Certain items like Repellant may not function as intended. Please check if a bug exists here or create a new one if you find an item that doesn't work [here](https://github.com/Yascob99/BluePrinceArchipelago/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug)
+
+#### Player Setup
+
+**Before you install this mod, I highly reccomend backing up your save file MtHollyBlueprint.es3 from your ~\AppData\LocalLow\Dogubomb\BLUE PRINCE\storage folder. Copy it somewhere safe.**
+Blue Prince Archipelago does not touch the save file process in any way, but I can't guarantee that it won't. Use this mod at your own discresion.
+
+If you prefer a simpler install we do have a [Thunderstore version](https://thunderstore.io/c/blue-prince/p/BluePrinceArchipelago/BluePrinceArchipelago/). Please note that I accidentally messed up the semantic versioning so 1.1.1 is actually meant to be 0.1.1 and so on. Due to how Thunderstore is setup this is not a mistake I can easily fix. 
+
+1. Install [Bepinex 6](https://docs.bepinex.dev/master/articles/user_guide/installation/index.html)
+* Specifically you will want to get build #755's [BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip](https://builds.bepinex.dev/projects/bepinex_be/755/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755%2B3fab71a.zip) from the page [here](https://builds.bepinex.dev/projects/bepinex_be)
+* Extract the files inside the  Blue Prince folder (Steam default of `C:\Program Files (x86)\Steam\steamapps\common\Blue Prince` )
+
+2. After installing Bepinex, start the game once from Steam. Wait for the game to start as normal then quit out. This will take some extra time only on the first time you do this on a fresh patch.
+	- If you are on linux you will need to add the following to your steam launch options `WINEDLLOVERRIDES="winhttp=n,b" %command%`. You can find them by clicking the gear icon on the right side of the game and click properties.
+
+3. Download the Latest mod release from [here](https://github.com/Yascob99/BluePrinceArchipelago/releases) and the APworld Release from [here](https://github.com/BatmenzDW/Archipelago/releases).
+
+4. Extract the contents of the mod to <YourBluePrinceInstallLocationHere>/BepInEx/plugins/BluePrinceArchipelago. Your final folder should look something like this:
+<img width="598" height="149" alt="image" src="https://github.com/user-attachments/assets/9b6a8ec9-44dd-481f-b2f1-07839efcbfcd" />
+
+5. Start the game. You will notice a new UI at the top. It is best to connect here before starting a new profile. This UI can be shown by pressing "/" and dismissed by pressing "ESC". This also doubles as your game client. Tying /help in the command box will show all the local commands. You can also run archipelago server commands from this console once connected. A lot of the commands are intended for dev usage to allow for progress when there is an issue with the mod.
+
+6. **IMPORTANT** If you have played a Blue Prince AP before in a **different multiworld** please press the **New Run Data Reset Button** or **run the /ResetData command** before connecting. Due to limitations in the mod, the mod currently can't cleanly detect when it is safe to delete the local data on the last seed you played, so this must be done manually when starting a new seed.
+
+7. To connect to your slot enter the connection details into the box on the left side of the UI. You will receive a message in the console if something goes wrong. If you are continueing a run (like in an async) load the same profile you loaded previously on the async run before connecting. The mod currently cannot detect it has loaded the correct seed so loading the wrong file may bork the mod's local saved data on your seed which may result in unexpected glitches.
+
+8. **IMPORTANT** After connecting to the Archipelago server, if you are starting a new multiworld, **create a new file in Bequest Mode**. While the game will function on other modes, it may create impossible to complete scenarios, so it is **Bequest Mode only** for now. If you are reconnecting or continueing a run, be sure to load the correct profile; the mod currently cannot detect it has loaded the correct seed so loading the wrong file may bork the mod's local saved data on your seed which may result in unexpected glitches.
+
+9. Enjoy!
+
+**Extras:**
+- Blue Prince supports Universal Tracker. You can find it in #Universal-Tracker on the discord or download the client [here](https://github.com/FarisTheAncient/Archipelago/releases/latest).
+- To disable your mods open up the doorstop_config.ini in your Blue Prince Installation folder and set enabled to false. This will prevent Bepinex from loading.
+
+#### Developer Setup:
 
 1. Install [Bepinex 6](https://docs.bepinex.dev/master/articles/user_guide/installation/index.html)
 * Specifically you will want to get build #755's [BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip](https://builds.bepinex.dev/projects/bepinex_be/755/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755%2B3fab71a.zip) from the page [here](https://builds.bepinex.dev/projects/bepinex_be)
@@ -125,6 +174,8 @@ Please make sure you have Bepinex 6 installed as we need the IL2CPP support.
 7. After you have built for the first time you will need to copy the Archipelago dll into the BluePrinceArchipelago folder.  This will appear by default in `C:\Users\USERNAME\.nuget\packages\archipelago.multiclient.net\6.7.1\lib\net6.0\Archipelago.MultiClient.Net.dll`.  Copy this into the Blue Prince\BepInEx\plugins\BluePrinceArchipelago folder
 
 8. After Building the mod you may need to copy the apprefabs file from the assets folder in to the root of the mods install. I have tried getting it to copy on building but haven't been able to get it working correctly.
+
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

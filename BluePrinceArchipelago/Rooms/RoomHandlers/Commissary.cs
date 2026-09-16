@@ -33,25 +33,18 @@ public class Commissary : RoomHandler
     {
         Logging.Log("Initializing Commissary.");
     }
-
-    public override void OnRoomDrafted(GameObject roomGameObject)
-    {
-        Logging.Log("Commissary drafted, setting up shop items.");
-        RoomGameObject = roomGameObject;
-
-        if (RoomGameObject == null)
-        {
-            Logging.LogError("Failed to find Commissary room GameObject, aborting OnRoomDrafted.");
-            return;
-        }
-        _ItemsForSaleGameObject = RoomGameObject.transform.Find("_GAMEPLAY/ITEMS FOR SALE")?.gameObject;
-        _ItemsForSaleFsm = RoomGameObject.transform.Find("_GAMEPLAY/ITEMS FOR SALE")?.GetComponent<PlayMakerFSM>();
-
-        SetupItemsForSale();
-        CommissaryDiskAdjustment();
-    }
     public override void OnAfterRoomDrafted(GameObject roomGameObject)
     {
+        RoomGameObject = roomGameObject;
+        if (RoomGameObject == null)
+        {
+            RoomGameObject = ModRoomManager.GetRoomInstance("Commissary");
+        }
+
+        _ItemsForSaleGameObject = RoomGameObject.transform.Find("_GAMEPLAY/ITEMS FOR SALE")?.gameObject;
+        _ItemsForSaleFsm = RoomGameObject.transform.Find("_GAMEPLAY/ITEMS FOR SALE")?.GetComponent<PlayMakerFSM>();
+        SetupItemsForSale();
+        CommissaryDiskAdjustment();
         ReplaceModelsWithAP();
     }
 

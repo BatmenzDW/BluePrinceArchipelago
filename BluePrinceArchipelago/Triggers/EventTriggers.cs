@@ -206,6 +206,21 @@ namespace BluePrinceArchipelago.Triggers
                 case EventID.Ornate_Compass_Purchased:
                     ModEventHandler.OnFirstFound(ModItemManager.GetUniqueItem("ORNATE COMPASS"));
                     break;
+                case EventID.Orchard_Unlocked:
+                    PermanentUnlockTriggers.OnAppleOrchardUnlock();
+                    break;
+                case EventID.West_Path_Gate_Unlocked:
+                    PermanentUnlockTriggers.OnWestGatePathUnlock();
+                    break;
+                case EventID.Gemstone_Cavern_Unlocked:
+                    PermanentUnlockTriggers.OnGemstoneCavernsUnlock();
+                    break;
+                case EventID.Satellite_Raised:
+                    PermanentUnlockTriggers.OnSatelliteRaised();
+                    break;
+                case EventID.Blackbridge_Powered:
+                    PermanentUnlockTriggers.OnBlackBridgeGrottoUnlock();
+                    break;
             }
         }
 

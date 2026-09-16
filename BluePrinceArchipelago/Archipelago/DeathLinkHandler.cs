@@ -374,7 +374,7 @@ public class DeathLinkHandler
             {
                 return string.Format("[DeathLink] " + messages[System.Random.Shared.Next(messages.Length)], slotName);
             }
-            return messages[0];
+            return string.Format(messages[0], slotName);
         }
         return deathLinkMsg;
     }

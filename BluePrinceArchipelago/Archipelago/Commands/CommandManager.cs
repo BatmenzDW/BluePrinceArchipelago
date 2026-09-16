@@ -65,7 +65,7 @@ namespace BluePrinceArchipelago.Archipelago.Commands
             _LocalCommands["adjust"] = new AdjustCommand("Adjust");
             _LocalCommands["item"] = new ItemCommand("Item");
             _LocalCommands["help"] = new HelpCommand("Help");
-            _LocalCommands["force"] = new ForceCommand("Force");
+            //_LocalCommands["force"] = new ForceCommand("Force"); // Disabled so it's code can be utilized for overriding small draft pool drafts.
             _LocalCommands["sync"] = new SyncCommand("Sync"); // New sync command for Archipelago data
             _LocalCommands["debug"] = new DebugCommand("Debug"); // Debug command for investigating game systems
             _LocalCommands["received"] = new ReceivedCommand("Received"); // Show received Archipelago items

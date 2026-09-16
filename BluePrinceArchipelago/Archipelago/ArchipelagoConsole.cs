@@ -43,6 +43,7 @@ public static class ArchipelagoConsole
     private static List<string> PreviousCommands = [];
     private static int PreviousCommandPointer = -1;
     private static List<string> TextFieldNames = ["URI", "SlotName", "Password", "CommandText"];
+    private static bool _AreYouSure = false;
 
     /// <summary>
     ///     Unity Monobehaviour Awake()
@@ -192,7 +193,7 @@ public static class ArchipelagoConsole
             ArchipelagoClient.ServerData.Password = GUI.PasswordField(new Rect(150, 210, 150, 20),
                 ArchipelagoClient.ServerData.Password, '*');
             // requires that the player at least puts *something* in the slot name
-            if (GUI.Button(new Rect(16, 230, 100, 20), "Connect") &&
+            if (GUI.Button(new Rect(16, 240, 100, 20), "Connect") &&
                 !ArchipelagoClient.ServerData.SlotName.IsNullOrWhiteSpace())
             {
                 ConnectionData connData = new ConnectionData();
@@ -201,6 +202,30 @@ public static class ArchipelagoConsole
                 connData.Password = ArchipelagoClient.ServerData.Password;
                 State.UpdateServerDetails(connData);
                 Plugin.ArchipelagoClient.Connect();
+            }
+            if (_AreYouSure)
+            {
+                if (GUI.Button(new Rect(150, 240, 80, 20), "Yes"))
+                {
+                    _AreYouSure = false;
+                    State.Reset();
+                    State.Initialize();
+                    ArchipelagoConsole.LogMessage("Local Session Data Reset, you are good to connect to a new multiworld!");
+                }
+                if (GUI.Button(new Rect(235, 240, 80, 20), "No"))
+                {
+                    _AreYouSure = false;
+                    ArchipelagoConsole.LogMessage("Local Session Data was not reset, please load into an existing run, or reset your data to connect to a new run.");
+                }
+
+            }
+            else
+            {
+                if (GUI.Button(new Rect(150, 240, 170, 20), "New Run Data Reset"))
+                {
+                    _AreYouSure = true;
+                    ArchipelagoConsole.LogMessage("Are You sure you want to reset your Local Session Data to start a new run?");
+                }
             }
         }
         GUI.SetNextControlName("CommandText");

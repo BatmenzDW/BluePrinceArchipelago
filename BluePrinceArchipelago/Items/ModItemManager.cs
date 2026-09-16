@@ -74,7 +74,8 @@ namespace BluePrinceArchipelago.Items
                 if (!item.HasBeenFound && item.ApplySanity())
                 {
                     FsmState state = Plugin.UniqueItemManager.GetPickupState(item.Name);
-                    if (state != null) {
+                    if (state != null)
+                    {
                         state.DisableActionsOfType<ArrayListAdd>();
                         state.AddAction(FSMEventHandler.RegisteredEvents[item.Name].Event);
                     }
@@ -83,14 +84,15 @@ namespace BluePrinceArchipelago.Items
                     {
 
                         GameObject spawnObj = FindSpawnObject(item.Name);
-                        if (spawnObj == null) {
+                        if (spawnObj == null)
+                        {
                             spawnObj = item.GameObj;
                         }
                         if (spawnObj != null)
                         {
                             //If the Model is not currently already replaced.
                             if (spawnObj.transform.FindChild("AP Swirlie") == null)
-                            { 
+                            {
                                 //Instantiate a copy of the game object at the location of the spawn pool game object.
                                 GameObject APGO = GameObject.Instantiate(prefab, spawnObj.transform.position, spawnObj.transform.rotation);
                                 // Get the APswirly Component of the prefab
@@ -108,7 +110,8 @@ namespace BluePrinceArchipelago.Items
                                 }
                                 GameObject.Destroy(APGO);
                             }
-                            else {
+                            else
+                            {
                                 // Make sure the notification is changed for persistent items.
                                 if (item.IsPersistent)
                                 {
@@ -128,6 +131,11 @@ namespace BluePrinceArchipelago.Items
                     else
                     {
                         Logging.LogWarning($"Unable to find prefab for {item.Name}. Item is either unimplemented or not present in the assets.");
+                    }
+                }
+                else {
+                    if (item.IsPersistent) { 
+                        RemoveUniqueItemAPSwirly(item);
                     }
                 }
             }

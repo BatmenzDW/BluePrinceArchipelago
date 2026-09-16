@@ -1,10 +1,12 @@
 ﻿using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
+using CirrusPlay.PortalLibrary;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Rooms
@@ -22,6 +24,8 @@ namespace BluePrinceArchipelago.Rooms
         }
         public static ModRoom ForcedRoom = null;
         public static bool IsForcingDraft = false;
+
+        public static GameObject[] ForcedRooms = [];
 
         public static List<string> VanillaRooms = [];
         public static List<string> CantCopy = ["ANTECHAMBER", "ENTRANCE HALL", "ROOM 46", "FOUNDATION", ""];
@@ -114,9 +118,6 @@ namespace BluePrinceArchipelago.Rooms
                     }
                 }
             }
-
-            // Update the actual picker arrays
-            UpdateRoomPools();
 
             Logging.Log($"Auto-sync complete: {unlockedCount} rooms unlocked from Archipelago.", "Rooms");
         }
@@ -355,22 +356,19 @@ namespace BluePrinceArchipelago.Rooms
                 // If the room is unlocked.
                 if (room.IsUnlocked)
                 {
-                    // If there are still copies in today's pool (or a safety for if extra copies are added without the mod tracking it.)
-                    if (room.RoomsLeftInPool > 0)
+                    bool found = false;
+                    // Confirm all dependencies of the room have been met. If one is not met, turn the room off until the next draft. (very important for Foundation)
+                    foreach (Func<ModRoom, bool> dependency in room.Dependencies)
                     {
-                        bool found = false;
-                        // Confirm all dependencies of the room have been met. If one is not met, turn the room off until the next draft. (very important for Foundation)
-                        foreach (Func<ModRoom, bool> dependency in room.Dependencies)
+                        if (!dependency.Invoke(room))
                         {
-                            if (!dependency.Invoke(room))
-                            {
-                                SetPoolRemovalVar(room.GameObjectName, true);
-                                found = true;
-                            }
+                            SetPoolRemovalVar(room.GameObjectName, true);
+                            found = true;
                         }
-                        if (!found) {
-                            SetPoolRemovalVar(room.GameObjectName, false);
-                        }
+                    }
+                    if (!found && room.Dependencies.Count > 0)
+                    {
+                        SetPoolRemovalVar(room.GameObjectName, false);
                     }
                 }
                 else
@@ -378,6 +376,68 @@ namespace BluePrinceArchipelago.Rooms
                     SetPoolRemovalVar(room.GameObjectName, true);
                 }
             }
+            CheckPoolTooEmpty();
+        }
+
+        private static void CheckPoolTooEmpty()
+        {
+            PlayMakerArrayListProxy Array1  = ModInstance.MasterPicker.GetGameObjectVariable("Array 1").Value?.GetComponent<PlayMakerArrayListProxy>();
+            PlayMakerArrayListProxy Array1G = ModInstance.MasterPicker.GetGameObjectVariable("Array 1 G").Value?.GetComponent<PlayMakerArrayListProxy>();
+            PlayMakerArrayListProxy Array2 = ModInstance.MasterPicker.GetGameObjectVariable("Array 2").Value?.GetComponent<PlayMakerArrayListProxy>();
+            PlayMakerArrayListProxy Array2G = ModInstance.MasterPicker.GetGameObjectVariable("Array 2 G").Value?.GetComponent<PlayMakerArrayListProxy>();
+            HashSet<GameObject> Unique = new HashSet<GameObject>();
+            for (int i = 0; i < Array1.arrayList.Count; i++)
+            {
+                GameObject item = Array1?.arrayList[i]?.TryCast<GameObject>();
+                Unique.Add(item);
+            }
+            for (int i = 0; i < Array2.arrayList.Count; i++)
+            {
+                GameObject item = Array2?.arrayList[i]?.TryCast<GameObject>();
+                Unique.Add(item);
+            }
+            for (int i = 0; i < Array1G.arrayList.Count; i++)
+            {
+                GameObject item = Array1G?.arrayList[i]?.TryCast<GameObject>();
+                Unique.Add(item);
+            }
+            for (int i = 0; i < Array2G.arrayList.Count; i++)
+            {
+                GameObject item = Array2G?.arrayList[i]?.TryCast<GameObject>();
+                Unique.Add(item);
+            }
+            GameObject Closet = GetRoomByName("Closet").GameObj;
+            int count = Unique.Count;
+            List<GameObject> uniqueList = [.. Unique];
+            if (Unique.Count < 4) {
+                Logging.Log("Using small Room Pool Fallback Draft", "Rooms");
+                if (count == 0)
+                {
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = Closet;
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = Closet;
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = Closet;
+                }
+                if (count == 1)
+                {
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = Closet;
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = Closet;
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = uniqueList[0];
+                }
+                if (count == 2)
+                {
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = Closet;
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = uniqueList[0];
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = uniqueList[1];
+                }
+                if (count == 3)
+                {
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = uniqueList[0];
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = uniqueList[1];
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = uniqueList[2];
+                }
+                ModInstance.MasterPicker.GetBoolVariable("ForceDraft").Value = true;
+            }
+           
         }
 
         /// <summary>
@@ -431,6 +491,13 @@ namespace BluePrinceArchipelago.Rooms
                 {
                     return room;
                 }
+                foreach (string alias in room.Aliases)
+                {
+                    if (alias.ToUpper().Trim() == name.ToUpper().Trim())
+                    {
+                        return room;
+                    }
+                }
                 foreach (GameObject gameObject in room.UpgradeObjects)
                 {
                     if (gameObject.name.ToUpper().Trim() == name.ToUpper().Trim())
@@ -445,7 +512,7 @@ namespace BluePrinceArchipelago.Rooms
         /// <summary>
         ///     Adds a room with the same name for both the room and its game object path.
         /// </summary>
-        public static ModRoom AddRoom(string name, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false)
+        public static ModRoom AddRoom(string name, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false, string[] aliases = null)
         {
             return AddRoom(name, name, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted);
         }
@@ -459,7 +526,8 @@ namespace BluePrinceArchipelago.Rooms
         /// <param name="isUnlocked">If the room is unlocked.</param>
         /// <param name="useVanilla">Whether to Use Vanilla handling</param>
         /// <param name="hasBeenDrafted">If the room has been drafted at least once.</param>
-        public static ModRoom AddRoom(string name, string gameObjectName, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false)
+        /// <param name="aliases">Alternative names for the room.</param>
+        public static ModRoom AddRoom(string name, string gameObjectName, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false, string[] aliases = null)
         {
             string roomPath = "__SYSTEM/The Room Engines/" + gameObjectName;
             GameObject roomObj = GameObject.Find(roomPath);
@@ -494,9 +562,9 @@ namespace BluePrinceArchipelago.Rooms
                 {
                     Logging.LogWarning($"UpgradeID variable could not be found for {name}.");
                 }
-                return AddRoom(new ModRoom(name, gameObjectName, roomObj, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted, UpgradeObjs, UpgradeID));
+                return AddRoom(new ModRoom(name, gameObjectName, roomObj, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted, UpgradeObjs, UpgradeID, aliases));
             }
-            return AddRoom(new ModRoom(name, gameObjectName, roomObj, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted));
+            return AddRoom(new ModRoom(name, gameObjectName, roomObj, pickerArrays, isUnlocked, useVanilla, hasBeenDrafted, null, 0, aliases));
         }
 
         /// <summary>
@@ -504,11 +572,11 @@ namespace BluePrinceArchipelago.Rooms
         /// </summary>
         public static void UpdateRoomPools()
         {
-            Logging.Log("Updating Room Pools");
-            foreach (string key in ModRoomManager.PickerDict.Keys)
+            Logging.Log("Updating Room Pools", "Rooms");
+            foreach (string key in PickerDict.Keys)
             {
-                PlayMakerArrayListProxy untouchedArray = ModRoomManager.UntouchedPickers[key];
-                PlayMakerArrayListProxy array = ModRoomManager.PickerDict[key];
+                PlayMakerArrayListProxy untouchedArray = UntouchedPickers[key];
+                PlayMakerArrayListProxy array = PickerDict[key];
                 int length = array.arrayList.Count;
                 GameObject room = null;
                 ModRoom modRoom = null;
@@ -516,6 +584,7 @@ namespace BluePrinceArchipelago.Rooms
                 for (int i = 0; i < length; i++)
                 {
                     room = array.arrayList[i].TryCast<GameObject>();
+                    //Logging.Log(room.name, "Rooms");
                     if (room != null)
                     {
                         modRoom = GetRoomByName(room.name);
@@ -532,56 +601,23 @@ namespace BluePrinceArchipelago.Rooms
                         }
                         else
                         {
-                            Logging.Log($"Unable to find room: {room.name}");
+                            Logging.Log($"Unable to find room: {room.name}", "Rooms");
                         }
                     }
                 }
                 int untouchedLength = untouchedArray.arrayList.Count;
                 List<string> updated = [];
-                for (int j = 0; j < untouchedLength; j++)
+                foreach (string roomName in RoomCounts.Keys)
                 {
-                    if (untouchedArray.arrayList[j] != null)
+                    modRoom = GetRoomByName(roomName);
+                    if (modRoom != null)
                     {
-                        room = untouchedArray.arrayList[j].TryCast<GameObject>();
-                        if (room != null)
-                        {
-                            modRoom = GetRoomByName(room.name);
-                            if (modRoom != null)
-                            {
-                                if (RoomCounts.ContainsKey(room.name))
-                                {
-                                    modRoom.UpdateArray(array, RoomCounts[room.name]);
-                                    updated.Add(room.name);
-                                }
-                                else
-                                {
-                                    modRoom.UpdateArray(array, 0);
-                                    updated.Add(room.name);
-                                }
-                            }
-                            else
-                            {
-                                Logging.Log($"Unable to find room: {room.name}");
-                            }
-                        }
+                        modRoom.UpdateArray(array, RoomCounts[roomName]);
+                        updated.Add(roomName);
                     }
-                }
-                foreach (string roomName in FoundFloorplans)
-                {
-                    if (!RoomCounts.ContainsKey(roomName) && !updated.Contains(roomName))
+                    else
                     {
-                        modRoom = GetRoomByName(roomName);
-                        if (modRoom != null)
-                        {
-                            if (modRoom.PickerArrays.Contains(key))
-                            {
-                                modRoom.UpdateArray(array, 0);
-                            }
-                        }
-                        else
-                        {
-                            Logging.Log($"Unable to find room: {room.name}");
-                        }
+                        Logging.Log($"Unable to find room: {roomName}", "Rooms");
                     }
                 }
             }
@@ -1253,7 +1289,7 @@ namespace BluePrinceArchipelago.Rooms
                 .AddDependency(secretPassageCheck);
             AddRoom("SECURITY", ["NORTH PIERCE G", "CENTER - Tier 1 G", "EDGEPIERCE G"], true);
             AddRoom("SERVANT\'S QUARTERS", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CORNER - RARE G", "CENTER - Tier 2 G", "EDGECREEP - RARE G", "EDGEPIERCE - RARE G"], true);
-            AddRoom("BOMB SHELTER", ["STANDALONE ARRAY", "STANDALONE ARRAY FULL"], true);
+            AddRoom("BOMB SHELTER", ["STANDALONE ARRAY", "STANDALONE ARRAY FULL"], true, false, false, ["SHELTER"]);
             AddRoom("SHOWROOM", ["FRONTBACK G - RARE", "CENTER - Tier 3 G", "EDGECREEP - RARE G", "Center Rare G"], true);
             AddRoom("SHRINE", ["STANDALONE ARRAY", "STANDALONE ARRAY FULL"], true);
             AddRoom("SOLARIUM", ["CORNER - RARE G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G", "NORTH PIERCE G", "CENTER - Tier 2 G"], false);
