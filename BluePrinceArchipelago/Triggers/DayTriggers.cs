@@ -76,7 +76,6 @@ namespace BluePrinceArchipelago.Triggers
                 {
                     FSMPatches.OuterDraftOverrides();
                 }
-                ModRoomManager.HLCFix();
                 Unlocks.AttemptPrePatch(); //Apply patches to the FSMs
                 Unlocks.AppleOrchard.PreventDefault();
                 Unlocks.WestGatePath.PreventDefault();

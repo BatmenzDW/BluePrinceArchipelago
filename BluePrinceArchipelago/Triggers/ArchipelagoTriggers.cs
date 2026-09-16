@@ -62,7 +62,6 @@ namespace BluePrinceArchipelago.Triggers
                 Plugin.UniqueItemManager.StartOfDay();
                 ModRoomManager.StartOfDay();
                 Plugin.ArchipelagoClient.DeathLinkHandler.KillPlayer();
-                ModRoomManager.HLCFix();
             }
         }
     }

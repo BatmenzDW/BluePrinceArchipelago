@@ -1,4 +1,5 @@
-﻿using BluePrinceArchipelago.Utils;
+﻿using BluePrinceArchipelago.Rooms;
+using BluePrinceArchipelago.Utils;
 using System.Collections.Generic;
 
 namespace BluePrinceArchipelago.Items
@@ -32,6 +33,7 @@ namespace BluePrinceArchipelago.Items
         /// </summary>
         public void OnTrunkOpen() {
             string currentRoom = ModInstance.TheGrid.GetStringVariable("CURRENT ROOM").Value;
+            currentRoom = ModRoomManager.GetRoomByName(currentRoom).Name;
             if (!_TrunkCounts.ContainsKey(currentRoom))
             {
                 _TrunkCounts.Add(currentRoom, 1);
