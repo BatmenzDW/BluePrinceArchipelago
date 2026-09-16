@@ -21,6 +21,7 @@ namespace BluePrinceArchipelago.Archipelago.Commands
         {
             State.Reset();
             State.Initialize();
+            ArchipelagoConsole.LogMessage("Local Session Data Reset, you are good to connect to a new multiworld!");
         }
     }
 }
