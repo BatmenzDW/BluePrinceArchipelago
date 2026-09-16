@@ -87,12 +87,7 @@ Special Thanks to:
 <!-- GETTING STARTED -->
 ## Getting Started
 
-If you are a player, there's no installation instructions yet. If you are developer please check out the <a href=#installation>Installation</a> section.
-
-### Prerequisites
-
-Please make sure you have Bepinex 6 installed as we need the IL2CPP support.
-* [Bepinex 6](https://docs.bepinex.dev/master/articles/user_guide/installation/index.html)
+If you are a player, Installation instructions are just below. If you are developer please check out the <a href=#developer-setup>Developer Setup</a> section.
 
 ### Installation
 
@@ -115,6 +110,8 @@ While fixes are being looked into and worked on they were not prioritized for Al
 
 **Before you install this mod, I highly reccomend backing up your save file MtHollyBlueprint.es3 from your ~\AppData\LocalLow\Dogubomb\BLUE PRINCE\storage folder. Copy it somewhere safe.**
 Blue Prince Archipelago does not touch the save file process in any way, but I can't guarantee that it won't. Use this mod at your own discresion.
+
+If you prefer a simpler install we do have a [Thunderstore version](https://thunderstore.io/c/blue-prince/p/BluePrinceArchipelago/BluePrinceArchipelago/). Please note that I accidentally messed up the semantic versioning so 1.1.1 is actually meant to be 0.1.1 and so on. Due to how Thunderstore is setup this is not a mistake I can easily fix. 
 
 1. Install [Bepinex 6](https://docs.bepinex.dev/master/articles/user_guide/installation/index.html)
 * Specifically you will want to get build #755's [BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip](https://builds.bepinex.dev/projects/bepinex_be/755/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755%2B3fab71a.zip) from the page [here](https://builds.bepinex.dev/projects/bepinex_be)
