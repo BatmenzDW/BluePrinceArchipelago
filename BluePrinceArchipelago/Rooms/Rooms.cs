@@ -51,6 +51,7 @@ namespace BluePrinceArchipelago.Rooms
     /// <param name="hasBeenDrafted">Whether this room has been drafted this run</param>
     /// <param name="upgradeObjs">The GameObjects for the Upgraded versions of the Room.</param>
     /// <param name="upgradeID">The Upgrade ID of this instance of the Room</param>
+    /// <param name="aliases">Alternative names for the room.</param>
     public class ModRoom(string name, string gameObjectName, GameObject gameObject, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false, List<GameObject> upgradeObjs = null, int upgradeID = 0, string[] aliases = null)
     {
 #pragma warning disable CS9124 // Parameter is captured into the state of the enclosing type and its value is also used to initialize a field, property, or event.

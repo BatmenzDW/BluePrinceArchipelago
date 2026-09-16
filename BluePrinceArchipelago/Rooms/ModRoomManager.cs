@@ -25,6 +25,8 @@ namespace BluePrinceArchipelago.Rooms
         public static ModRoom ForcedRoom = null;
         public static bool IsForcingDraft = false;
 
+        public static GameObject[] ForcedRooms = [];
+
         public static List<string> VanillaRooms = [];
         public static List<string> CantCopy = ["ANTECHAMBER", "ENTRANCE HALL", "ROOM 46", "FOUNDATION", ""];
         public static List<string> FoundFloorplans = ["PLANETARIUM", "CONSERVATORY", "TUNNEL", "THRONE ROOM", "TREASURE TROVE", "MECHANARIUM", "LOST & FOUND", "CLOSED EXHIBIT", "CLOCK TOWER", "THE KENNEL", "VESTIBULE", "DOVECOTE", "SOLARIUM", "DORMITORY", "CASINO", "SAUNA", "LOCKER ROOM", "MORNING ROOM", "CLASSROOM"];
@@ -374,6 +376,68 @@ namespace BluePrinceArchipelago.Rooms
                     SetPoolRemovalVar(room.GameObjectName, true);
                 }
             }
+            CheckPoolTooEmpty();
+        }
+
+        private static void CheckPoolTooEmpty()
+        {
+            PlayMakerArrayListProxy Array1  = ModInstance.MasterPicker.GetGameObjectVariable("Array 1").Value?.GetComponent<PlayMakerArrayListProxy>();
+            PlayMakerArrayListProxy Array1G = ModInstance.MasterPicker.GetGameObjectVariable("Array 1 G").Value?.GetComponent<PlayMakerArrayListProxy>();
+            PlayMakerArrayListProxy Array2 = ModInstance.MasterPicker.GetGameObjectVariable("Array 2").Value?.GetComponent<PlayMakerArrayListProxy>();
+            PlayMakerArrayListProxy Array2G = ModInstance.MasterPicker.GetGameObjectVariable("Array 2 G").Value?.GetComponent<PlayMakerArrayListProxy>();
+            HashSet<GameObject> Unique = new HashSet<GameObject>();
+            for (int i = 0; i < Array1.arrayList.Count; i++)
+            {
+                GameObject item = Array1?.arrayList[i]?.TryCast<GameObject>();
+                Unique.Add(item);
+            }
+            for (int i = 0; i < Array2.arrayList.Count; i++)
+            {
+                GameObject item = Array2?.arrayList[i]?.TryCast<GameObject>();
+                Unique.Add(item);
+            }
+            for (int i = 0; i < Array1G.arrayList.Count; i++)
+            {
+                GameObject item = Array1G?.arrayList[i]?.TryCast<GameObject>();
+                Unique.Add(item);
+            }
+            for (int i = 0; i < Array2G.arrayList.Count; i++)
+            {
+                GameObject item = Array2G?.arrayList[i]?.TryCast<GameObject>();
+                Unique.Add(item);
+            }
+            GameObject Closet = GetRoomByName("Closet").GameObj;
+            int count = Unique.Count;
+            List<GameObject> uniqueList = [.. Unique];
+            if (Unique.Count < 4) {
+                Logging.Log("Using small Room Pool Fallback Draft", "Rooms");
+                if (count == 0)
+                {
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = Closet;
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = Closet;
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = Closet;
+                }
+                if (count == 1)
+                {
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = Closet;
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = Closet;
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = uniqueList[0];
+                }
+                if (count == 2)
+                {
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = Closet;
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = uniqueList[0];
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = uniqueList[1];
+                }
+                if (count == 3)
+                {
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = uniqueList[0];
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = uniqueList[1];
+                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = uniqueList[2];
+                }
+                ModInstance.MasterPicker.GetBoolVariable("ForceDraft").Value = true;
+            }
+           
         }
 
         /// <summary>
@@ -462,6 +526,7 @@ namespace BluePrinceArchipelago.Rooms
         /// <param name="isUnlocked">If the room is unlocked.</param>
         /// <param name="useVanilla">Whether to Use Vanilla handling</param>
         /// <param name="hasBeenDrafted">If the room has been drafted at least once.</param>
+        /// <param name="aliases">Alternative names for the room.</param>
         public static ModRoom AddRoom(string name, string gameObjectName, List<string> pickerArrays, bool isUnlocked, bool useVanilla = false, bool hasBeenDrafted = false, string[] aliases = null)
         {
             string roomPath = "__SYSTEM/The Room Engines/" + gameObjectName;

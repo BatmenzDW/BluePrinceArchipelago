@@ -17,6 +17,8 @@ namespace BluePrinceArchipelago.Triggers
         public static void OnAfterRoomSpawned(GameObject obj) {
             ModRoom room = ModRoomManager.GetRoomByName(obj.name.ToUpper().Trim());
             room?.Handler?.OnAfterRoomDrafted(obj);
+            // Turn off the forced draft.
+            ModInstance.MasterPicker.GetBoolVariable("Force Draft").Value = false;
         }
 
         /// <summary>
@@ -36,7 +38,7 @@ namespace BluePrinceArchipelago.Triggers
                 {
                     roomname = "HER LADYSHIP\'S CHAMBER";
                 }
-                Logging.LogWarning($"Room Drafted: {roomname}", "Room");
+                Logging.Log($"Room Drafted: {roomname}", "Rooms");
                 if (ModRoomManager.ForcedRoom != null)
                 {
                     if (roomname.ToUpper() == ModRoomManager.ForcedRoom.Name.ToUpper())
