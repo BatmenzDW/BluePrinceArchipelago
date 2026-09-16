@@ -1202,6 +1202,7 @@ namespace BluePrinceArchipelago.Items
             AddItem(new JunkItem("Extra Gems 2", null, true, "Gems", 2));
             AddItem(new JunkItem("Extra Keys 1", null, true, "Keys", 1));
             AddItem(new JunkItem("Extra Keys 2", null, true, "Keys", 2));
+            AddItem(new JunkItem("Extra Keys 3", null, true, "Keys", 3));
             AddItem(new JunkItem("Extra Steps 1", null, true, "Steps", 1));
             AddItem(new JunkItem("Extra Steps 2", null, true, "Steps", 2));
             AddItem(new JunkItem("Extra Steps 5", null, true, "Steps", 5));

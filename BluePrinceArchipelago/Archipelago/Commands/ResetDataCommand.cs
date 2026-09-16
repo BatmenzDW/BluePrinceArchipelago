@@ -21,6 +21,7 @@ namespace BluePrinceArchipelago.Archipelago.Commands
         {
             State.Reset();
             State.Initialize();
+            ArchipelagoConsole.LogMessage($"Local Data Reset. You are good to start a new run.");
         }
     }
 }
