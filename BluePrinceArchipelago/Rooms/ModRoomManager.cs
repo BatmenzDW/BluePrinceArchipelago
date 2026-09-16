@@ -1,10 +1,12 @@
 ﻿using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
+using CirrusPlay.PortalLibrary;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Rooms
@@ -114,9 +116,6 @@ namespace BluePrinceArchipelago.Rooms
                     }
                 }
             }
-
-            // Update the actual picker arrays
-            UpdateRoomPools();
 
             Logging.Log($"Auto-sync complete: {unlockedCount} rooms unlocked from Archipelago.", "Rooms");
         }
@@ -508,11 +507,11 @@ namespace BluePrinceArchipelago.Rooms
         /// </summary>
         public static void UpdateRoomPools()
         {
-            Logging.Log("Updating Room Pools");
-            foreach (string key in ModRoomManager.PickerDict.Keys)
+            Logging.Log("Updating Room Pools", "Rooms");
+            foreach (string key in PickerDict.Keys)
             {
-                PlayMakerArrayListProxy untouchedArray = ModRoomManager.UntouchedPickers[key];
-                PlayMakerArrayListProxy array = ModRoomManager.PickerDict[key];
+                PlayMakerArrayListProxy untouchedArray = UntouchedPickers[key];
+                PlayMakerArrayListProxy array = PickerDict[key];
                 int length = array.arrayList.Count;
                 GameObject room = null;
                 ModRoom modRoom = null;
@@ -520,6 +519,7 @@ namespace BluePrinceArchipelago.Rooms
                 for (int i = 0; i < length; i++)
                 {
                     room = array.arrayList[i].TryCast<GameObject>();
+                    //Logging.Log(room.name, "Rooms");
                     if (room != null)
                     {
                         modRoom = GetRoomByName(room.name);
@@ -536,56 +536,23 @@ namespace BluePrinceArchipelago.Rooms
                         }
                         else
                         {
-                            Logging.Log($"Unable to find room: {room.name}");
+                            Logging.Log($"Unable to find room: {room.name}", "Rooms");
                         }
                     }
                 }
                 int untouchedLength = untouchedArray.arrayList.Count;
                 List<string> updated = [];
-                for (int j = 0; j < untouchedLength; j++)
+                foreach (string roomName in RoomCounts.Keys)
                 {
-                    if (untouchedArray.arrayList[j] != null)
+                    modRoom = GetRoomByName(roomName);
+                    if (modRoom != null)
                     {
-                        room = untouchedArray.arrayList[j].TryCast<GameObject>();
-                        if (room != null)
-                        {
-                            modRoom = GetRoomByName(room.name);
-                            if (modRoom != null)
-                            {
-                                if (RoomCounts.ContainsKey(room.name))
-                                {
-                                    modRoom.UpdateArray(array, RoomCounts[room.name]);
-                                    updated.Add(room.name);
-                                }
-                                else
-                                {
-                                    modRoom.UpdateArray(array, 0);
-                                    updated.Add(room.name);
-                                }
-                            }
-                            else
-                            {
-                                Logging.Log($"Unable to find room: {room.name}");
-                            }
-                        }
+                        modRoom.UpdateArray(array, RoomCounts[roomName]);
+                        updated.Add(roomName);
                     }
-                }
-                foreach (string roomName in FoundFloorplans)
-                {
-                    if (!RoomCounts.ContainsKey(roomName) && !updated.Contains(roomName))
+                    else
                     {
-                        modRoom = GetRoomByName(roomName);
-                        if (modRoom != null)
-                        {
-                            if (modRoom.PickerArrays.Contains(key))
-                            {
-                                modRoom.UpdateArray(array, 0);
-                            }
-                        }
-                        else
-                        {
-                            Logging.Log($"Unable to find room: {room.name}");
-                        }
+                        Logging.Log($"Unable to find room: {roomName}", "Rooms");
                     }
                 }
             }

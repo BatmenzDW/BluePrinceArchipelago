@@ -217,14 +217,14 @@ namespace BluePrinceArchipelago.Rooms
                 if (array.Contains(_GameObj))
                 {
                     array.Remove(_GameObj, "GameObject");
-                    Logging.Log($"Removed {Name} from {array.name}");
+                    Logging.Log($"Removed {Name} from {array.name}", "Rooms");
                     removed = true;
                 }
                 // Handle the Upgraded objects.
                 foreach (GameObject upgrade in UpgradeObjects) {
                     if (array.Contains(upgrade))
                     {
-                        Logging.LogWarning("Removed Upgraded Room From Pool");
+                        Logging.LogWarning("Removed Upgraded Room From Pool", "Rooms");
                         array.Remove(upgrade, "GameObject");
                         Logging.Log($"Removed {Name} from {array.name}");
                         removed = true;
@@ -232,7 +232,7 @@ namespace BluePrinceArchipelago.Rooms
                 }
                 if (!removed)
                 {
-                    Logging.Log($"{Name} doesn't exist in the pool {array.name}");
+                    Logging.Log($"{Name} doesn't exist in the pool {array.name}", "Rooms");
                 }
             }
         }
