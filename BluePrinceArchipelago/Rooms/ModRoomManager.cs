@@ -619,8 +619,10 @@ namespace BluePrinceArchipelago.Rooms
                                 Logging.Log(pair.Key, "Rooms");
                                 printed = true;
                             }
-                            Modroom.AddToPool(array, Modroom.RoomPoolCount);
-                            updated.Add(Modroom.Name);
+                            if (Modroom.RoomsLeftInPool > 0)
+                            {
+                                Modroom.AddToPool(array, Modroom.RoomsLeftInPool);
+                            }
                         }
                         if (FoundFloorplans.Contains(Modroom.Name) && Modroom.RoomsLeftInPool > 0)
                         {

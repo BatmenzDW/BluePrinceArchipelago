@@ -174,10 +174,10 @@ namespace BluePrinceArchipelago.Rooms
         /// <param name="array">The Picker Array to add it to</param>
         /// <param name="count">The number to add to the pool</param>
         public void AddToPool(PlayMakerArrayListProxy array, int count = 1) {
+            Logging.Log($"Adding {Name} to {array.name}", "Rooms");
             // Ensure we have a valid GameObject to add
             if (_GameObj == null)
             {
-                Logging.LogWarning($"Adding {count} {name}(s) to pool.");
                 // Try to get the GameObject from the Room Engines using the game object name
                 _GameObj = GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName);
                 if (_GameObj == null)
@@ -185,12 +185,13 @@ namespace BluePrinceArchipelago.Rooms
                     Logging.LogWarning($"Cannot add {Name} to pool: GameObject is null (looked for '{_GameObjectName}')");
                     return;
                 }
+                for (int i = 0; i < count; i++)
+                {
+                    array.Add(_GameObj, "GameObject");
+                    Logging.Log($"Adding {Name} to {array.name}", "Rooms");
+                }
             }
-            for (int i = 0; i < count; i++)
-            {
-                array.Add(_GameObj, "GameObject");
-                Logging.Log($"Removed {Name} from {array.name}", "Rooms");
-            }
+            
         }
         /// <summary>
         ///     Removes copy(s) of the room from the picker array.
