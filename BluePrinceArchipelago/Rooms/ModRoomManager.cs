@@ -597,7 +597,7 @@ namespace BluePrinceArchipelago.Rooms
                         if (modRoom != null)
                         {
                             if (FoundFloorplans.Contains(roomName)) {
-                                Logging.Log($"Attempting to add/remove {room} to {pair.Key}.", "Rooms");
+                                Logging.Log($"Attempting to add/remove {room} to {pair.Key}.\n\tAP Pool Count: {modRoom.RoomPoolCount}\n\tRoom Left In Pool Count: {modRoom.RoomsLeftInPool}", "Rooms");
                             }
                             modRoom.UpdateArray(array, RoomCounts[roomName]);
                             updated.Add(roomName);
@@ -616,7 +616,7 @@ namespace BluePrinceArchipelago.Rooms
                                 Modroom.AddToPool(array, Modroom.RoomsLeftInPool);
                                 if (FoundFloorplans.Contains(Modroom.Name))
                                 {
-                                    Logging.Log($"Attempting to add {room} to {pair.Key}.", "Rooms");
+                                    Logging.Log($"Attempting to add/remove {room} to {pair.Key}.\n\tAP Pool Count: {Modroom.RoomPoolCount}\n\tRoom Left In Pool Count: {Modroom.RoomsLeftInPool}", "Rooms");
                                 }
                             }
                         }
