@@ -25,7 +25,7 @@ namespace BluePrinceArchipelago.Patches
             FsmState ForceDraft = fsm.AddState("Force Room Draft");
             FsmState DraftForcedCheck = fsm.AddState("Draft Forced Check");
             FsmState DraftForcedSlot1 = fsm.AddState("Draft Forced Slot 1");
-            FsmState DraftForcedSlot3 = fsm.AddState("Draft Forced Slot 1");
+            FsmState DraftForcedSlot3 = fsm.AddState("Draft Forced Slot 3");
             FsmGameObject ForcedRoom = fsm.AddFsmGameObject("ForcedRoom", null);
             FsmGameObject ForcedRoom2 = fsm.AddFsmGameObject("ForcedRoom2", null);
             FsmGameObject ForcedRoom3 = fsm.AddFsmGameObject("ForcedRoom3", null);

@@ -29,7 +29,7 @@ namespace BluePrinceArchipelago.Archipelago
             {"Casino", ["{0} gambled away their inheritance.", "{0} caught a snake. It bit back.", "{0} is betting it all on the next run."]},
             {"Catacombs", ["{0} fell into an open coffin.", "What did {0} expect in the Catacombs?"]},
             {"Chamber of Mirrors", ["{0} trapped themself in the Chamber of Mirrors.", "{0} did not break the glass in case of emergency."]},
-            {"Chapel", ["{0} couldn't afford to pay their tithes.", "[…] was caught taking from the alms"]},
+            {"Chapel", ["{0} couldn't afford to pay their tithes.", "{0} was caught taking from the alms"]},
             {"Classroom", ["{0} wisely chose death over the Final Exam."]}, //Potentially add grade detection for: "{0} is not smarter than a __th grader."
             {"Clock Tower", ["{0} took the short way down a spiral staircase."]},
             {"Cloister", ["{0} shut themselves away in the Cloister.", "{0} is the new statue of the Cloister."]},

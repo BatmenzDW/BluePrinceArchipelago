@@ -1,12 +1,9 @@
 ﻿using BluePrinceArchipelago.Archipelago;
-using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
-using CirrusPlay.PortalLibrary;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using System;
 using System.Collections.Generic;
-using System.Xml.Linq;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Rooms
@@ -169,16 +166,8 @@ namespace BluePrinceArchipelago.Rooms
                 array = ModInstance.PlanPicker.transform.GetChild(coreChildIDs[i]).gameObject.GetComponent<PlayMakerArrayListProxy>();
                 if (array != null)
                 {
-                    PickerDict[array.name.Trim()] = array;
-                }
-            }
 
-            for (int i = 1; i < 31; i++)
-            {
-                array = GameObject.Find("__SYSTEM/Room Lists/UntouchedPickers").transform.GetChild(i).gameObject.GetComponent<PlayMakerArrayListProxy>();
-                if (array != null)
-                {
-                    UntouchedPickers[array.name.Trim()] = array;
+                    PickerDict[array.name.Trim()] = array;
                 }
             }
 
@@ -376,68 +365,86 @@ namespace BluePrinceArchipelago.Rooms
                     SetPoolRemovalVar(room.GameObjectName, true);
                 }
             }
-            CheckPoolTooEmpty();
+            //CheckPoolTooEmpty();
         }
 
         private static void CheckPoolTooEmpty()
         {
-            PlayMakerArrayListProxy Array1  = ModInstance.MasterPicker.GetGameObjectVariable("Array 1").Value?.GetComponent<PlayMakerArrayListProxy>();
-            PlayMakerArrayListProxy Array1G = ModInstance.MasterPicker.GetGameObjectVariable("Array 1 G").Value?.GetComponent<PlayMakerArrayListProxy>();
-            PlayMakerArrayListProxy Array2 = ModInstance.MasterPicker.GetGameObjectVariable("Array 2").Value?.GetComponent<PlayMakerArrayListProxy>();
-            PlayMakerArrayListProxy Array2G = ModInstance.MasterPicker.GetGameObjectVariable("Array 2 G").Value?.GetComponent<PlayMakerArrayListProxy>();
-            HashSet<GameObject> Unique = new HashSet<GameObject>();
-            for (int i = 0; i < Array1.arrayList.Count; i++)
+            PlayMakerArrayListProxy Array1  = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE")?.GetComponent<PlayMakerFSM>().GetGameObjectVariable("Array 1").Value.GetComponent<PlayMakerArrayListProxy>();
+            PlayMakerArrayListProxy Array1G = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE")?.GetComponent<PlayMakerFSM>().GetGameObjectVariable("Array 1 G").Value.GetComponent<PlayMakerArrayListProxy>();
+            PlayMakerArrayListProxy Array2 = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE")?.GetComponent<PlayMakerFSM>().GetGameObjectVariable("Array 2").Value.GetComponent<PlayMakerArrayListProxy>();
+            PlayMakerArrayListProxy Array2G = GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE")?.GetComponent<PlayMakerFSM>().GetGameObjectVariable("Array 2 G").Value.GetComponent<PlayMakerArrayListProxy>();
+            List<GameObject> List = [];
+            if (Array1 != null)
             {
-                GameObject item = Array1?.arrayList[i]?.TryCast<GameObject>();
-                Unique.Add(item);
+                for (int i = 0; i < Array1.arrayList.Count; i++)
+                {
+                    GameObject item = Array1?.arrayList[i]?.TryCast<GameObject>();
+                    List.Add(GetRoomByName(item.name).GameObj);
+                    Logging.Log(item.name, "Rooms");
+                }
             }
-            for (int i = 0; i < Array2.arrayList.Count; i++)
+            if (Array2 != null)
             {
-                GameObject item = Array2?.arrayList[i]?.TryCast<GameObject>();
-                Unique.Add(item);
+                for (int i = 0; i < Array2.arrayList.Count; i++)
+                {
+                    GameObject item = Array2?.arrayList[i]?.TryCast<GameObject>();
+                    List.Add(GetRoomByName(item.name).GameObj);
+                    Logging.Log(item.name, "Rooms");
+                }
             }
-            for (int i = 0; i < Array1G.arrayList.Count; i++)
+            if (Array1G != null)
             {
-                GameObject item = Array1G?.arrayList[i]?.TryCast<GameObject>();
-                Unique.Add(item);
+                for (int i = 0; i < Array1G.arrayList.Count; i++)
+                {
+                    GameObject item = Array1G?.arrayList[i]?.TryCast<GameObject>();
+                    List.Add(GetRoomByName(item.name).GameObj);
+                    Logging.Log(item.name, "Rooms");
+                }
             }
-            for (int i = 0; i < Array2G.arrayList.Count; i++)
+            if (Array2G != null)
             {
-                GameObject item = Array2G?.arrayList[i]?.TryCast<GameObject>();
-                Unique.Add(item);
+                for (int i = 0; i < Array2G.arrayList.Count; i++)
+                {
+                    GameObject item = Array2G?.arrayList[i]?.TryCast<GameObject>();
+                    List.Add(GetRoomByName(item.name).GameObj);
+                    Logging.Log(item.name, "Rooms");
+                }
             }
             GameObject Closet = GetRoomByName("Closet").GameObj;
-            int count = Unique.Count;
-            List<GameObject> uniqueList = [.. Unique];
-            if (Unique.Count < 4) {
+            int count = List.Count;
+            
+            if (count < 4)
+            {
                 Logging.Log("Using small Room Pool Fallback Draft", "Rooms");
                 if (count == 0)
                 {
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = Closet;
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = Closet;
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = Closet;
+                    Logging.Log("Using small Room Pool Fallback Draft", "Rooms");
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom").Value = Closet;
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom2").Value = Closet;
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom3").Value = Closet;
                 }
                 if (count == 1)
                 {
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = Closet;
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = Closet;
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = uniqueList[0];
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom").Value = Closet;
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom2").Value = Closet;
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom3").Value = Closet;
                 }
                 if (count == 2)
                 {
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = Closet;
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = uniqueList[0];
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = uniqueList[1];
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom").Value = Closet;
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom2").Value = Closet;
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom3").Value = Closet;
                 }
                 if (count == 3)
                 {
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom").Value = uniqueList[0];
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom2").Value = uniqueList[1];
-                    ModInstance.MasterPicker.GetGameObjectVariable("ForcedRoom3").Value = uniqueList[2];
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom").Value = Closet;
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom2").Value = Closet;
+                    GameObject.Find("__SYSTEM/THE DRAFT/PLAN PICKER/MASTER PICKER - OVERRIDE").GetComponent<PlayMakerFSM>().GetGameObjectVariable("ForcedRoom3").Value = Closet;
                 }
                 ModInstance.MasterPicker.GetBoolVariable("ForceDraft").Value = true;
             }
-           
+
         }
 
         /// <summary>
@@ -449,20 +456,6 @@ namespace BluePrinceArchipelago.Rooms
             if (room.RoomPoolCount > 0)
             {
                 room.RoomPoolCount -= 1;
-            }
-        }
-        /// <summary>
-        ///     A fix for the HLC being deactivated for days 8+ on veteran mode.
-        /// </summary>
-        public static void HLCFix()
-        {
-            if (ModInstance.GlobalPersistentManager.GetBoolVariable("_Veteran Player").Value)
-            {
-                ModRoom HLC = GetRoomByName("HER LADYSHIP\'S CHAMBER");
-                if (HLC.IsUnlocked)
-                {
-                    SetPoolRemovalVar("HER LADYSHIP\'S CHAMBER");
-                }
             }
         }
 
@@ -573,22 +566,20 @@ namespace BluePrinceArchipelago.Rooms
         public static void UpdateRoomPools()
         {
             Logging.Log("Updating Room Pools", "Rooms");
-            foreach (string key in PickerDict.Keys)
+            foreach (var pair in PickerDict)
             {
-                PlayMakerArrayListProxy untouchedArray = UntouchedPickers[key];
-                PlayMakerArrayListProxy array = PickerDict[key];
-                int length = array.arrayList.Count;
-                GameObject room = null;
-                ModRoom modRoom = null;
-                Dictionary<string, int> RoomCounts = new Dictionary<string, int>();
-                for (int i = 0; i < length; i++)
+                Logging.Log(pair.Key, "Rooms");
+                PlayMakerArrayListProxy array = pair.Value;
+                if (array != null)
                 {
-                    room = array.arrayList[i].TryCast<GameObject>();
-                    //Logging.Log(room.name, "Rooms");
-                    if (room != null)
+                    int length = array.arrayList.Count;
+                    GameObject room = null;
+                    Dictionary<string, int> RoomCounts = new Dictionary<string, int>();
+                    for (int i = 0; i < length; i++)
                     {
-                        modRoom = GetRoomByName(room.name);
-                        if (modRoom != null)
+                        room = array.arrayList[i].TryCast<GameObject>();
+                        //Logging.Log(room.name, "Rooms");
+                        if (room != null)
                         {
                             if (RoomCounts.ContainsKey(room.name))
                             {
@@ -599,25 +590,28 @@ namespace BluePrinceArchipelago.Rooms
                                 RoomCounts[room.name] = 1;
                             }
                         }
+                    }
+                    List<string> updated = [];
+                    foreach (string roomName in RoomCounts.Keys)
+                    {
+                         ModRoom modRoom = GetRoomByName(roomName);
+                        if (modRoom != null)
+                        {
+                            modRoom.UpdateArray(array, RoomCounts[roomName]);
+                            updated.Add(roomName);
+                        }
                         else
                         {
-                            Logging.Log($"Unable to find room: {room.name}", "Rooms");
+                            Logging.Log($"Unable to find room: {roomName}", "Rooms");
                         }
                     }
-                }
-                int untouchedLength = untouchedArray.arrayList.Count;
-                List<string> updated = [];
-                foreach (string roomName in RoomCounts.Keys)
-                {
-                    modRoom = GetRoomByName(roomName);
-                    if (modRoom != null)
+                    foreach (ModRoom Modroom in _Rooms)
                     {
-                        modRoom.UpdateArray(array, RoomCounts[roomName]);
-                        updated.Add(roomName);
-                    }
-                    else
-                    {
-                        Logging.Log($"Unable to find room: {roomName}", "Rooms");
+                        if (!RoomCounts.ContainsKey(Modroom.Name) && Modroom.PickerArrays.Contains(pair.Key) && Modroom.IsUnlocked)
+                        {
+                            Modroom.UpdateArray(array, Modroom.RoomPoolCount);
+                            updated.Add(Modroom.Name);
+                        }
                     }
                 }
             }

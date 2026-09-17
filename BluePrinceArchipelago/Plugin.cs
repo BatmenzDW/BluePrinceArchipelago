@@ -18,7 +18,7 @@ namespace BluePrinceArchipelago {
     {
         public const string PluginGUID = "com.Yascob.BluePrinceArchipelago";
         public const string PluginName = "BluePrinceArchipelago";
-        public const string PluginVersion = "0.1.2";
+        public const string PluginVersion = "0.1.3";
 
         private static Plugin _instance;
         public static Plugin Instance => _instance;
