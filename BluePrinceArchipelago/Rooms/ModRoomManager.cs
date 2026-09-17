@@ -612,6 +612,11 @@ namespace BluePrinceArchipelago.Rooms
                             Modroom.UpdateArray(array, Modroom.RoomPoolCount);
                             updated.Add(Modroom.Name);
                         }
+                         if (FoundFloorplans.Contains(Modroom.Name) && Modroom.RoomInHouseCount < Modroom.RoomPoolCount)
+                        {
+                            SetPoolRemovalVar(Modroom.GameObjectName, false);
+
+                        }
                     }
                 }
             }
