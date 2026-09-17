@@ -174,7 +174,6 @@ namespace BluePrinceArchipelago.Rooms
         /// <param name="array">The Picker Array to add it to</param>
         /// <param name="count">The number to add to the pool</param>
         public void AddToPool(PlayMakerArrayListProxy array, int count = 1) {
-            Logging.Log($"Adding {Name} to {array.name}", "Rooms");
             // Ensure we have a valid GameObject to add
             if (_GameObj == null)
             {

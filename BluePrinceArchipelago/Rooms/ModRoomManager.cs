@@ -596,6 +596,9 @@ namespace BluePrinceArchipelago.Rooms
                          ModRoom modRoom = GetRoomByName(roomName);
                         if (modRoom != null)
                         {
+                            if (FoundFloorplans.Contains(roomName)) {
+                                Logging.Log($"Attempting to add/remove {room} to {pair.Key}.", "Rooms");
+                            }
                             modRoom.UpdateArray(array, RoomCounts[roomName]);
                             updated.Add(roomName);
                         }
@@ -604,30 +607,18 @@ namespace BluePrinceArchipelago.Rooms
                             Logging.Log($"Unable to find room: {roomName}", "Rooms");
                         }
                     }
-                    bool printed = false;
-                    if (updated.Count > 0)
-                    {
-                        Logging.Log(pair.Key, "Rooms");
-                        printed = true;
-                    }
                     foreach (ModRoom Modroom in _Rooms)
                     {
                         if (!updated.Contains(Modroom.Name) && Modroom.PickerArrays.Contains(pair.Key) && Modroom.IsUnlocked)
                         {
-                            if (!printed)
-                            {
-                                Logging.Log(pair.Key, "Rooms");
-                                printed = true;
-                            }
-                            if (Modroom.RoomsLeftInPool > 0)
+                            if (Modroom.RoomsLeftInPool > 0 && Modroom.RoomsLeftInPool < Modroom.RoomPoolCount)
                             {
                                 Modroom.AddToPool(array, Modroom.RoomsLeftInPool);
+                                if (FoundFloorplans.Contains(Modroom.Name))
+                                {
+                                    Logging.Log($"Attempting to add {room} to {pair.Key}.", "Rooms");
+                                }
                             }
-                        }
-                        if (FoundFloorplans.Contains(Modroom.Name) && Modroom.RoomsLeftInPool > 0)
-                        {
-                            SetPoolRemovalVar(Modroom.GameObjectName, false);
-
                         }
                     }
                 }
