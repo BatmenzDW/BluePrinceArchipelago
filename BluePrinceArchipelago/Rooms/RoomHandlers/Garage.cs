@@ -1,7 +1,8 @@
-﻿using BluePrinceArchipelago.Items;
+﻿using BluePrinceArchipelago.Events;
+using BluePrinceArchipelago.Items;
+using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using BluePrinceArchipelago.Utils;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Rooms.RoomHandlers;
@@ -11,6 +12,12 @@ class Garage : RoomHandler
     public override void OnAfterRoomDrafted(GameObject roomGameObject)
     {
         roomGameObject = ModRoomManager.GetRoomInstance("Garage");
+        //Yes, one of these has a (1) at the end and the other does not. Tonda my GOAT. 
+        PlayMakerFSM GaragePierceFSM = roomGameObject.transform.Find("_NONSTATIC/PIERCE/Garage Door Button (1)/Button").GetComponent<PlayMakerFSM>();
+        PlayMakerFSM GarageCreepFSM = roomGameObject.transform.Find("_NONSTATIC/CREEP/Garage Door Button/Button").GetComponent<PlayMakerFSM>();
+        GarageCreepFSM.GetState("Button Press")?.AddFirstAction(FSMEventHandler.RegisteredEvents["Garage Opened"].Event);
+        GaragePierceFSM.GetState("Button Press")?.AddFirstAction(FSMEventHandler.RegisteredEvents["Garage Opened"].Event);
+
         if (roomGameObject != null)
         {
             PlayMakerFSM ItemDropFSM = roomGameObject.transform.Find("_GAMEPLAY/TrunkSpawn/1 Spawn/7")?.GetComponent<PlayMakerFSM>();
