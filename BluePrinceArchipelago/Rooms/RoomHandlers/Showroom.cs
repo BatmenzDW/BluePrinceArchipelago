@@ -1,9 +1,11 @@
-using System.Collections.Generic;
-using BluePrinceArchipelago.Utils;
-using HutongGames.PlayMaker.Actions;
-using UnityEngine;
+using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Items;
+using BluePrinceArchipelago.Utils;
+using ES3Types;
 using HutongGames.PlayMaker;
+using HutongGames.PlayMaker.Actions;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace BluePrinceArchipelago.Rooms.RoomHandlers;
 
@@ -11,87 +13,146 @@ public class Showroom : RoomHandler
 {
     public static Dictionary<string, Models.ShopItem> LocationMap { get; set; } = [];
 
-    private PlayMakerFSM _ShowroomMenuFsm;
+    private static PlayMakerFSM _ShowroomMenuFsm;
 
     public Showroom()
     {
         Logging.Log("Initializing Showroom.");
     }
-
-    public override void OnRoomDrafted(GameObject roomGameObject)
+    /// <summary>
+    /// Attach an event to the showroom menu being opened. This is used to handle the items that are in the showroom on a given day.
+    /// </summary>
+    public static void SetupShowroomMenuEvent()
     {
-        Logging.Log("Showroom drafted, setting up.");
-        RoomGameObject = roomGameObject;
-
-        if (RoomGameObject == null)
-        {
-            Logging.LogError("Failed to find Showroom room GameObject, aborting OnRoomDrafted.");
-            return;
-        }
-
         _ShowroomMenuFsm = GameObject.Find("UI OVERLAY CAM").transform.Find("Showroom Menu")?.gameObject?.GetFsm("FSM");
-
-        SetupShowroomItems();
+        _ShowroomMenuFsm?.GetState("State 8")?.AddFirstAction(FSMEventHandler.RegisteredEvents["Showroom Menu Opened"].Event);
     }
-
-    private static readonly string[] ItemStateNames = ["items A 1", "items A 2", "items A 3", "items A 4", "items A 5", "items A 6", "items B 1", "items B 2", "items B 3", "items B 4", "items B 5", "items B 6"];
-
+    /// <summary>
+    /// A mapping of the names of items to the FSM state(s) corresponding to when that item is purchased and picked up
+    /// </summary>
     private static readonly Dictionary<string, string[]> ItemPickupStates = new()
     {
-        {"EMERALD BRACELET",["Em Purchase", "Em Purchase 2"] },
-        {"MOON PENDANT", ["Moon Purchase"]},
-        {"ORNATE COMPASS", ["Compass Purchase"]},
-        {"MASTER KEY", ["Master Key Purchase"]},
-        {"CHRONOGRAPH", ["Chronograph Purchase"]},
-        {"SILVER SPOON PURCHASE", ["Silver Spoon Purchase"]},
+        {ShowroomItems.EmeraldBracelet,["Em Purchase", "Em Purchase 2"] },
+        {ShowroomItems.MoonPendant, ["Moon Purchase"]},
+        {ShowroomItems.OrnateCompass, ["Compass Purchase"]},
+        {ShowroomItems.MasterKey, ["Master Key Purchase"]},
+        {ShowroomItems.Chronograph, ["Chronograph Purchase"]},
+        {ShowroomItems.SilverSpoon, ["Silver Spoon Purchase"]},
     };
-    private void SetupShowroomItems()
+
+    /// <summary>
+    /// Get the in-game showroom random numbers and map them to the corresponding list of items on sale that day
+    /// </summary>
+    /// <returns>The list of items on sale in the showroom.</returns>
+    private static string[] OnSaleItems()
     {
-        Logging.LogWarning("Adjusting Showroom FSM");
-        foreach (var stateName in ItemStateNames)
+        string[] onSaleItems = new string[4];
+        int randomA = _ShowroomMenuFsm.GetIntVariable("showroom_items_int_A").Value;
+        int randomB = _ShowroomMenuFsm.GetIntVariable("showroom_items_int_B").Value;
+        switch (randomA)
         {
-            var state = _ShowroomMenuFsm.GetState(stateName);
-            if (state == null)
-            {
-                Logging.LogError($"Failed to find state {stateName} in Showroom Menu FSM.");
-                continue;
-            }
+            case 1:
+                onSaleItems[0] = ShowroomItems.EmeraldBracelet;
+                onSaleItems[2] = ShowroomItems.Chronograph;
+                break;
+            case 2:
+                onSaleItems[0] = ShowroomItems.MoonPendant ;
+                onSaleItems[2] = ShowroomItems.EmeraldBracelet;
+                break;
+            case 3:
+            default:
+                onSaleItems[0] = ShowroomItems.MoonPendant;
+                onSaleItems[2] = ShowroomItems.Chronograph;
+                break;
+        }
 
-            SetProperty propSetActions = state.GetFirstActionOfType<SetProperty>();
-            var target = propSetActions.targetProperty.StringParameter.Value;
+        switch (randomB)
+        {
+            case 1:
+                onSaleItems[1] = ShowroomItems.OrnateCompass;
+                onSaleItems[3] = ShowroomItems.SilverSpoon;
+                break;
+            case 2:
+                onSaleItems[1] = ShowroomItems.MasterKey;
+                onSaleItems[3] = ShowroomItems.OrnateCompass;
+                break;
+            case 3:
+            default:
+                onSaleItems[1] = ShowroomItems.MasterKey;
+                onSaleItems[3] = ShowroomItems.SilverSpoon;
+                break;
+        }
+        return onSaleItems;
+    }
+    /// <summary>
+    /// Any required setup for once we know the items in the showroom
+    /// </summary>
+    public static void SetupShowroomItems()
+    {
+        GetShowroomHints();
+        DisableUnfoundShowroomItems();
+    }
+    /// <summary>
+    /// Send scout hints for all current showroom items
+    /// </summary>
+    private static void GetShowroomHints()
+    {
+        foreach (string item in OnSaleItems())
+        {
 
-            if (!LocationMap.ContainsKey(target))
+            if (!LocationMap.ContainsKey(item))
             {
-                LocationMap.Add(target, new Models.ShopItem
+                LocationMap.Add(item, new Models.ShopItem
                 {
-                    Name = target,
+                    Name = item,
                 });
             }
 
-            var shopItem = LocationMap[target];
-
-            propSetActions.targetProperty.StringParameter.Value = shopItem.GetScoutHint();
+            LocationMap[item].GetScoutHint();
         }
-        // Prevent not unlocked items from being added to inventory.
-        foreach (var item in ItemPickupStates) {
+    }
+    /// <summary>
+    /// Loop through all showroom item pickup states and disable the ones for unfound items
+    /// </summary>
+    private static void DisableUnfoundShowroomItems()
+    {
+        foreach (var item in ItemPickupStates)
+        {
             string itemName = item.Key;
             string[] stateNames = item.Value;
             UniqueItem Item = ModItemManager.GetUniqueItem(itemName);
-            if (Item != null) {
-                if (!Item.IsUnlocked) {
-                    foreach (string stateName in stateNames) {
+            if (Item != null)
+            {
+                if (!Item.IsUnlocked)
+                {
+                    foreach (string stateName in stateNames)
+                    {
                         FsmState state = _ShowroomMenuFsm.GetState(stateName);
                         if (stateName != "Chronograph Purchase")
                         {
                             state.DisableAction(2);
                         }
-                        else { 
+                        else
+                        {
                             state.DisableAction(3);
                         }
                         state.DisableAction(4);
                     }
+                    //TODO: Handle re-enabling this if they lose the item to the lost and found
                 }
             }
         }
     }
+}
+
+public static class ShowroomItems
+{
+    public static readonly string EmeraldBracelet = "EMERALD BRACELET";
+    public static readonly string MoonPendant = "MOON PENDANT";
+    public static readonly string OrnateCompass = "ORNATE COMPASS";
+    public static readonly string MasterKey = "MASTER KEY";
+    public static readonly string Chronograph = "CHRONOGRAPH";
+    public static readonly string SilverSpoon = "SILVER SPOON";
+
+
 }

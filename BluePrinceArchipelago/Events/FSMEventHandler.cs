@@ -1,4 +1,5 @@
 ﻿using BluePrinceArchipelago.Items;
+using BluePrinceArchipelago.Rooms.RoomHandlers;
 using BluePrinceArchipelago.Triggers;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
@@ -24,6 +25,7 @@ namespace BluePrinceArchipelago.Events
             { "Item Traded", new ItemTraded()},
             { "Sundial Scorched", new SundialScorched()},
             { "Garage Opened", new GarageOpened() },
+            { "Showroom Menu Opened", new ShowroomMenuOpened() },
         };
 
         /// <summary>
@@ -596,6 +598,41 @@ namespace BluePrinceArchipelago.Events
         public override void OnTrigger()
         { 
             //Not implemented yet.
+        }
+    }
+
+    public class ShowroomMenuOpened() : RegisteredFSMEvent
+    {
+        public new string Name { get; set; } = "Showroom Menu Opened";
+
+        public override void OnRegister()
+        {
+            ModInstance.APEventFSM.AddState(Name);
+            ModInstance.APEventFSM.AddGlobalTransition(Name, Name);
+            // Creates a new SendEvent instance that can be called by other FSMs to communicate important events to the mod (albeit a little jankily).
+            Event = new SendEvent()
+            {
+                eventTarget = new FsmEventTarget()
+                {
+                    target = FsmEventTarget.EventTarget.GameObject,
+                    gameObject = new FsmOwnerDefault()
+                    {
+                        gameObject = Plugin.ModObject,
+                        ownerOption = OwnerDefaultOption.SpecifyGameObject
+                    },
+                    fsmName = "FSM",
+                    sendToChildren = false,
+                    excludeSelf = false
+                },
+                sendEvent = Plugin.ModObject.GetComponent<PlayMakerFSM>().GetGlobalTransition(Name).FsmEvent,
+                everyFrame = false,
+                delay = 0f
+            };
+        }
+
+        public override void OnTrigger()
+        {
+            Showroom.SetupShowroomItems();
         }
     }
 }
