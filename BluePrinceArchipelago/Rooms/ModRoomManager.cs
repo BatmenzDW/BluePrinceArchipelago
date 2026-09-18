@@ -1,4 +1,5 @@
 ﻿using BluePrinceArchipelago.Archipelago;
+using BluePrinceArchipelago.Rooms.RoomHandlers;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
@@ -215,6 +216,8 @@ namespace BluePrinceArchipelago.Rooms
             if (!Found) {
                 RoomHandlers.Foundation.StartedDayInHouse = false;
             }
+
+            Showroom.SetupShowroomMenuEvent();
         }
 
         /// <summary>
