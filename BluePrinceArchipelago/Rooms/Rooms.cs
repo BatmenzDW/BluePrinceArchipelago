@@ -173,11 +173,10 @@ namespace BluePrinceArchipelago.Rooms
         /// </summary>
         /// <param name="array">The Picker Array to add it to</param>
         /// <param name="count">The number to add to the pool</param>
-        private void AddToPool(PlayMakerArrayListProxy array, int count = 1) {
+        public void AddToPool(PlayMakerArrayListProxy array, int count = 1) {
             // Ensure we have a valid GameObject to add
             if (_GameObj == null)
             {
-                Logging.LogWarning($"Adding {count} {name}(s) to pool.");
                 // Try to get the GameObject from the Room Engines using the game object name
                 _GameObj = GameObject.Find("__SYSTEM/The Room Engines/" + _GameObjectName);
                 if (_GameObj == null)
@@ -185,21 +184,13 @@ namespace BluePrinceArchipelago.Rooms
                     Logging.LogWarning($"Cannot add {Name} to pool: GameObject is null (looked for '{_GameObjectName}')");
                     return;
                 }
-            }
-            //Checks dependencies of the room before adding it to the draft pool.
-            foreach (Func<ModRoom, bool> dependency in Dependencies) {
-                Logging.LogWarning($"Checking Dependency of {Name}");
-                if (!dependency(this)) {
-                    Logging.LogWarning($"Cannot add {Name} to pool: Dependency not met");
-                    return;
+                for (int i = 0; i < count; i++)
+                {
+                    array.Add(_GameObj, "GameObject");
+                    Logging.Log($"Adding {Name} to {array.name}", "Rooms");
                 }
             }
-
-            for (int i = 0; i < count; i++)
-            {
-                array.Add(_GameObj, "GameObject");
-                Logging.Log($"Added {Name} (GO: {_GameObjectName}) to {array.name}");
-            }
+            
         }
         /// <summary>
         ///     Removes copy(s) of the room from the picker array.
@@ -227,7 +218,7 @@ namespace BluePrinceArchipelago.Rooms
                     {
                         Logging.LogWarning("Removed Upgraded Room From Pool", "Rooms");
                         array.Remove(upgrade, "GameObject");
-                        Logging.Log($"Removed {Name} from {array.name}");
+                        Logging.Log($"Removed {upgrade.name} from {array.name}", "Rooms");
                         removed = true;
                     }
                 }

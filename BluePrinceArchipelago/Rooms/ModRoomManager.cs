@@ -26,7 +26,7 @@ namespace BluePrinceArchipelago.Rooms
 
         public static List<string> VanillaRooms = [];
         public static List<string> CantCopy = ["ANTECHAMBER", "ENTRANCE HALL", "ROOM 46", "FOUNDATION", ""];
-        public static List<string> FoundFloorplans = ["PLANETARIUM", "CONSERVATORY", "TUNNEL", "THRONE ROOM", "TREASURE TROVE", "MECHANARIUM", "LOST & FOUND", "CLOSED EXHIBIT", "CLOCK TOWER", "THE KENNEL", "VESTIBULE", "DOVECOTE", "SOLARIUM", "DORMITORY", "CASINO", "SAUNA", "LOCKER ROOM", "MORNING ROOM", "CLASSROOM"];
+        public static List<string> FoundFloorplans { get; set; } = ["PLANETARIUM", "CONSERVATORY", "TUNNEL", "THRONE ROOM", "TREASURE TROVE", "MECHANARIUM", "LOST & FOUND", "CLOSED EXHIBIT", "CLOCK TOWER", "THE KENNEL", "VESTIBULE", "DOVECOTE", "SOLARIUM", "DORMITORY", "CASINO", "SAUNA", "LOCKER ROOM", "MORNING ROOM", "CLASSROOM"];
         public static List<ModRoom> OuterDraftRooms = new();
         public static Dictionary<string, PlayMakerArrayListProxy> PickerDict { set; get; } = [];
         public static Dictionary<string, PlayMakerArrayListProxy> UntouchedPickers { set; get; } = [];
@@ -568,7 +568,7 @@ namespace BluePrinceArchipelago.Rooms
             Logging.Log("Updating Room Pools", "Rooms");
             foreach (var pair in PickerDict)
             {
-                Logging.Log(pair.Key, "Rooms");
+                
                 PlayMakerArrayListProxy array = pair.Value;
                 if (array != null)
                 {
@@ -578,7 +578,6 @@ namespace BluePrinceArchipelago.Rooms
                     for (int i = 0; i < length; i++)
                     {
                         room = array.arrayList[i].TryCast<GameObject>();
-                        //Logging.Log(room.name, "Rooms");
                         if (room != null)
                         {
                             if (RoomCounts.ContainsKey(room.name))
@@ -597,6 +596,9 @@ namespace BluePrinceArchipelago.Rooms
                          ModRoom modRoom = GetRoomByName(roomName);
                         if (modRoom != null)
                         {
+                            if (FoundFloorplans.Contains(roomName)) {
+                                Logging.Log($"Attempting to add/remove {room} to {pair.Key}.\n\tAP Pool Count: {modRoom.RoomPoolCount}\n\tRoom Left In Pool Count: {modRoom.RoomsLeftInPool}", "Rooms");
+                            }
                             modRoom.UpdateArray(array, RoomCounts[roomName]);
                             updated.Add(roomName);
                         }
@@ -607,10 +609,16 @@ namespace BluePrinceArchipelago.Rooms
                     }
                     foreach (ModRoom Modroom in _Rooms)
                     {
-                        if (!RoomCounts.ContainsKey(Modroom.Name) && Modroom.PickerArrays.Contains(pair.Key) && Modroom.IsUnlocked)
+                        if (!updated.Contains(Modroom.Name) && Modroom.PickerArrays.Contains(pair.Key) && Modroom.IsUnlocked)
                         {
-                            Modroom.UpdateArray(array, Modroom.RoomPoolCount);
-                            updated.Add(Modroom.Name);
+                            if (Modroom.RoomsLeftInPool > 0 && Modroom.RoomsLeftInPool < Modroom.RoomPoolCount)
+                            {
+                                Modroom.AddToPool(array, Modroom.RoomsLeftInPool);
+                                if (FoundFloorplans.Contains(Modroom.Name))
+                                {
+                                    Logging.Log($"Attempting to add/remove {room} to {pair.Key}.\n\tAP Pool Count: {Modroom.RoomPoolCount}\n\tRoom Left In Pool Count: {Modroom.RoomsLeftInPool}", "Rooms");
+                                }
+                            }
                         }
                     }
                 }
