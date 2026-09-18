@@ -1,9 +1,11 @@
-﻿using BluePrinceArchipelago.Events;
+﻿using BluePrinceArchipelago.FsmMethods;
+using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using Il2CppInterop.Runtime;
 using UnityEngine;
 
 namespace BluePrinceArchipelago.Patches
@@ -286,10 +288,14 @@ namespace BluePrinceArchipelago.Patches
             // Because we skip Logo Slates we have to copy the music start action here.
             // This just replaces a fade to black that would've been removed anyway
             fsm.Fsm.GetState("State 8").actions[0] = fsm.Fsm.GetState("Logo Slates").actions[1];
-
             // Remove the 3 second delay
             var wait = fsm.Fsm.GetState("State 8").actions[2].Cast<Wait>();
             wait.time = new FsmFloat(0f);
+
+        }
+
+        public static void PrintHelloWorld(string message) {
+            Logging.LogWarning(message);
         }
 
         /// <summary>
@@ -413,7 +419,7 @@ namespace BluePrinceArchipelago.Patches
             PlayMakerFSM TradingPostMenu = GameObject.Find("UI OVERLAY CAM").transform.Find("Trading Post Menu").Find("Items PM bridge").gameObject.GetComponent<PlayMakerFSM>();
 
             FsmState MenuIconUpdate = TradingPostMenu.GetState("Menu Icon Update");
-            MenuIconUpdate.AddAction(FSMEventHandler.RegisteredEvents["Item Traded"].Event);
+            MenuIconUpdate.AddAction(CustomFsmMethodManager.GetCallMethod("ItemTraded"));
             MenuIconUpdate.ChangeTransition("FINISHED", "TEXT ALERT - TRADE ACCEPTED!");
         }
 
@@ -435,7 +441,7 @@ namespace BluePrinceArchipelago.Patches
                 SendFreeze.DisableAction(5);
                 //SendFreeze.DisableAction(7);
                 //RegisteredFSMEvent OuterDraftStart = FSMEventHandler.RegisteredEvents["Outer Draft Start"];
-                RegisteredFSMEvent OuterDraftReroll = FSMEventHandler.RegisteredEvents["Outer Draft Reroll"];
+                CallMethod OuterDraftReroll = CustomFsmMethodManager.GetCallMethod("OuterDraftReroll");
 
                 //ShuffleRooms.AddAction(OuterDraftStart.Event);
                 //ShuffleRooms.RemoveTransitionsTo("FINISHED");
@@ -505,7 +511,7 @@ namespace BluePrinceArchipelago.Patches
                 FsmState StandaloneRedraw = MasterPicker.GetState("Standalone Redraw");
                 IntAdd AddToRedraw = new IntAdd() { intVariable = RerollCount, add = 1, everyFrame = false };
                 StandaloneRedraw.AddAction(AddToRedraw);
-                StandaloneRedraw.AddAction(OuterDraftReroll.Event);
+                StandaloneRedraw.AddAction(OuterDraftReroll);
                 StandaloneRedraw.RemoveTransitionsTo("FINISHED");
 
                 StandaloneDoorCode.GetState("State 5").DisableAction(3);
@@ -518,8 +524,8 @@ namespace BluePrinceArchipelago.Patches
             for (int i = 0; i < 8; i++) {
                 GameObject child1 = Step1.transform.GetChild(i).gameObject;
                 GameObject child2 = Step2.transform.GetChild(i).gameObject;
-                child1.GetComponent<PlayMakerFSM>().GetState("State 9").AddAction(FSMEventHandler.RegisteredEvents["Sundial Scorched"].Event);
-                child2.GetComponent<PlayMakerFSM>().GetState("State 9").AddAction(FSMEventHandler.RegisteredEvents["Sundial Scorched"].Event);
+                child1.GetComponent<PlayMakerFSM>().GetState("State 9").AddAction(CustomFsmMethodManager.GetCallMethod("SundialScorched"));
+                child2.GetComponent<PlayMakerFSM>().GetState("State 9").AddAction(CustomFsmMethodManager.GetCallMethod("SundialScorched"));
             }
         }
     }

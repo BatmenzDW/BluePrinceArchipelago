@@ -1,4 +1,5 @@
 using BluePrinceArchipelago.Events;
+using BluePrinceArchipelago.FsmMethods;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
 using ES3Types;
@@ -25,7 +26,7 @@ public class Showroom : RoomHandler
     public static void SetupShowroomMenuEvent()
     {
         _ShowroomMenuFsm = GameObject.Find("UI OVERLAY CAM").transform.Find("Showroom Menu")?.gameObject?.GetFsm("FSM");
-        _ShowroomMenuFsm?.GetState("State 8")?.AddFirstAction(FSMEventHandler.RegisteredEvents["Showroom Menu Opened"].Event);
+        _ShowroomMenuFsm?.GetState("State 8")?.AddFirstAction(CustomFsmMethodManager.GetCallMethod("ShowroomMenuOpened"));
     }
     /// <summary>
     /// A mapping of the names of items to the FSM state(s) corresponding to when that item is purchased and picked up

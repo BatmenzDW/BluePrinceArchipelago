@@ -1,4 +1,4 @@
-﻿using BluePrinceArchipelago.Events;
+﻿using BluePrinceArchipelago.FsmMethods;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
@@ -15,8 +15,8 @@ class Garage : RoomHandler
         //Yes, one of these has a (1) at the end and the other does not. Tonda my GOAT. 
         PlayMakerFSM GaragePierceFSM = roomGameObject.transform.Find("_NONSTATIC/PIERCE/Garage Door Button (1)/Button").GetComponent<PlayMakerFSM>();
         PlayMakerFSM GarageCreepFSM = roomGameObject.transform.Find("_NONSTATIC/CREEP/Garage Door Button/Button").GetComponent<PlayMakerFSM>();
-        GarageCreepFSM.GetState("Button Press")?.AddFirstAction(FSMEventHandler.RegisteredEvents["Garage Opened"].Event);
-        GaragePierceFSM.GetState("Button Press")?.AddFirstAction(FSMEventHandler.RegisteredEvents["Garage Opened"].Event);
+        GarageCreepFSM.GetState("Button Press")?.AddFirstAction(CustomFsmMethodManager.GetCallMethod("GarageOpened"));
+        GaragePierceFSM.GetState("Button Press")?.AddFirstAction(CustomFsmMethodManager.GetCallMethod("GarageOpened"));
 
         if (roomGameObject != null)
         {

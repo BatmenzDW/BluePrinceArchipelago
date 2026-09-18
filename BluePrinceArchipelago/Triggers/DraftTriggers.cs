@@ -17,7 +17,7 @@ namespace BluePrinceArchipelago.Triggers
         {
             if (ArchipelagoClient.Authenticated)
             {
-                ModRoomManager.RecheckRoomUnlockStatus();
+                //ModRoomManager.RecheckRoomUnlockStatus();
             }
         }
 
@@ -28,7 +28,7 @@ namespace BluePrinceArchipelago.Triggers
         {
             if (ArchipelagoClient.Authenticated)
             {
-                //ModRoomManager.RecheckRoomUnlockStatus();
+                ModRoomManager.RecheckRoomUnlockStatus();
             }
         }
 

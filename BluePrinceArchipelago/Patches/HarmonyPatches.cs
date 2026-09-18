@@ -207,16 +207,6 @@ namespace BluePrinceArchipelago.Patches
                         }
                     }
                 }
-                // Triggers whenever a custom Archipelago Event is sent to Archipelago FSM.
-                if (targetName == "Archipelago")
-                {
-                    // If the Event is registered, trigger the event.
-                    
-                    if (eventName != null)
-                    {
-                        EventTriggers.ModEventTrigger(eventName);
-                    }
-                }
                 else if (eventName.Contains("Allowance Token Pickup"))
                 {
                     EventTriggers.AllowanceTokenPickup(__instance.owner);

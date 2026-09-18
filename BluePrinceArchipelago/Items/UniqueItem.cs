@@ -1,4 +1,5 @@
 ﻿using BluePrinceArchipelago.Archipelago;
+using BluePrinceArchipelago.FsmMethods;
 using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Rooms.RoomHandlers;
 using BluePrinceArchipelago.Utils;
@@ -50,11 +51,11 @@ namespace BluePrinceArchipelago.Items
 
         public bool IsLocksmith { set; get; } = false;
 
-        public SendEvent CommissaryEvent { get; set; } = null;
+        public CallMethod CommissaryEvent { get; set; } = null;
 
-        public SendEvent DigEvent { get; set; } = null;
+        public CallMethod DigEvent { get; set; } = null;
 
-        public SendEvent LocksmithEvent { get; set; } = null;
+        public CallMethod LocksmithEvent { get; set; } = null;
 
         public FsmState CommissaryState { get; set; } = null;
 
@@ -107,18 +108,21 @@ namespace BluePrinceArchipelago.Items
                 }
             }
 
-            FSMEventHandler.AddItemFSMEvent(name, this);
+            CustomFsmMethodManager.AddItemPickedUpMethod(this);
             if (IsCommissary)
             {
-                CommissaryEvent = FSMEventHandler.AddBuyFSMEvent("Commissary: Bought " + name, this).Event;
+                CustomFsmMethodManager.AddItemBoughtMethod(this);
+                CommissaryEvent = CustomFsmMethodManager.GetCallMethod(CustomFsmMethodManager.GetItemBoughtMethodName(name));
             }
             if (IsDig)
             {
-                DigEvent = FSMEventHandler.AddDigFSMEvent("Dug Up " + name, this).Event;
+                CustomFsmMethodManager.AddItemDugUpMethod(this);
+                DigEvent = CustomFsmMethodManager.GetCallMethod(CustomFsmMethodManager.GetItemDugUpMethodName(name));
             }
             if (IsLocksmith)
             {
-                LocksmithEvent = FSMEventHandler.AddBuyFSMEvent("Locksmith: Bought " + name, this).Event;
+                CustomFsmMethodManager.AddItemBoughtMethod(this);
+                LocksmithEvent = CustomFsmMethodManager.GetCallMethod(CustomFsmMethodManager.GetItemBoughtMethodName(name));
             } 
         }
 

@@ -1,5 +1,6 @@
 ﻿using BepInEx.Unity.IL2CPP.Utils.Collections;
 using BluePrinceArchipelago.Archipelago;
+using BluePrinceArchipelago.FsmMethods;
 using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Patches;
@@ -9,6 +10,7 @@ using BluePrinceArchipelago.Utils;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using Il2CppSystem.Runtime.Remoting.Messaging;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -109,7 +111,6 @@ namespace BluePrinceArchipelago
             APEventFSM = Plugin.ModObject.GetComponent<PlayMakerFSM>();
             Harmony.CreateAndPatchAll(typeof(RoomPatches), "RoomPatches");
             Harmony.CreateAndPatchAll(typeof(ItemPatches), "ItemPatches");
-            FSMEventHandler.RegisterEvents();
             Prefabs = GameObject.Instantiate(new GameObject("Prefabs"), Plugin.ModObject.transform);
             Prefabs.name = "prefabs";
         }

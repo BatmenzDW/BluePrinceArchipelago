@@ -3,6 +3,7 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Archipelago.Commands;
+using BluePrinceArchipelago.FsmMethods;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
 using Il2CppInterop.Runtime.Injection;
@@ -29,6 +30,8 @@ namespace BluePrinceArchipelago {
         public ManualLogSource LogSource => Log;
         public static ArchipelagoClient ArchipelagoClient;
         public static GameObject ModObject;
+
+        public static GameObject FsmMethods;
         public static UniqueItemManager UniqueItemManager;
 
         /// <summary>
@@ -55,6 +58,7 @@ namespace BluePrinceArchipelago {
             Logging.SetLogLevel("ArchipelagoConsole", LogLevel.Info);
             //Logging.SetLogLevel("ItemQueue", LogLevel.Info);
             Logging.SetLogLevel("ArchipelagoEvents", LogLevel.Info);
+            Logging.SetLogLevel("CustomFsmMethods", LogLevel.Info);
 
             // Plugin startup logic
             ArchipelagoClient = new ArchipelagoClient();
@@ -65,11 +69,16 @@ namespace BluePrinceArchipelago {
             
             //Inject custom Object for Mod Handling
             ClassInjector.RegisterTypeInIl2Cpp<ModInstance>();
+            ClassInjector.RegisterTypeInIl2Cpp<CustomFsmMethods>();
             ModObject = new GameObject("Archipelago");
+            FsmMethods = new GameObject("CustomFsmMethods");
+            
             GameObject.DontDestroyOnLoad(ModObject);
             ModObject.hideFlags = HideFlags.HideAndDontSave; //The mod breaks if this is removed. Unsure if different flags could be used to make this more visible.
             ModObject.AddComponent<ModInstance>();
             ModObject.AddComponent<PlayMakerFSM>(); //Add A PlayMakerFSM to be used for Events.
+            FsmMethods.AddComponent<CustomFsmMethods>();
+            FsmMethods.transform.parent = ModObject.transform;
 
             // Start up the necessary game systems.
             State.Initialize();

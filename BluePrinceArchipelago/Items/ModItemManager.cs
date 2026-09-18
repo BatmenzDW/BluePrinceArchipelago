@@ -1,5 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Models;
 using BluePrinceArchipelago.Archipelago;
+using BluePrinceArchipelago.FsmMethods;
 using BluePrinceArchipelago.Events;
 using BluePrinceArchipelago.Utils;
 using HarmonyLib;
@@ -77,7 +78,7 @@ namespace BluePrinceArchipelago.Items
                     if (state != null)
                     {
                         state.DisableActionsOfType<ArrayListAdd>();
-                        state.AddAction(FSMEventHandler.RegisteredEvents[item.Name].Event);
+                        state.AddAction(CustomFsmMethodManager.GetCallMethod(CustomFsmMethodManager.GetItemPickedUpMethodName(item.Name)));
                     }
                     GameObject prefab = ModInstance.Prefabs.GetChild(item.Name);
                     if (prefab != null)

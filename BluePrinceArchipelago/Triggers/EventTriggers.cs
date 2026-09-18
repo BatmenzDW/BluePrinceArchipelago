@@ -13,22 +13,6 @@ namespace BluePrinceArchipelago.Triggers
     public static class EventTriggers
     {
         /// <summary>
-        ///     Triggers on a mod created event Triggering.
-        /// </summary>
-        /// <param name="eventName">The Name of the event.</param>
-        public static void ModEventTrigger(string eventName) {
-            Logging.Log($"Mod Event Triggered: {eventName}", "Events");
-            if (FSMEventHandler.RegisteredEvents.ContainsKey(eventName))
-            {
-                FSMEventHandler.RegisteredEvents[eventName].OnTrigger();
-            }
-            else
-            {
-                Logging.LogWarning($"The custom Archipelago event {eventName} doesn't appear to be registered. It is likely mispelled or not fully implemented.", "Events");
-            }
-        }
-
-        /// <summary>
         ///     Triggered whenever an event it recorded by the Game's StatLogger.
         /// </summary>
         /// <param name="id">The Enum EventID of the event being recorded.</param>

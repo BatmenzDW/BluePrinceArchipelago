@@ -1,4 +1,6 @@
 ﻿using BluePrinceArchipelago.Events;
+using BluePrinceArchipelago.FsmMethods;
+using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
@@ -162,7 +164,7 @@ namespace BluePrinceArchipelago.Items
                 appleOrchardButton.GetState("Check Code").RemoveTransition("FINISHED");
                 appleOrchardButton.GetState("Check Code").AddTransition("FINISHED", "Won't Open");
                 appleOrchard.GetState("State 4")?.DisableActionsOfType<SendEvent>();
-                appleOrchard.GetState("State 4")?.AddAction(FSMEventHandler.RegisteredEvents["Apple Orchard Unlock"].Event);
+                appleOrchard.GetState("State 4")?.AddAction(CustomFsmMethodManager.GetCallMethod("AppleOrchardUnlock"));
             }
         }
 
@@ -201,7 +203,7 @@ namespace BluePrinceArchipelago.Items
             {
                 FsmState State2 = RoomObject.transform.Find("_GAMEPLAY/Giant Switch/Giant Switch Lever").GetComponent<PlayMakerFSM>().GetState("State 2");
                 State2.EnableAction(2);
-                State2.RemoveLastActionOfType<SendEventByName>();
+                State2.RemoveLastActionOfType<CallMethod>();
             }
             if (Solved)
             {
@@ -242,24 +244,16 @@ namespace BluePrinceArchipelago.Items
                 everyFrame = false
             };
 
-            GameObject RoomSpawnPools = GameObject.Find("__SYSTEM/Room Spawn Pools");
-            for (int i = 0; i < RoomSpawnPools.transform.childCount; i++)
+
+            RoomObject = ModRoomManager.GetRoomInstance("Utility Closet");
+            FsmState State2 = RoomObject.transform.Find("_GAMEPLAY/Giant Switch/Giant Switch Lever").GetComponent<PlayMakerFSM>().GetState("State 2");
+            if (!Unlocked)
             {
-                Transform child = RoomSpawnPools.transform.GetChild(i);
-                if (child.name.Contains("Utility Closet"))
-                {
-                    RoomObject = child.gameObject;
-                    FsmState State2 = RoomObject.transform.Find("_GAMEPLAY/Giant Switch/Giant Switch Lever").GetComponent<PlayMakerFSM>().GetState("State 2");
-                    if (!Unlocked)
-                    {
-                        // This code may needs to be run after the utility closet has been spawned.
-                        State2.DisableAction(2);
-                    }
-                    State2.AddAction(FSMEventHandler.RegisteredEvents["Gemstone Caverns Unlock"].Event);
-                    State2.AddAction(unfreeze);
-                    
-                }
+                // This code may needs to be run after the utility closet has been spawned.
+                State2.DisableAction(2);
             }
+            State2.AddAction(CustomFsmMethodManager.GetCallMethod("GemstoneCavernsUnlock"));
+            State2.AddAction(unfreeze);
 
         }
 
@@ -315,7 +309,7 @@ namespace BluePrinceArchipelago.Items
                 FsmState GateIsClosed = GateOpened.AddState("GATE IS CLOSED");
                 GateIsClosed.RemoveTransitionsTo("FINISHED");
                 FsmTransition off = GateIsClosed.AddTransition("off", "Off");
-                GateIsClosed.AddAction(FSMEventHandler.RegisteredEvents["West Gate Path Unlock"].Event);
+                GateIsClosed.AddAction(CustomFsmMethodManager.GetCallMethod("WestGatePathUnlock"));
                 GateIsClosed.AddAction(new Wait() { time = 3.3f, finishEvent = off.FsmEvent, realTime = false });
                 GateOpened.GetState("Hover").ChangeTransition("click", "GATE IS CLOSED");
                 GateOpened.GetState("Off").ChangeTransition("click", "GATE IS CLOSED"); 
@@ -409,7 +403,7 @@ namespace BluePrinceArchipelago.Items
                         FsmState State12 = LabMachine.GetState("State 12");
                         State12.DisableAction(1);
                         State12.DisableAction(4);
-                        State12.InsertAction(FSMEventHandler.RegisteredEvents["Blackbridge Grotto Unlock"].Event, 4);
+                        State12.InsertAction(CustomFsmMethodManager.GetCallMethod("BlackbridgeGrottoUnlock"), 4);
                         State12.AddAction(unfreeze);
                     }
                 }
@@ -458,7 +452,7 @@ namespace BluePrinceArchipelago.Items
                 FsmState boolCheck = pt2.GetState("State 7");
                 boolCheck.RemoveTransitionsTo("FINISHED");
                 boolCheck.DisableActionsOfType<BoolTest>();
-                boolCheck.AddAction(FSMEventHandler.RegisteredEvents["Satellite Raised"].Event);
+                boolCheck.AddAction(CustomFsmMethodManager.GetCallMethod("SatelliteRaised"));
             }
         }
         public override void FoundLocation()
