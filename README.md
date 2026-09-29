@@ -196,7 +196,7 @@ If you prefer a simpler install we do have a [Thunderstore version](https://thun
 Below are instructions to get access to opening the files in Unity editor.
 1. Install [Unity Hub](https://docs.unity.com/en-us/hub/install-hub). You can continue to the step 3 while this installs.
 2. Install [Unity 6000.0.58f2](https://unity.com/releases/editor/whats-new/6000.0.58f2). You can continue to the step 3 while this installs.
-3. Download (AssetRipper)[https://github.com/AssetRipper/AssetRipper]
+3. Download [AssetRipper](https://github.com/AssetRipper/AssetRipper)
 4. Open AssetRipper and Click File > Open Folder and navigate to the root install folder of Blue Prince.
 5. Once AssetRipper has imported all the files click Export > All Files.
 6. Click select folder and choose an output folder.
