@@ -1,4 +1,5 @@
-﻿using BluePrinceArchipelago.Rooms;
+﻿using BluePrinceArchipelago.Archipelago;
+using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
 using System.Collections.Generic;
 
@@ -22,7 +23,7 @@ namespace BluePrinceArchipelago.Items
         ///     Pulls from the saved state to initialize the current trunk counts.
         /// </summary>
         public void Initialize() {
-            if (ModInstance.IsArchipelagoMode) {
+            if (ArchipelagoClient.Authenticated) {
                 State.InitializeTrunkCounts();
                 return;
             }

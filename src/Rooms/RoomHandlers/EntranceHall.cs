@@ -19,7 +19,7 @@ public class EntranceHall : RoomHandler
     {
         ObservedFSMStates.Add("Vase 1", ["BREAK!"]);
         ObservedFSMStates.Add("Vase 2", ["BREAK!"]);
-        AllowanceTokens.Add("ENTRANCE HALL");
+        AllowanceTokens.Add("Entrance Hall");
     }
 
     public override void OnFSMStateChanged(Fsm fsm, string gameObjectName, string newState)

@@ -48,6 +48,9 @@ namespace BluePrinceArchipelago.Triggers
                 FSMPatches.RoomForcer();
                 FSMPatches.TradingPostOverrides();
                 FSMPatches.SundialOverrides();
+                if (ModInstance.FirstLoad) {
+                    ModInstance.TrunkManager.Initialize();
+                }
                 if (ArchipelagoOptions.UpgradeDiskSanity)
                 {
                     FSMPatches.UpgradeDiskOverride(ModInstance.GlobalManager);

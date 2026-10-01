@@ -50,6 +50,7 @@ namespace BluePrinceArchipelago.Triggers
                         Logging.LogWarning("Rebuilding State");
                         Plugin.ArchipelagoClient.RebuildState();
                     }
+                    ModInstance.TrunkManager.Initialize();
                 }
 
                 // Release items that were queued while offline/before the run started

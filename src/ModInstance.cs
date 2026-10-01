@@ -219,12 +219,6 @@ namespace BluePrinceArchipelago
                 if (scene.name != PreviousSceneName)
                 {
                     ModEventHandler.LocationFound += ArchipelagoTriggers.OnLocalLocationSent;
-                    TrunkManager.Initialize();
-                    if (ArchipelagoClient.Authenticated)
-                    {
-                        ; // Register the initial state of the items.
-                        Logging.Log("Scheduling delayed sync after scene load...");
-                    }
                 }
                 
                 UpgradeDisks.InitializeUpgradeDiskNotifications();
