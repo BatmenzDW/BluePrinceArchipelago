@@ -193,6 +193,7 @@ If you prefer a simpler install we do have a [Thunderstore version](https://thun
 3. Download the Latest mod release from [here](https://github.com/Yascob99/BluePrinceArchipelago/releases) and if you haven't already the APworld Release from [here](https://github.com/BatmenzDW/Archipelago/releases).
 
 4. Extract the contents of the mod to <YourBluePrinceInstallLocationHere>/Mods. The DLLs shoot sit in the root folder of mods Your final folder should look something like this:
+<img width="797" height="362" alt="image" src="https://github.com/user-attachments/assets/2ce08c0e-7d21-459a-a8c5-23a928b91fa3" />
 
 5. Start the game. You will notice a new UI at the top. It is best to connect here before starting a new profile. This UI can be shown by pressing "/" and dismissed by pressing "ESC". This also doubles as your game client. Tying /help in the command box will show all the local commands. You can also run archipelago server commands from this console once connected. A lot of the commands are intended for dev usage to allow for progress when there is an issue with the mod.
 
