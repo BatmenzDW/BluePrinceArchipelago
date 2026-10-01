@@ -54,7 +54,7 @@
         <li><a href="#windows-setups">Windows Setups</a></li>
         <ul>
             <li><a href="#windows-bepinex-steam-setup">Windows BepInEx Steam Setup</a></li>
-            <li><a href="#windows-bepinex-steam-setup">Windows MelonLoaderr Steam Setup</a></li>
+            <li><a href="#windows-melonloader-steam-setup">Windows MelonLoader Steam Setup</a></li>
             <li><a href="#windows-bepinex-xbox-gamepass-setup">Windows BepInEx Xbox GamePass Setup (Microsoft Store)</a></li>
         </ul>
         <li><a href="#linux-setups">Linux:</a></li>
