@@ -1,22 +1,16 @@
 ﻿using BluePrinceArchipelago.Utils.Actions;
 #if Bep
 using HutongGames.PlayMaker;
-using Rewired.Data.Mapping;
 #endif
 #if ML
 using Il2Cpp;
-using Rewired = Il2CppRewired;
-using Il2CppHutongGames;
 using Il2CppHutongGames.PlayMaker;
-using Il2CppHutongGames.Extensions;
-using Il2CppHutongGames.PlayMaker.Actions;
 #endif
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Il2CppSystem.Net;
 
 namespace BluePrinceArchipelago.Utils
 {
@@ -442,7 +436,7 @@ namespace BluePrinceArchipelago.Utils
             };
             state.ClearActions();
             AddState(fsm, state);
-
+            state.SaveActions();
             return state;
         }
         /// <summary>
@@ -467,6 +461,7 @@ namespace BluePrinceArchipelago.Utils
             state.Actions.CopyTo(Actions, 1);
             state.Actions = Actions;
             action.Init(state);
+            state.SaveActions();
         }
         /// <summary>
         ///     Adds an Action as the last action in an FsmState.
@@ -480,6 +475,7 @@ namespace BluePrinceArchipelago.Utils
             state.Actions.CopyTo(actions, 0);
             state.Actions = actions;
             action.Init(state);
+            state.SaveActions();
         }
 
         /// <summary>
@@ -505,6 +501,7 @@ namespace BluePrinceArchipelago.Utils
             actions[index] = action;
             state.Actions = actions;
             action.Init(state);
+            state.SaveActions();
         }
         /// <summary>
         ///     Removes an Action to an FSMState at a given index.
@@ -526,6 +523,7 @@ namespace BluePrinceArchipelago.Utils
                 else actions[i] = state.Actions[i + 1];
             }
             state.Actions = actions;
+            state.SaveActions();
         }
         /// <summary>
         ///     Replaces an Action from an FsmState at a given index.
@@ -545,6 +543,7 @@ namespace BluePrinceArchipelago.Utils
             }
             state.Actions[index] = action;
             action.Init(state);
+            state.SaveActions();
         }
         /// <summary>
         ///     Removes all action from a state.
@@ -564,6 +563,7 @@ namespace BluePrinceArchipelago.Utils
             {
                 actions[i].Init(state);
             }
+            state.SaveActions();
         }
         /// <summary>
         ///     Removes all actions of a given type from an FsmState.
@@ -579,6 +579,7 @@ namespace BluePrinceArchipelago.Utils
                     state.RemoveAction(i);
                 }
             }
+            state.SaveActions();
         }
         /// <summary>
         ///     Removes the first action of a given type from an FsmState.
@@ -588,7 +589,10 @@ namespace BluePrinceArchipelago.Utils
         public static void RemoveFirstActionOfType<T>(this FsmState state) where T : FsmStateAction
         {
             int i = Array.FindIndex<FsmStateAction>(state.Actions, a => a is T);
-            if (i >= 0) state.RemoveAction(i);
+            if (i >= 0) { 
+                state.RemoveAction(i);
+                state.SaveActions();
+            }
         }
         /// <summary>
         ///     Get all actions of a given type from an FsmState.
@@ -834,6 +838,7 @@ namespace BluePrinceArchipelago.Utils
             state.Actions = actions;
             state.actions = actions;
             action.Init(state);
+            state.SaveActions();
         }
 
         /// <summary>
@@ -859,6 +864,7 @@ namespace BluePrinceArchipelago.Utils
             {
                 state.AddAction(action);
             }
+            state.SaveActions();
         }
 
         /// TODO: Fix these functions
@@ -907,6 +913,7 @@ namespace BluePrinceArchipelago.Utils
             FunctionAction<Action> action = new FunctionAction<Action> { Method = method };
             action.Arg = action.Finish;
             state.AddAction(action);
+            state.SaveActions();
         }
 
         /// <summary>
@@ -1004,6 +1011,7 @@ namespace BluePrinceArchipelago.Utils
                 state.InsertAction(action, index);
                 index++;  // preserves order
             }
+            state.SaveActions();
         }
 
         /// <summary>
@@ -1043,6 +1051,7 @@ namespace BluePrinceArchipelago.Utils
         {
             MethodAction action = new MethodAction { Method = method };
             state.InsertAction(action, index);
+            state.SaveActions();
         }
 
         /// <summary>
@@ -1083,6 +1092,7 @@ namespace BluePrinceArchipelago.Utils
             FunctionAction<Action> action = new FunctionAction<Action> { Method = method };
             action.Arg = action.Finish;
             state.InsertAction(action, index);
+            state.SaveActions();
         }
 
         /// <summary>
@@ -1097,6 +1107,7 @@ namespace BluePrinceArchipelago.Utils
             FsmState state = action.State;
             int idx = Array.IndexOf(state.Actions, action);
             state.InsertMethod(idx, method);
+            state.SaveActions();
         }
 
         /// <summary>
@@ -1111,6 +1122,7 @@ namespace BluePrinceArchipelago.Utils
             FsmState state = action.State;
             int idx = Array.IndexOf(state.Actions, action);
             state.InsertMethod(idx + 1, method);
+            state.SaveActions();
         }
 
         /// <summary>
@@ -1124,6 +1136,7 @@ namespace BluePrinceArchipelago.Utils
             FsmState state = action.State;
             int idx = Array.IndexOf(state.Actions, action);
             state.InsertAction(idx, newAction);
+            state.SaveActions();
         }
 
         /// <summary>
@@ -1137,6 +1150,7 @@ namespace BluePrinceArchipelago.Utils
             FsmState state = action.State;
             int idx = Array.IndexOf(state.Actions, action);
             state.InsertAction(idx + 1, newAction);
+            state.SaveActions();
         }
         /// <summary>
         ///     Replaces an action in a PlayMakerFSM.
@@ -1440,6 +1454,7 @@ namespace BluePrinceArchipelago.Utils
             if (lastActionIndex == -1)
                 return;
             state.RemoveAction(lastActionIndex);
+            state.SaveActions();
         }
 
         /// <summary>
@@ -1469,6 +1484,7 @@ namespace BluePrinceArchipelago.Utils
             }
             state.Actions[index].Enabled = false;
             state.Actions[index].enabled = false;
+            state.SaveActions();
             return true;
         }
 
@@ -1540,7 +1556,7 @@ namespace BluePrinceArchipelago.Utils
             int i = 0;
             foreach (string actionName in state.ActionData.ActionNames)
             {
-                if (actionName == typeof(TAction).FullName)
+                if (typeof(TAction).FullName.Contains(actionName))
                 {
                     state.DisableAction(i);
                 }
@@ -1556,8 +1572,9 @@ namespace BluePrinceArchipelago.Utils
         public static void DisableFirstActionOfType<TAction>(this FsmState state) {
             for (int i = 0; i < state.ActionData.ActionNames.Count; i++)
             {
-                if (state.ActionData.ActionNames[i] == typeof(TAction).FullName)
+                if (typeof(TAction).FullName.Contains(state.ActionData.ActionNames[i]))
                 {
+                    state.DisableAction(i);
                     state.DisableAction(i);
                     return;
                 }
@@ -1572,9 +1589,10 @@ namespace BluePrinceArchipelago.Utils
             int length = state.ActionData.ActionNames.Count;
             for (int i = 0; i < length; i++)
             {
-                if (state.ActionData.ActionNames[length - 1 - i] == typeof(TAction).FullName)
+                if (typeof(TAction).FullName.Contains(state.ActionData.ActionNames[length - 1 - i]))
                 {
                     state.DisableAction(i);
+                    state.SaveActions();
                     return;
                 }
             }
@@ -1589,9 +1607,10 @@ namespace BluePrinceArchipelago.Utils
             int i = 0;
             foreach (string actionName in state.ActionData.ActionNames)
             {
-                if (actionName == typeof(TAction).FullName)
+                if (typeof(TAction).FullName.Contains(actionName))
                 {
                     state.EnableAction(i);
+                    state.SaveActions();
                     return;
                 }
                 i++;
@@ -1607,9 +1626,10 @@ namespace BluePrinceArchipelago.Utils
             int length = state.ActionData.ActionNames.Count;
             for (int i = 0; i < length; i++)
             {
-                if (state.ActionData.ActionNames[length - 1 - i] == typeof(TAction).FullName)
+                if (typeof(TAction).FullName.Contains(state.ActionData.ActionNames[length - 1 - i]))
                 {
                     state.EnableAction(i);
+                    state.SaveActions();
                     return;
                 }
             }
@@ -1625,12 +1645,13 @@ namespace BluePrinceArchipelago.Utils
             int i = 0;
             foreach (string actionName in state.ActionData.ActionNames)
             {
-                if (actionName == typeof(TAction).FullName)
+                if (typeof(TAction).FullName.Contains(actionName))
                 {
                     state.EnableAction(i);
                 }
                 i++;
             }
+            state.SaveActions();
         }
 
         /// <summary>
@@ -1646,6 +1667,7 @@ namespace BluePrinceArchipelago.Utils
             }
             state.Actions[index].Enabled = true;
             state.Actions[index].enabled = true;
+            state.SaveActions();
             return true;
         }
 

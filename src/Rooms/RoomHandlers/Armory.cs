@@ -47,7 +47,7 @@ public class Armory : RoomHandler
         SetupArmoryItems();
     }
 
-    // Morning Star preview model is misspelled as Mornign Star in scene
+    // Morning Star preview model is misspelled as Morning Star in scene
 
     private void SetupArmoryItems()
     {

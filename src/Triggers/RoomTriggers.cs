@@ -1,5 +1,4 @@
-﻿using BluePrinceArchipelago.Archipelago;
-using BluePrinceArchipelago.Rooms;
+﻿using BluePrinceArchipelago.Rooms;
 using BluePrinceArchipelago.Utils;
 using UnityEngine;
 
@@ -34,7 +33,7 @@ namespace BluePrinceArchipelago.Triggers
                 {
                     roomname = "MAID\'S CHAMBER";
                 }
-                if (roomname.ToUpper().Trim().Contains("LADYSHIPS"))
+                else if (roomname.ToUpper().Trim().Contains("LADYSHIPS"))
                 {
                     roomname = "HER LADYSHIP\'S CHAMBER";
                 }

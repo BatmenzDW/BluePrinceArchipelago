@@ -1218,6 +1218,10 @@ namespace BluePrinceArchipelago.Rooms
                 }
                 return true;
             };
+            Func<ModRoom, bool> checkEarlyUnlockStatus = (room) =>
+            {
+                return !(GameObject.Find("__SYSTEM").transform.Find("The Room Engines").Find(room.Name).gameObject.GetComponent<PlayMakerFSM>().GetBoolVariable("POOL REMOVAL").Value);
+            };
             // Checks if the Secret Passage can be drafted and if so prevents default drafting behaviour.
             Func<ModRoom, bool> secretPassageCheck = (room) => {
                 int targetRank = ModInstance.TheGrid.GetIntVariable("Taret Rank").Value;
@@ -1277,7 +1281,7 @@ namespace BluePrinceArchipelago.Rooms
             AddRoom("FREEZER", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CORNER - RARE G", "CENTER - Tier 3 G", "EDGECREEP - RARE G", "EDGEPIERCE - RARE G"], true);
             AddRoom("GALLERY", ["FRONT - Tier 1", "FRONTBACK - RARE", "CENTER - Tier 3", "EDGECREEP - RARE"], false);
             AddRoom("GARAGE", ["EDGE ADVANCE WESTWING - G", "EDGEPIERCE G"], true)
-                .AddLaterDraftDependency(garageRankCheck);
+                .AddLaterDraftDependency(garageRankCheck).AddEarlyDraftDependency(checkEarlyUnlockStatus);
             AddRoom("GIFT SHOP", ["CENTER - Tier 2", "FRONT - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], false)
                 .AddEarlyDraftDependency(room46Reached);
             AddRoom("GREAT HALL", ["CENTER - Tier 3"], true);
@@ -1336,7 +1340,7 @@ namespace BluePrinceArchipelago.Rooms
             AddRoom("THE ARMORY", ["CENTER - Tier 1 G", "CORNER - Tier 1 G", "EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G", "NORTH PIERCE G"], false)
                 .AddEarlyDraftDependency(chessPowerRook);
             AddRoom("THE FOUNDATION", ["CENTER - Tier 1", "CENTER - Tier 2", "CENTER - Tier 3"], true)
-                .AddEarlyDraftDependency(foundationCheck);
+                .AddEarlyDraftDependency(foundationCheck).AddEarlyDraftDependency(checkEarlyUnlockStatus);
             AddRoom("THE KENNEL", ["FRONT - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "CENTER - Tier 1"], false);
             AddRoom("THE POOL", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CENTER - Tier 2 G", "EDGE ADVANCE WESTWING - G", "EDGE ADVANCE EASTWING - G", "EDGE RETREAT WESTWING -  G", "EDGE RETREAT EASTTWING -  G", "EDGEPIERCE G", "Center Rare G"], true);
             AddRoom("THRONE ROOM", ["EDGEPIERCE - RARE G", "CENTER - Tier 2 G"], false);

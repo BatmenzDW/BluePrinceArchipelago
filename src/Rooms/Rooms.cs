@@ -300,33 +300,37 @@ namespace BluePrinceArchipelago.Rooms
         ///     Adds a Dependency to the room early in the draft process
         /// </summary>
         /// <param name="dependency">A Function that checks the dependency.</param>
-        public void AddEarlyDraftDependency(Func<ModRoom, bool> dependency)
+        public ModRoom AddEarlyDraftDependency(Func<ModRoom, bool> dependency)
         {
             EarlyDraftDependencies.Add(dependency);
+            return this;
         }
         /// <summary>
         ///     Adds a Dependency to the room early in the draft process
         /// </summary>
         /// <param name="dependencies">A collection of functions that check if dependencies for those rooms are met.</param>
-        public void AddEarlyDraftDependencies(params Func<ModRoom, bool>[] dependencies) {
+        public ModRoom AddEarlyDraftDependencies(params Func<ModRoom, bool>[] dependencies) {
             EarlyDraftDependencies.AddRange(dependencies);
+            return this;
         }
 
         /// <summary>
         ///     Adds a Dependency to the room that is checked later in draft process.
         /// </summary>
         /// <param name="dependency">A Function that checks the dependency.</param>
-        public void AddLaterDraftDependency(Func<ModRoom, bool> dependency)
+        public ModRoom AddLaterDraftDependency(Func<ModRoom, bool> dependency)
         {
             LaterDraftDependencies.Add(dependency);
+            return this;
         }
         /// <summary>
         ///     Adds a collection of dependencies to a room later in the draft process.
         /// </summary>
         /// <param name="dependencies">A collection of functions that check if dependencies for those rooms are met.</param>
-        public void AddLaterDraftDependencies(params Func<ModRoom, bool>[] dependencies)
+        public ModRoom AddLaterDraftDependencies(params Func<ModRoom, bool>[] dependencies)
         {
             LaterDraftDependencies.AddRange(dependencies);
+            return this;
         }
 
         /// <summary>
