@@ -140,7 +140,7 @@ Here are the currently supported Mod Installation Options:
 
 **<a href="#windows-setups">Windows:</a>**
 * <a href="#windows-bepinex-steam-setup">Windows BepInEx Steam Setup</a>
-* <a href="#windows-bepinex-steam-setup">Windows MelonLoaderr Steam Setup</a>
+* <a href="#windows-bepinex-steam-setup">Windows MelonLoader Steam Setup</a>
 * <a href="#windows-bepinex-xbox-gamepass-setup">Windows BepInEx Xbox GamePass Setup (Microsoft Store)</a>
 
 **<a href="#linux-setups">Linux:</a>**
