@@ -310,7 +310,7 @@ namespace BluePrinceArchipelago.Patches
             FsmState PlanetariumAddState = PlanetariumYesButton.GetState("State 8");
             PlanetariumAddState.DisableFirstActionOfType<SendEvent>();
             // Get the second Send Event so it can be unfrozen.
-            SendEvent Unfreeze = PlanetariumAddState.Actions[2].Cast<SendEvent>();
+            SendEvent Unfreeze = PlanetariumAddState.GetActionsOfType<SendEvent>()[1];
 
             //Conservatory
             PlayMakerFSM ConservatoryYesButton = GameObject.Find("UI OVERLAY CAM/UI Documents/MINI MENUS/Conservatory Find - menu/2 Button Spread (2)/YES BUTTON").GetComponent<PlayMakerFSM>();
