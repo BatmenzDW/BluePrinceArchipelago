@@ -157,7 +157,7 @@ If your preferred platform/modloader/storefront combination is not listed, it ha
 
 #### Windows BepInEx Steam Setup 
 
-If you prefer a simpler install we do have a [Thunderstore version](https://thunderstore.io/c/blue-prince/p/BluePrinceArchipelago/BluePrinceArchipelago/). Please note that I accidentally messed up the semantic versioning so 1.1.1 is actually meant to be 0.1.1 and so on. Due to how Thunderstore is setup this is not a mistake I can easily fix. 
+If you prefer a simpler install we do have a [Thunderstore version]([https://thunderstore.io/c/blue-prince/p/BluePrinceArchipelago/BluePrinceArchipelago/](https://thunderstore.io/c/blue-prince/p/BluePrinceArchipelago/BluePrinceArchipelagoBepInEx/)).
 
 1. Install [Bepinex 6](https://docs.bepinex.dev/master/articles/user_guide/installation/index.html)
 * Specifically you will want to get build #755's [BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip](https://builds.bepinex.dev/projects/bepinex_be/755/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755%2B3fab71a.zip) from the page [here](https://builds.bepinex.dev/projects/bepinex_be)
