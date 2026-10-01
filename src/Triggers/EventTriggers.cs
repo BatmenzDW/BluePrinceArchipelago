@@ -224,7 +224,7 @@ namespace BluePrinceArchipelago.Triggers
             {
                 foreach (var token in roomHandler.AllowanceTokens)
                 {
-                    if (path.Contains(token))
+                    if (path.ToUpper().Contains(token.ToUpper()))
                     {
                         Logging.LogWarning($"Allowance Token matched for room handler {roomHandler.GetType().Name} with token {token}", "ArchipelagoEvents");
                         roomHandler.OnAllowanceTokenCollected(token);

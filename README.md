@@ -48,18 +48,31 @@
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-		  <ul>
-			  <li><a href="#disclaimer">Disclaimer</a></li>
-			  <li><a href="#player-setup">Player Setup</a></li>
-			  <li><a href="#developer-setup">Developer Setup</a></li>
-		  </ul>
-		<li><a href="#unity-setup">Contributing</a></li>
+      <li><a href="#disclaimer">Disclaimer</a></li>
+        <li><a href="#archipelago-setup">Archipelago Setup</a></li>
+        <li><a href="#mod-install-options">Mod Install Options</a></li>
+        <li><a href="#windows-setups">Windows Setups</a></li>
+        <ul>
+            <li><a href="#windows-bepinex-steam-setup">Windows BepInEx Steam Setup</a></li>
+            <li><a href="#windows-bepinex-steam-setup">Windows MelonLoaderr Steam Setup</a></li>
+            <li><a href="#windows-bepinex-xbox-gamepass-setup">Windows BepInEx Xbox GamePass Setup (Microsoft Store)</a></li>
+        </ul>
+        <li><a href="#linux-setups">Linux:</a></li>
+        <ul>
+            <li><a href="#linux-bepinex-steam-setup">Linux BepInEx Steam Setup</a></li>
+        </ul>
+        <li><a href="#mac-setups">Mac:</a></li>
+        <ul>
+            <li><a href="#mac-bepinex-sikarugir-steam-setup">Mac BepInEx Sikarugir Steam Setup</a></li>
+        </ul>
+		<li><a href="#developer-setup">Developer Setup</a></li>
+        <li><a href="#unity-setups">Unity Setup</a></li>
+        <ul>
+            <li><a href="#setting-up-unity-editor">Setting Up Unity Editor</a></li>
+            <li><a href="#creating-asset-bundles">Creating Asset Bundles</a></li>
+        </ul>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#development-roadmap">Development Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
   </ol>
@@ -89,8 +102,6 @@ Special Thanks to:
 
 If you are a player, Installation instructions are just below. If you are developer please check out the <a href=#developer-setup>Developer Setup</a> section.
 
-### Installation
-
 #### Disclaimer:
 This version of Blue Prince Archipelago is in Alpha and as such has quite a few known issues and limitations. All known Bugs will be listed [here](https://github.com/Yascob99/BluePrinceArchipelago/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug). Any QoL changes or future planned changes will live [here](https://github.com/Yascob99/BluePrinceArchipelago/issues?q=is%3Aissue%20state%3Aopen%20label%3Aenhancement).
 
@@ -106,10 +117,45 @@ While fixes are being looked into and worked on they were not prioritized for Al
 - Sometimes rooms outside of your draft pool appear in drafts. I am currently unsure on how to fix this fully and need more data on which rooms drafted from where Please add any new instances of this to [this issue](https://github.com/Yascob99/BluePrinceArchipelago/issues/62).
 - Certain items like Repellant may not function as intended. Please check if a bug exists here or create a new one if you find an item that doesn't work [here](https://github.com/Yascob99/BluePrinceArchipelago/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug)
 
-#### Player Setup
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Archipelago Setup
+
+If you haven't set up Archipelago before, please take a look at [this general guide for Windows/Linux](https://archipelago.gg/tutorial/Archipelago/setup_en) or this [guide for Mac](https://archipelago.gg/tutorial/Archipelago/mac_en).
+
+Since Blue Prince is a custom world you will need to follow those additional instructions. Here is where you can obtain the [lates Blue Prince Apworld](https://github.com/BatmenzDW/Archipelago/releases).
+
+**Extras:**
+- Blue Prince supports Universal Tracker. You can find it in #Universal-Tracker on the discord or download the client [here](https://github.com/FarisTheAncient/Archipelago/releases/latest).
+- To disable your mods open up the doorstop_config.ini in your Blue Prince Installation folder and set enabled to false. This will prevent Bepinex from loading.
 
 **Before you install this mod, I highly reccomend backing up your save file MtHollyBlueprint.es3 from your ~\AppData\LocalLow\Dogubomb\BLUE PRINCE\storage folder. Copy it somewhere safe.**
 Blue Prince Archipelago does not touch the save file process in any way, but I can't guarantee that it won't. Use this mod at your own discresion.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Mod Install Options
+
+Here are the currently supported Mod Installation Options:
+
+**<a href="#windows-setups">Windows:</a>**
+* <a href="#windows-bepinex-steam-setup">Windows BepInEx Steam Setup</a>
+* <a href="#windows-bepinex-steam-setup">Windows MelonLoaderr Steam Setup</a>
+* <a href="#windows-bepinex-xbox-gamepass-setup">Windows BepInEx Xbox GamePass Setup (Microsoft Store)</a>
+
+**<a href="#linux-setups">Linux:</a>**
+* <a href="#linux-bepinex-steam-setup">Linux BepInEx Steam Setup</a>
+
+**<a href="#mac-setups">Mac:</a>**
+* <a href="#mac-bepinex-sikarugir-steam-setup">Mac BepInEx Sikarugir Steam Setup</a>
+
+If your preferred platform/modloader/storefront combination is not listed, it has not been tested or no one has provided fixes. If you do find a way to make that work please let me know so I can get it added.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Windows Setups
+
+#### Windows BepInEx Steam Setup 
 
 If you prefer a simpler install we do have a [Thunderstore version](https://thunderstore.io/c/blue-prince/p/BluePrinceArchipelago/BluePrinceArchipelago/). Please note that I accidentally messed up the semantic versioning so 1.1.1 is actually meant to be 0.1.1 and so on. Due to how Thunderstore is setup this is not a mistake I can easily fix. 
 
@@ -118,9 +164,8 @@ If you prefer a simpler install we do have a [Thunderstore version](https://thun
 * Extract the files inside the  Blue Prince folder (Steam default of `C:\Program Files (x86)\Steam\steamapps\common\Blue Prince` )
 
 2. After installing Bepinex, start the game once from Steam. Wait for the game to start as normal then quit out. This will take some extra time only on the first time you do this on a fresh patch.
-	- If you are on linux you will need to add the following to your steam launch options `WINEDLLOVERRIDES="winhttp=n,b" %command%`. You can find them by clicking the gear icon on the right side of the game and click properties.
 
-3. Download the Latest mod release from [here](https://github.com/Yascob99/BluePrinceArchipelago/releases) and the APworld Release from [here](https://github.com/BatmenzDW/Archipelago/releases).
+3. Download the Latest mod release from [here](https://github.com/Yascob99/BluePrinceArchipelago/releases) and if you haven't already the APworld Release from [here](https://github.com/BatmenzDW/Archipelago/releases).
 
 4. Extract the contents of the mod to <YourBluePrinceInstallLocationHere>/BepInEx/plugins/BluePrinceArchipelago. Your final folder should look something like this:
 <img width="598" height="149" alt="image" src="https://github.com/user-attachments/assets/9b6a8ec9-44dd-481f-b2f1-07839efcbfcd" />
@@ -135,11 +180,112 @@ If you prefer a simpler install we do have a [Thunderstore version](https://thun
 
 9. Enjoy!
 
-**Extras:**
-- Blue Prince supports Universal Tracker. You can find it in #Universal-Tracker on the discord or download the client [here](https://github.com/FarisTheAncient/Archipelago/releases/latest).
-- To disable your mods open up the doorstop_config.ini in your Blue Prince Installation folder and set enabled to false. This will prevent Bepinex from loading.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-#### Developer Setup:
+#### Windows MelonLoader Steam Setup
+
+**Please note MelonLoader Support is expirimental and not as well tested. Use with caution.**
+
+1. Download [MelonLoader 0.7.3](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.3) for your platform. Run the installer then install Melonloader onto your Blue Prince installation. If you previously had a different modloader installed you may need to uninstall it before Melonloader will work.
+
+2. Start the game once from Steam. Wait for the game to start as normal then quit out. This will take some extra time only on the first time you do this on a fresh patch.
+
+3. Download the Latest mod release from [here](https://github.com/Yascob99/BluePrinceArchipelago/releases) and if you haven't already the APworld Release from [here](https://github.com/BatmenzDW/Archipelago/releases).
+
+4. Extract the contents of the mod to <YourBluePrinceInstallLocationHere>/Mods. The DLLs shoot sit in the root folder of mods Your final folder should look something like this:
+
+5. Start the game. You will notice a new UI at the top. It is best to connect here before starting a new profile. This UI can be shown by pressing "/" and dismissed by pressing "ESC". This also doubles as your game client. Tying /help in the command box will show all the local commands. You can also run archipelago server commands from this console once connected. A lot of the commands are intended for dev usage to allow for progress when there is an issue with the mod.
+
+6. **IMPORTANT** If you have played a Blue Prince AP before in a **different multiworld** please press the **New Run Data Reset Button** or **run the /ResetData command** before connecting. Due to limitations in the mod, the mod currently can't cleanly detect when it is safe to delete the local data on the last seed you played, so this must be done manually when starting a new seed.
+
+7. To connect to your slot enter the connection details into the box on the left side of the UI. You will receive a message in the console if something goes wrong. If you are continueing a run (like in an async) load the same profile you loaded previously on the async run before connecting. The mod currently cannot detect it has loaded the correct seed so loading the wrong file may bork the mod's local saved data on your seed which may result in unexpected glitches.
+
+8. **IMPORTANT** After connecting to the Archipelago server, if you are starting a new multiworld, **create a new file in Bequest Mode**. While the game will function on other modes, it may create impossible to complete scenarios, so it is **Bequest Mode only** for now. If you are reconnecting or continueing a run, be sure to load the correct profile; the mod currently cannot detect it has loaded the correct seed so loading the wrong file may bork the mod's local saved data on your seed which may result in unexpected glitches.
+
+9. Enjoy!
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+#### Windows BepInEx Xbox GamePass Setup
+
+1. Install [Bepinex 6](https://docs.bepinex.dev/master/articles/user_guide/installation/index.html)
+* Specifically you will want to get build #788's [BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788+5b766a3.zip](https://builds.bepinex.dev/projects/bepinex_be/788/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788%2B5b766a3.zip) from the page [here](https://builds.bepinex.dev/projects/bepinex_be)
+* Extract the files inside the  Blue Prince Installation folder. Xbox Gamepass defaults to  `C:\XboxGames` or `C:\Program Files\WindowsApps`. The folder might not be Named Blue Prince, but instead a meaningless string of numbers and letters.
+
+2. After installing Bepinex, start the game once from Steam. Wait for the game to start as normal then quit out. This will take some extra time only on the first time you do this on a fresh patch.
+	- If you are on linux you will need to add the following to your steam launch options `WINEDLLOVERRIDES="winhttp=n,b" %command%`. You can find them by clicking the gear icon on the right side of the game and click properties.
+
+3. Download the Latest mod release from [here](https://github.com/Yascob99/BluePrinceArchipelago/releases) and if you haven't already the APworld Release from [here](https://github.com/BatmenzDW/Archipelago/releases).
+
+4. Extract the contents of the mod to <YourBluePrinceInstallLocationHere>/BepInEx/plugins/BluePrinceArchipelago. Your final folder should look something like this:
+<img width="598" height="149" alt="image" src="https://github.com/user-attachments/assets/9b6a8ec9-44dd-481f-b2f1-07839efcbfcd" />
+
+5. Start the game. You will notice a new UI at the top. It is best to connect here before starting a new profile. This UI can be shown by pressing "/" and dismissed by pressing "ESC". This also doubles as your game client. Tying /help in the command box will show all the local commands. You can also run archipelago server commands from this console once connected. A lot of the commands are intended for dev usage to allow for progress when there is an issue with the mod.
+
+6. **IMPORTANT** If you have played a Blue Prince AP before in a **different multiworld** please press the **New Run Data Reset Button** or **run the /ResetData command** before connecting. Due to limitations in the mod, the mod currently can't cleanly detect when it is safe to delete the local data on the last seed you played, so this must be done manually when starting a new seed.
+
+7. To connect to your slot enter the connection details into the box on the left side of the UI. You will receive a message in the console if something goes wrong. If you are continueing a run (like in an async) load the same profile you loaded previously on the async run before connecting. The mod currently cannot detect it has loaded the correct seed so loading the wrong file may bork the mod's local saved data on your seed which may result in unexpected glitches.
+
+8. **IMPORTANT** After connecting to the Archipelago server, if you are starting a new multiworld, **create a new file in Bequest Mode**. While the game will function on other modes, it may create impossible to complete scenarios, so it is **Bequest Mode only** for now. If you are reconnecting or continueing a run, be sure to load the correct profile; the mod currently cannot detect it has loaded the correct seed so loading the wrong file may bork the mod's local saved data on your seed which may result in unexpected glitches.
+
+9. Enjoy!
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Linux Setups
+
+#### Linux Bepinex Steam Setup
+
+1. Install [Bepinex 6](https://docs.bepinex.dev/master/articles/user_guide/installation/index.html)
+* Specifically you will want to get build #755's [BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip](https://builds.bepinex.dev/projects/bepinex_be/755/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755%2B3fab71a.zip) from the page [here](https://builds.bepinex.dev/projects/bepinex_be)
+* Extract the files inside the  Blue Prince folder (Steam default of `C:\Program Files (x86)\Steam\steamapps\common\Blue Prince` )
+
+2. On steam you will need to add the following to your steam launch options `WINEDLLOVERRIDES="winhttp=n,b" %command%`. You can find them by clicking the gear icon on the right side of the game and click properties.
+
+3. After installing Bepinex, start the game once from Steam. Wait for the game to start as normal then quit out. This will take some extra time only on the first time you do this on a fresh patch.
+
+4. Download the Latest mod release from [here](https://github.com/Yascob99/BluePrinceArchipelago/releases) and if you haven't already the APworld Release from [here](https://github.com/BatmenzDW/Archipelago/releases).
+
+5. Extract the contents of the mod to <YourBluePrinceInstallLocationHere>/BepInEx/plugins/BluePrinceArchipelago. Your final folder should look something like this:
+<img width="598" height="149" alt="image" src="https://github.com/user-attachments/assets/9b6a8ec9-44dd-481f-b2f1-07839efcbfcd" />
+
+6. Start the game. You will notice a new UI at the top. It is best to connect here before starting a new profile. This UI can be shown by pressing "/" and dismissed by pressing "ESC". This also doubles as your game client. Tying /help in the command box will show all the local commands. You can also run archipelago server commands from this console once connected. A lot of the commands are intended for dev usage to allow for progress when there is an issue with the mod.
+
+7. **IMPORTANT** If you have played a Blue Prince AP before in a **different multiworld** please press the **New Run Data Reset Button** or **run the /ResetData command** before connecting. Due to limitations in the mod, the mod currently can't cleanly detect when it is safe to delete the local data on the last seed you played, so this must be done manually when starting a new seed.
+
+8. To connect to your slot enter the connection details into the box on the left side of the UI. You will receive a message in the console if something goes wrong. If you are continueing a run (like in an async) load the same profile you loaded previously on the async run before connecting. The mod currently cannot detect it has loaded the correct seed so loading the wrong file may bork the mod's local saved data on your seed which may result in unexpected glitches.
+
+9. **IMPORTANT** After connecting to the Archipelago server, if you are starting a new multiworld, **create a new file in Bequest Mode**. While the game will function on other modes, it may create impossible to complete scenarios, so it is **Bequest Mode only** for now. If you are reconnecting or continueing a run, be sure to load the correct profile; the mod currently cannot detect it has loaded the correct seed so loading the wrong file may bork the mod's local saved data on your seed which may result in unexpected glitches.
+
+10. Enjoy!
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Mac Setups
+
+#### Mac BepInEx Sikarugir Steam Setup
+Original credit for these instructions goes to RacgiMan on the Archipelago discord. Your milage may vary.
+
+1. Install [sikarugir](https://github.com/Sikarugir-App/Sikarugir). The readme has an explanation on how to install and the video in that readme shows you how to create a wrapper.
+
+2. Create a sikarugir wrapper and install steam on it.
+
+3.  configure winhttp override in winecfg of that wrapper.
+    * Locate your wrapped steam app
+    * Right click the app -> "Show Package Contents"
+    * Open "Configure" (Configure.app)
+    * In the configuration window, click the "Tools" tab
+    * Click "Config Utility (winecfg)" in the "Wine Tools" section
+    *  In the Wine configuration window, click the "Libraries" tab
+    * Click the dropdown, enter "winhttp", then hit "add"
+    * Verify that the winhttp override was added, then hit "Apply"
+    * Click ok to exit the wine configuration window, then close the configure app.
+
+4. Follow the regular <a href="BepInEx-Windows-Steam-Setup">Windows BepInEx Installation Instructions</a>
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Developer Setup:
 
 1. Install [Bepinex 6](https://docs.bepinex.dev/master/articles/user_guide/installation/index.html)
 * Specifically you will want to get build #755's [BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip](https://builds.bepinex.dev/projects/bepinex_be/755/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755%2B3fab71a.zip) from the page [here](https://builds.bepinex.dev/projects/bepinex_be)
@@ -194,8 +340,8 @@ and
         <PlatformTarget>AnyCPU</PlatformTarget>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<NoWarn>$(NoWarn);1591</NoWarn>
-		<BluePrinceBepInExDir>C:\Program Files (x86)\Steam\steamapps\common\Blue Prince</BluePrinceBepInExDir>
-		<BluePrinceMelonLoaderDir>C:\Program Files (x86)\Steam\steamapps\common\Blue Prince - MelonModded</BluePrinceMelonLoaderDir>
+		<BluePrinceBepInExDir>Path/To/BepInEx/BluePrinceHere/</BluePrinceBepInExDir>
+		<BluePrinceMelonLoaderDir>Path/To/MelonLoader/BluePrinceHere/</BluePrinceMelonLoaderDir>
     </PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
 		<DebugType>none</DebugType>
@@ -232,9 +378,9 @@ and
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-## Unity Setup
+### Unity Setups
 
-### Setting Up Unity Editor
+#### Setting Up Unity Editor
 
 Below are instructions to get access to opening the files in Unity editor.
 1. Install [Unity Hub](https://docs.unity.com/en-us/hub/install-hub). You can continue to the step 3 while this installs.
@@ -269,9 +415,11 @@ protected Tag() { }
 ```
 16. Save the file and check for more errors, attempt to solve them in a similar fashion. You can ignore all of the warnings.
 
-17. The project will now attempt to open and will fail to open. Navigate to ExportedProject\Assets\ and open up the MainMenu.Unity file with Unity 6000.0.58f2. You now will be able to open most of the games prefabs by browsing for them in the asset brwoser in the bottom left. Some room prefabs may not open and will cause the scene to crash for unknown reasons.
+17. The project will now attempt to open and will fail to open. Navigate to ExportedProject\Assets\ and open up the MainMenu.Unity file with Unity 6000.0.58f2. You now will be able to open most of the games prefabs by browsing for them in the asset browser in the bottom left.
 
-### Creating Asset Bundles
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+#### Creating Asset Bundles
 
 1. First naviagate to ExportedProject\Assets\Editor then create a file. Call it something on theme that ends with ".cs". It will be a script for creating AssetBundles. Paste the following into it:
 ```
@@ -349,55 +497,6 @@ public class BuildSubsetAssetBundles
    
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<!-- USAGE EXAMPLES -->
-## Usage
-
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- ROADMAP -->
-## Development Roadmap
-
-- Rooms
-    - [x] Ability to change initial draft pool and dynamically add back in rooms to the pool.
-    - [x] Add ability to add extra copies of rooms to the pool
-    - [ ] Add better handling of certain rooms that rely on other events to be added to the pool (eg. Morning Room) - partial done
-    - [ ] Add ways of better handling upgraded rooms.
-- Items
-    - [x] Create AP assets for replacement unique item locations
-    - [x] Handle recieving items mid-run and remove it from the appropriate inventories.
-    - [x] Handle Junk item rewards.
-    - [x] Handle Permanent items (rewards that persist between days).
-- Reverse Engineering
-    - [x] Find events to hook to track if a run is ongoing so items and traps, and deathlinks can be applied at the proper times.
-    - [x] Find out how shops choose their inventory and how to change it based on our items.
-        - [ ] Find out how to add checks that can be bought at a randomized price (for other players).
-    - [ ] Look into how the trading post functions and how to handle replacing the tradeable items with AP versions when appropriate.
-    - [x] Find a place to hook for trunk goals.
-- Goals
-    - [x] Find where to hook for specific goals being achieved.
-- Archipelago
-    - [x] Create the logic for handling events from the AP server.
-    - [x] Create a reconnect logic that will reconstruct as much of the state as possible from the Data from the AP Server.
-    - [x] Create a way of storing run specific data in case of a game crash. (eg which save file, any queued checks, any temporary effects applied to the current day)
-- UI
-    - [ ] Create a better looking UI
-    - [ ] Add a menu option for Archipelago Mode on creating a new file.
-- Potential Long Term Goals
-    - [ ] Check the ease of changing puzzles like the Mora Jai puzzles for use in future optional modes.
-    - [ ] Add in the ability to swap in first enter room checks for a physical item hidden inside each room.
-
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- CONTRIBUTING -->
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
