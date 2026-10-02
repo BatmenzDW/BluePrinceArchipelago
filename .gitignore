@@ -11,3 +11,4 @@ bin/*
 *.csproj.user
 Directory.Build.props
 BluePrinceArchipelago/BluePrinceArchipelago.csproj.lscache
+BluePrinceArchipelago/obj/*
