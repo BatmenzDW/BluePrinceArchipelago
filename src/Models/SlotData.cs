@@ -65,6 +65,9 @@ namespace BluePrinceArchipelago.Models
         [JsonProperty("goal_sanctum_solves")]
         public int GoalSanctumSolves { get; set; }
 
+        [JsonProperty("morajai_box_color_codes")]
+        public Dictionary<string, string> MorajaiBoxColorCodes { get; set; }
+
         [JsonProperty("start_inventory")]
         public Dictionary<string, int> StartInventory { get; set; }
 

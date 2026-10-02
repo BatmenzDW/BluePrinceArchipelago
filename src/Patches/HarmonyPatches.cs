@@ -1,4 +1,5 @@
-﻿using BluePrinceArchipelago.FsmMethods;
+﻿using BluePrinceArchipelago.Archipelago;
+using BluePrinceArchipelago.FsmMethods;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Rooms.RoomHandlers;
 using BluePrinceArchipelago.Triggers;
@@ -101,8 +102,8 @@ namespace BluePrinceArchipelago.Patches
 
         private static readonly Dictionary<string, string> _LastStates = [];
         private static readonly Dictionary<string, (HashSet<string>, Action<Fsm, string, string>)> _ObservedFSMs = new(){
-        {"ZERO STEP ENDING", (["State 3"], OnZeroStepsEnding)},
-    };
+            {"ZERO STEP ENDING", (["State 3"], OnZeroStepsEnding)},
+        };
 
         [HarmonyPatch(typeof(Fsm), nameof(Fsm.UpdateStateChanges))]
         [HarmonyPostfix]
@@ -146,28 +147,6 @@ namespace BluePrinceArchipelago.Patches
                 // Logging.Log($"Error in FSM state change postfix: {ex}", "RoomHandler");
             }
         }
-
-        // TODO: Find a hook that works for Mora Jai Boxes
-        // [HarmonyPatch(typeof(MorajaiController), nameof(MorajaiController.CheckCorners))]
-        // [HarmonyPostfix]
-        // static void MorajaiPostfix(MorajaiController __instance)
-        // {
-        //     if (__instance == null) return;
-        //     var gameObject = __instance.gameObject?.transform?.parent?.gameObject;
-        //     if (gameObject == null) return;
-
-        //     var value = __instance.hasSolved;
-
-        //     Logging.Log($"Morajai Puzzle {gameObject.name} solved: {value}");
-
-        //     foreach (var roomHandler in RoomHandler.RoomHandlers.Values)
-        //     {
-        //         if (roomHandler.MorajaiPuzzles.Contains(gameObject.name) && value)
-        //         {
-        //             roomHandler.OnMorajaiPuzzleSolved(gameObject.name);
-        //         }
-        //     }
-        // }
 
         private static void OnZeroStepsEnding(Fsm fsm, string gameObjectName, string newState)
         {
@@ -338,6 +317,30 @@ namespace BluePrinceArchipelago.Patches
                 return false;
             }
             return true;
+        }
+    }
+
+    public class MoraJaiBoxControllerPatch
+    {
+        [HarmonyPatch(typeof(MorajaiController), "Start")]
+        [HarmonyPrefix]
+        public static void MoraJaiBoxControllerStartPrefix(MorajaiController __instance)
+        {
+            if (ArchipelagoOptions.MorajaiBoxColorCodes == null)
+            {
+                return;
+            }
+
+            string path = __instance.gameObject.GetPath();
+
+            foreach (var kvp in ArchipelagoOptions.MorajaiBoxColorCodes)
+            {
+                if (path.Contains(kvp.Key, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    __instance.colorCode = kvp.Value;
+                    break;
+                }
+            }
         }
     }
 }

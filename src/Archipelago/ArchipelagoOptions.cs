@@ -118,6 +118,11 @@ public static class ArchipelagoOptions
     /// </summary>
     public static Dictionary<string, int> TrapTypeDistribution { get; private set; } = new Dictionary<string, int>();
 
+    /// <summary>
+    /// Morajai box color codes.
+    /// </summary>
+    public static Dictionary<string, string> MorajaiBoxColorCodes { get; private set; } = new Dictionary<string, string>();
+
     // ============================================================
     // Methods
     // ============================================================
@@ -155,6 +160,7 @@ public static class ArchipelagoOptions
             DeathLinkMonkException = slotData.DeathLinkMonkException;
             GoalType = slotData.GoalType;
             GoalSanctumSolves = slotData.GoalSanctumSolves;
+            MorajaiBoxColorCodes = slotData.MorajaiBoxColorCodes;
             IsLoaded = true;
             LogOptions();
         }
