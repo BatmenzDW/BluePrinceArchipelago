@@ -1,4 +1,5 @@
-﻿using BluePrinceArchipelago.Items;
+﻿using BluePrinceArchipelago.Archipelago;
+using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
 #if Bep
 using HutongGames.PlayMaker;
@@ -18,30 +19,33 @@ class GreatHall : RoomHandler
 {
     public override void OnAfterRoomDrafted(GameObject roomGameObject)
     {
-        roomGameObject = ModRoomManager.GetRoomInstance("Great Hall");
-        if (roomGameObject != null)
+        if (ArchipelagoOptions.UpgradeDiskSanity)
         {
-            List<PlayMakerFSM> ItemDropFSMs = GetItemDropFSMs(roomGameObject);
-            foreach (PlayMakerFSM ItemDropFSM in ItemDropFSMs)
+            roomGameObject = ModRoomManager.GetRoomInstance("Great Hall");
+            if (roomGameObject != null)
             {
+                List<PlayMakerFSM> ItemDropFSMs = GetItemDropFSMs(roomGameObject);
+                foreach (PlayMakerFSM ItemDropFSM in ItemDropFSMs)
+                {
 
-                if (ItemDropFSM != null)
-                {
-                    bool found = ModItemManager.UpgradeDisks.FoundLocations.Contains("GREAT HALL");
-                    Logging.LogWarning(found);
-                    FsmBool CanSpawnDisk = ItemDropFSM.AddBoolVariable("CanSpawnDisk");
-                    CanSpawnDisk.Value = found;
-                    ItemDropFSM.GetState("State 1").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
-                    ArrayListContains CheckInInventory = ItemDropFSM.GetState("State 2").GetFirstActionOfType<ArrayListContains>();
-                    CheckInInventory.isContainedEvent = CheckInInventory.isNotContainedEvent;
-                }
-                else
-                {
-                    Logging.LogWarning("Error changing Great Hall Upgrade disk spawn logic.");
+                    if (ItemDropFSM != null)
+                    {
+                        bool found = ModItemManager.UpgradeDisks.FoundLocations.Contains("GREAT HALL");
+                        Logging.LogWarning(found);
+                        FsmBool CanSpawnDisk = ItemDropFSM.AddBoolVariable("CanSpawnDisk");
+                        CanSpawnDisk.Value = found;
+                        ItemDropFSM.GetState("State 1").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
+                        ArrayListContains CheckInInventory = ItemDropFSM.GetState("State 2").GetFirstActionOfType<ArrayListContains>();
+                        CheckInInventory.isContainedEvent = CheckInInventory.isNotContainedEvent;
+                    }
+                    else
+                    {
+                        Logging.LogWarning("Error changing Great Hall Upgrade disk spawn logic.");
+                    }
                 }
             }
-        }
 
+        }
     }
     private List<PlayMakerFSM> GetItemDropFSMs(GameObject roomGameObject)
     {

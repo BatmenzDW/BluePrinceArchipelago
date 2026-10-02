@@ -1,3 +1,4 @@
+using BluePrinceArchipelago.Archipelago;
 using BluePrinceArchipelago.Items;
 using BluePrinceArchipelago.Utils;
 #if Bep
@@ -55,15 +56,19 @@ public class Commissary : RoomHandler
         ReplaceModelsWithAP();
     }
 
-    private void CommissaryDiskAdjustment() {
+    private void CommissaryDiskAdjustment()
+    {
         if (_ItemsForSaleFsm == null)
         {
             return;
         }
-        // Changes makes it check if the location has been found instead of a different check.
-        FsmBool CanSpawnDisk = _ItemsForSaleFsm.AddBoolVariable("CanSpawnDisk");
-        CanSpawnDisk.Value = ModItemManager.UpgradeDisks.FoundLocations.Contains("COMMISSARY");
-        _ItemsForSaleFsm.GetState("State 5").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
+        if (ArchipelagoOptions.UpgradeDiskSanity)
+        {
+            // Changes makes it check if the location has been found instead of a different check.
+            FsmBool CanSpawnDisk = _ItemsForSaleFsm.AddBoolVariable("CanSpawnDisk");
+            CanSpawnDisk.Value = ModItemManager.UpgradeDisks.FoundLocations.Contains("COMMISSARY");
+            _ItemsForSaleFsm.GetState("State 5").GetFirstActionOfType<BoolTest>().boolVariable = CanSpawnDisk;
+        }
     }
 
     private void ReplaceModelsWithAP() {

@@ -1186,7 +1186,7 @@ namespace BluePrinceArchipelago.Rooms
                 int currentRank = ModInstance.TheGrid.GetIntVariable("Current Rank").Value;
                 int currentTile = ModInstance.TheGrid.GetIntVariable("Current Tile").Value;
                 int targetTile = ModInstance.TheGrid.GetIntVariable("Target Tile").Value;
-                return room.RoomInHouseCount == 0 && targetRank > 3 && targetRank < 9 && currentRank <= targetRank && targetTile % 5 != 0 && currentTile > 10 && currentTile != 12; // Rank 4-8, not drafted south, and only on the west side of the house.
+                return room.RoomInHouseCount == 0 && targetRank > 3 && targetRank < 9 && currentRank <= targetRank && targetTile % 5 != 0; // Rank 4-8, not drafted south, and only on the west side of the house.
             };
             // Checks if the foundation can be drafted here.
             Func<ModRoom, bool> foundationCheck = (room) => {
@@ -1217,6 +1217,13 @@ namespace BluePrinceArchipelago.Rooms
                     }
                 }
                 return true;
+            };
+
+            Func<ModRoom, bool> checkGarageEarlyUnlock = (room) =>
+            {
+                int currentTile = ModInstance.TheGrid.GetIntVariable("Current Tile").Value;
+                int targetTile = ModInstance.TheGrid.GetIntVariable("Target Tile").Value;
+                return currentTile > 10 && currentTile != 14 && currentTile % 5 != 0 && currentTile != 12;
             };
             Func<ModRoom, bool> checkEarlyUnlockStatus = (room) =>
             {
@@ -1281,7 +1288,7 @@ namespace BluePrinceArchipelago.Rooms
             AddRoom("FREEZER", ["FRONTBACK G - RARE", "NORTH PIERCE G", "CORNER - RARE G", "CENTER - Tier 3 G", "EDGECREEP - RARE G", "EDGEPIERCE - RARE G"], true);
             AddRoom("GALLERY", ["FRONT - Tier 1", "FRONTBACK - RARE", "CENTER - Tier 3", "EDGECREEP - RARE"], false);
             AddRoom("GARAGE", ["EDGE ADVANCE WESTWING - G", "EDGEPIERCE G"], true)
-                .AddLaterDraftDependency(garageRankCheck).AddEarlyDraftDependency(checkEarlyUnlockStatus);
+                .AddLaterDraftDependency(garageRankCheck).AddEarlyDraftDependencies(checkEarlyUnlockStatus, checkGarageEarlyUnlock);
             AddRoom("GIFT SHOP", ["CENTER - Tier 2", "FRONT - Tier 1", "EDGECREEP EAST", "EDGECREEP WEST", "EDGEPIERCE EAST", "EDGEPIERCE WEST"], false)
                 .AddEarlyDraftDependency(room46Reached);
             AddRoom("GREAT HALL", ["CENTER - Tier 3"], true);
