@@ -182,7 +182,7 @@ namespace BluePrinceArchipelago.Items
         {
             if (spawnedObj != null)
             {
-                if (FoundLocations.Contains(location.ToUpper()))
+                if (FoundLocations.Contains(location.ToUpper()) && ArchipelagoOptions.UpgradeDiskSanity)
                 {
                     GameObject.Destroy(spawnedObj);
                     Logging.LogWarning($"Despawned Upgrade Disk in {location}, since it has been found before.");
