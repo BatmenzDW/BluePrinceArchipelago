@@ -112,7 +112,7 @@
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="Il2CppPlayMaker">
-			<HintPath>$(BluePrinceMelonLoaderDir)\MelonLoader\Il2CppAssemblies\Il2CppPlaymaker.dll</HintPath>
+			<HintPath>$(BluePrinceMelonLoaderDir)\MelonLoader\Il2CppAssemblies\Il2CppPlayMaker.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 	</ItemGroup>
